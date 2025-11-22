@@ -9,10 +9,10 @@ import {
   Moon, Sun, ArrowUpRight, ArrowDownRight, Monitor, Globe, Keyboard, Save, Key, 
   Sparkles, Play, StopCircle, LayoutTemplate, Type, Image as ImageIcon, AlignLeft, Code,
   List, CheckSquare, DollarSign, Megaphone, Scale, ThumbsUp, HelpCircle, Link, 
-  FileCode, ShieldCheck, Users, Workflow, Briefcase, FormInput, Award, Zap, Download, Wand2, Copy, BookOpen, Palette, ChevronRight
+  FileCode, ShieldCheck, Users, Workflow, Briefcase, FormInput, Award, Zap, Download, Wand2, Copy, BookOpen, Palette, ChevronRight, ArrowUp, ArrowDown, Smartphone, Check, Star, ThumbsDown, HardDrive, FolderOpen
 } from 'lucide-react';
 
-// --- 0. PRESET TEMPLATES ---
+// --- 0. PRESET TEMPLATES (Unchanged) ---
 const PRESET_TEMPLATES = [
   {
     id: 'preset-1',
@@ -78,8 +78,21 @@ const Badge = ({ children, type = "neutral" }) => {
   );
 };
 
-// --- NEW: Interactive Live Preview Component ---
+// --- Live Preview Component ---
 const LivePreview = ({ blocks }) => {
+  const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState('desktop');
+
+  const generateHTML = () => {
+    return blocks.map(b => `<!-- ${b.type} -->\n<div class="block-${b.type}">${b.content}</div>`).join('\n\n');
+  };
+
+  const handleCopyHTML = () => {
+    navigator.clipboard.writeText(generateHTML());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (!blocks || blocks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-slate-400 min-h-[400px] bg-slate-50/50 rounded-xl border-2 border-dashed border-slate-200">
@@ -90,253 +103,69 @@ const LivePreview = ({ blocks }) => {
   }
 
   return (
-    <div className="w-full bg-white shadow-2xl min-h-[800px] border border-slate-200 rounded-lg overflow-hidden flex flex-col mx-auto max-w-5xl">
-      
-      {/* Mock Browser Header */}
-      <div className="bg-slate-100 border-b border-slate-200 p-3 flex items-center gap-2">
-        <div className="flex gap-1.5">
-           <div className="w-3 h-3 rounded-full bg-red-400"></div>
-           <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-           <div className="w-3 h-3 rounded-full bg-green-400"></div>
+    <div className={`mx-auto transition-all duration-300 flex flex-col ${viewMode === 'mobile' ? 'max-w-sm' : 'w-full max-w-5xl'}`}>
+      <div className="bg-slate-100 border border-b-0 border-slate-200 p-3 flex items-center justify-between gap-2 rounded-t-lg">
+        <div className="flex items-center flex-1 gap-4">
+           <div className="flex gap-1.5"><div className="w-3 h-3 rounded-full bg-red-400"></div><div className="w-3 h-3 rounded-full bg-amber-400"></div><div className="w-3 h-3 rounded-full bg-green-400"></div></div>
+           <div className="flex-1 max-w-md bg-white h-6 rounded-md border border-slate-200 text-[10px] text-slate-400 flex items-center px-2 truncate">https://grogoliath.com/preview</div>
         </div>
-        <div className="flex-1 bg-white h-6 rounded-md border border-slate-200 mx-4 text-[10px] text-slate-400 flex items-center px-2">
-           https://yourwebsite.com/preview
+        <div className="flex bg-white rounded-md border border-slate-200 p-0.5">
+           <button onClick={() => setViewMode('desktop')} className={`p-1.5 rounded ${viewMode === 'desktop' ? 'bg-slate-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`} title="Desktop View"><Monitor size={14} /></button>
+           <button onClick={() => setViewMode('mobile')} className={`p-1.5 rounded ${viewMode === 'mobile' ? 'bg-slate-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`} title="Mobile View"><Smartphone size={14} /></button>
+        </div>
+        <button onClick={handleCopyHTML} className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-md hover:bg-indigo-100 transition-colors flex items-center gap-1 ml-2">{copied ? <CheckCircle2 size={12}/> : <Code size={12}/>} {copied ? 'Copied!' : 'Copy HTML'}</button>
+      </div>
+      <div className={`flex-1 bg-white border border-slate-200 border-t-0 shadow-2xl overflow-hidden flex flex-col ${viewMode === 'mobile' ? 'rounded-b-3xl border-8 border-slate-800 min-h-[600px]' : 'rounded-b-lg min-h-[800px]'}`}>
+        <nav className="border-b border-slate-100 px-6 py-4 flex justify-between items-center bg-white sticky top-0 z-10">
+          <div className="font-bold text-lg text-slate-900 tracking-tight">Brand</div>
+          {viewMode === 'desktop' && (<div className="flex gap-6 text-sm font-medium text-slate-600"><span>Features</span><span>Pricing</span><span>Contact</span></div>)}
+          {viewMode === 'mobile' ? <div className="space-y-1"><div className="w-5 h-0.5 bg-slate-800"></div><div className="w-5 h-0.5 bg-slate-800"></div><div className="w-5 h-0.5 bg-slate-800"></div></div> : <button className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium">Get Started</button>}
+        </nav>
+        <div className="flex-1 overflow-y-auto bg-white">
+          {blocks.map((block) => {
+            if (!block || !block.type) return null; 
+            switch (block.type) {
+              case 'header': return <section key={block.id} className="px-6 py-8"><h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">{block.content}</h2></section>;
+              case 'hero': return <section key={block.id} className="text-center py-16 px-6 bg-gradient-to-b from-slate-50 to-white border-b border-slate-100"><h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 tracking-tight leading-tight">{block.content}</h1><p className="text-lg text-slate-500 mb-8">Your compelling subheadline goes here.</p><button className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 w-full md:w-auto">Start Now</button></section>;
+              case 'text': return <section key={block.id} className="px-6 py-4"><p className="text-base md:text-lg text-slate-700 leading-relaxed">{block.content}</p></section>;
+              case 'image': return <section key={block.id} className="px-6 py-8"><div className="w-full h-48 md:h-[400px] bg-slate-100 rounded-2xl flex flex-col items-center justify-center text-slate-400 border border-slate-200 overflow-hidden relative group"><ImageIcon size={32} className="mb-2 text-slate-300"/> <span className="font-medium text-sm">{block.content}</span></div></section>;
+              case 'pain_point': return <section key={block.id} className="px-6 py-8 bg-red-50/50"><div className="p-5 bg-white border border-red-100 rounded-xl shadow-sm"><h3 className="text-lg font-bold text-red-800 mb-2 flex gap-2 items-center"><AlertCircle size={18}/> Problem</h3><p className="text-slate-600">{block.content}</p></div></section>;
+              case 'solution': return <section key={block.id} className="px-6 py-8 bg-emerald-50/50"><div className="p-5 bg-white border border-emerald-100 rounded-xl shadow-sm"><h3 className="text-lg font-bold text-emerald-800 mb-2 flex gap-2 items-center"><CheckCircle2 size={18}/> Solution</h3><p className="text-slate-600">{block.content}</p></div></section>;
+              case 'pricing': return <section key={block.id} className="px-6 py-12 bg-slate-50"><div className={`grid gap-4 ${viewMode==='mobile'?'grid-cols-1':'grid-cols-3'}`}>{[{ name: 'Starter', price: '$29' }, { name: 'Pro', price: '$99', highlight: true }, { name: 'Enterprise', price: '$299' }].map((plan, i) => (<div key={i} className={`bg-white p-6 rounded-xl border ${plan.highlight ? 'border-indigo-500 shadow-lg' : 'border-slate-200'}`}><div className="text-slate-500 text-sm font-bold uppercase mb-2">{plan.name}</div><div className="text-3xl font-extrabold text-slate-900 mb-4">{plan.price}</div><button className="w-full py-2 rounded-lg bg-slate-100 text-sm font-bold">Select</button></div>))}</div></section>;
+              case 'cta': return <section key={block.id} className="px-6 py-16 bg-indigo-600 text-white text-center"><h3 className="text-2xl font-bold mb-4">{block.content}</h3><button className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold shadow-lg">Get Started</button></section>;
+              case 'faq_auto': return <section key={block.id} className="px-6 py-12"><h3 className="text-xl font-bold mb-6 text-center">FAQ</h3><div className="space-y-3">{[1, 2, 3].map(i => (<details key={i} className="bg-white border border-slate-200 rounded-lg"><summary className="flex justify-between items-center cursor-pointer p-4 font-medium text-slate-900 text-sm"><span>Question {i}?</span><ChevronDown size={16} className="text-slate-400"/></summary></details>))}</div></section>;
+              case 'trust_badges': return <section key={block.id} className="py-12 border-y border-slate-100 bg-slate-50/50"><div className="max-w-6xl mx-auto px-8"><p className="text-center text-sm font-bold text-slate-400 uppercase tracking-wider mb-8">Trusted by industry leaders</p><div className="flex justify-center gap-12 opacity-50 grayscale flex-wrap"><div className="font-bold text-2xl text-slate-600 flex items-center gap-2"><ShieldCheck/> Secure</div><div className="font-bold text-2xl text-slate-600 flex items-center gap-2"><Users/> CrowdSource</div><div className="font-bold text-2xl text-slate-600 flex items-center gap-2"><Zap/> Fast</div></div></div></section>;
+              case 'contact_form': return <section key={block.id} className="px-6 py-16 bg-slate-50"><div className="max-w-lg mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-200"><h3 className="text-xl font-bold mb-6 text-center">Contact Us</h3><div className="space-y-4"><div><label className="block text-sm font-medium text-slate-700 mb-1">Name</label><input type="text" className="w-full p-3 border rounded-lg bg-slate-50" placeholder="Your name"/></div><div><label className="block text-sm font-medium text-slate-700 mb-1">Email</label><input type="email" className="w-full p-3 border rounded-lg bg-slate-50" placeholder="name@example.com"/></div><div><label className="block text-sm font-medium text-slate-700 mb-1">Message</label><textarea className="w-full p-3 border rounded-lg bg-slate-50 h-24" placeholder="How can we help?"></textarea></div><button className="w-full py-3 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800">Send Message</button></div></div></section>;
+              case 'comparison': return <section key={block.id} className="px-6 py-12"><h3 className="text-xl font-bold mb-6 text-center">Comparison</h3><div className="overflow-x-auto"><table className="w-full text-sm text-left"><thead className="bg-slate-50 text-slate-500 border-b"><tr><th className="px-6 py-3">Feature</th><th className="px-6 py-3 text-indigo-600 font-bold">Us</th><th className="px-6 py-3">Them</th></tr></thead><tbody className="divide-y">{[1,2,3].map(r=><tr key={r}><td className="px-6 py-3 font-medium">Feature {r}</td><td className="px-6 py-3 text-emerald-600"><Check size={16}/></td><td className="px-6 py-3 text-red-400"><X size={16}/></td></tr>)}</tbody></table></div></section>;
+              case 'pros_cons': return <section key={block.id} className="px-6 py-8"><div className="grid md:grid-cols-2 gap-6"><div className="bg-emerald-50 border border-emerald-100 p-6 rounded-xl"><h4 className="font-bold text-emerald-800 mb-4 flex items-center gap-2"><ThumbsUp size={16}/> Pros</h4><ul className="space-y-2 text-emerald-700 text-sm"><li><Check size={14} className="inline mr-2"/> Benefit 1</li><li><Check size={14} className="inline mr-2"/> Benefit 2</li></ul></div><div className="bg-red-50 border border-red-100 p-6 rounded-xl"><h4 className="font-bold text-red-800 mb-4 flex items-center gap-2"><ThumbsDown size={16}/> Cons</h4><ul className="space-y-2 text-red-700 text-sm"><li><X size={14} className="inline mr-2"/> Drawback 1</li><li><X size={14} className="inline mr-2"/> Drawback 2</li></ul></div></div></section>;
+              case 'process': return <section key={block.id} className="px-6 py-12"><div className="flex flex-col md:flex-row gap-4 text-center">{[1,2,3].map(step=><div key={step} className="flex-1 p-6 border rounded-xl bg-slate-50"><div className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold mx-auto mb-4">{step}</div><h4 className="font-bold text-slate-900">Step {step}</h4><p className="text-sm text-slate-500 mt-2">Description of this step.</p></div>)}</div></section>;
+              case 'social_proof': return <section key={block.id} className="px-6 py-12 bg-slate-50"><div className="max-w-2xl mx-auto text-center"><div className="flex justify-center mb-4 text-yellow-400"><Star fill="currentColor" size={20}/><Star fill="currentColor" size={20}/><Star fill="currentColor" size={20}/><Star fill="currentColor" size={20}/><Star fill="currentColor" size={20}/></div><blockquote className="text-xl font-medium text-slate-800 italic">"This product completely changed how we work. Highly recommended!"</blockquote><div className="mt-4 font-bold text-slate-900">- Happy Customer</div></div></section>;
+              case 'case_study': return <section key={block.id} className="px-6 py-12"><div className="flex gap-6 items-center bg-indigo-50 p-8 rounded-2xl border border-indigo-100"><div className="flex-1"><div className="text-indigo-600 font-bold text-sm uppercase tracking-wide mb-2">Case Study</div><h3 className="text-2xl font-bold text-slate-900 mb-4">How Client X grew 200%</h3><p className="text-slate-600 mb-6">Full story placeholder text describing the success.</p><button className="text-indigo-600 font-bold hover:underline">Read Story &rarr;</button></div><div className="w-1/3 h-40 bg-indigo-200 rounded-xl hidden md:block"></div></div></section>;
+              case 'schema_service': case 'schema_blog': return <div key={block.id} className="px-6 py-4"><div className="p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800 font-mono">Hidden Schema: {block.type}</div></div>;
+              default: return <div key={block.id} className="p-6 text-center border-b border-slate-100"><p className="text-slate-400 font-mono text-xs">Block: {block.type}</p></div>;
+            }
+          })}
+          <footer className="bg-slate-900 text-slate-500 py-8 px-6 text-center text-xs mt-auto"><p>© 2025 GroGoliath. All rights reserved.</p></footer>
         </div>
       </div>
-
-      {/* Mock Navigation */}
-      <nav className="border-b border-slate-100 px-8 py-4 flex justify-between items-center bg-white sticky top-0 z-10">
-        <div className="font-bold text-xl text-slate-900 tracking-tight">BrandLogo</div>
-        <div className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
-           <span>Features</span>
-           <span>Pricing</span>
-           <span>About</span>
-           <span>Contact</span>
-        </div>
-        <button className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">Get Started</button>
-      </nav>
-
-      {/* Main Content Area */}
-      <div className="flex-1 bg-white">
-        {blocks.map((block) => {
-          switch (block.type) {
-            case 'header':
-              return (
-                 <section key={block.id} className="px-8 py-8 max-w-4xl mx-auto">
-                    <h2 className="text-3xl font-bold text-slate-900 leading-tight">{block.content}</h2>
-                 </section>
-              );
-            case 'hero':
-              return (
-                <section key={block.id} className="text-center py-20 px-6 bg-gradient-to-b from-slate-50 to-white border-b border-slate-100">
-                  <div className="max-w-4xl mx-auto">
-                    <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 mb-6 tracking-tight leading-tight">{block.content}</h1>
-                    <p className="text-xl text-slate-500 mb-8 max-w-2xl mx-auto">This is where your powerful subheadline will go. It explains the value proposition clearly.</p>
-                    <div className="flex justify-center gap-4">
-                       <button className="bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all hover:-translate-y-1">Start Now</button>
-                       <button className="bg-white text-slate-700 border border-slate-200 px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-50 transition-all">Learn More</button>
-                    </div>
-                  </div>
-                </section>
-              );
-            case 'text':
-              return (
-                 <section key={block.id} className="px-8 py-4 max-w-3xl mx-auto">
-                    <p className="text-lg text-slate-700 leading-relaxed">{block.content}</p>
-                 </section>
-              );
-            case 'image':
-              return (
-                 <section key={block.id} className="px-8 py-8 max-w-5xl mx-auto">
-                    <div className="w-full h-[400px] bg-slate-100 rounded-2xl flex flex-col items-center justify-center text-slate-400 border border-slate-200 overflow-hidden relative group">
-                       <ImageIcon size={48} className="mb-4 text-slate-300"/> 
-                       <span className="font-medium">{block.content}</span>
-                       <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    </div>
-                 </section>
-              );
-            case 'pain_point':
-              return (
-                <section key={block.id} className="px-8 py-12 bg-red-50/50">
-                   <div className="max-w-4xl mx-auto">
-                      <div className="flex gap-4 items-start p-6 bg-white border border-red-100 rounded-xl shadow-sm">
-                         <div className="p-3 bg-red-100 rounded-lg text-red-600"><AlertCircle size={24}/></div>
-                         <div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">The Problem</h3>
-                            <p className="text-slate-600 leading-relaxed">{block.content}</p>
-                         </div>
-                      </div>
-                   </div>
-                </section>
-              );
-            case 'solution':
-              return (
-                <section key={block.id} className="px-8 py-12 bg-emerald-50/50">
-                   <div className="max-w-4xl mx-auto">
-                      <div className="flex gap-4 items-start p-6 bg-white border border-emerald-100 rounded-xl shadow-sm">
-                         <div className="p-3 bg-emerald-100 rounded-lg text-emerald-600"><CheckCircle2 size={24}/></div>
-                         <div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">The Solution</h3>
-                            <p className="text-slate-600 leading-relaxed">{block.content}</p>
-                         </div>
-                      </div>
-                   </div>
-                </section>
-              );
-            case 'pricing':
-              return (
-                <section key={block.id} className="px-8 py-16 bg-slate-50">
-                   <div className="max-w-5xl mx-auto">
-                      <h3 className="text-2xl font-bold text-center mb-10">Simple Pricing</h3>
-                      <div className="grid md:grid-cols-3 gap-6">
-                        {[
-                           { name: 'Starter', price: '$29', feat: 'Basic features' },
-                           { name: 'Pro', price: '$99', feat: 'Advanced AI tools', highlight: true },
-                           { name: 'Enterprise', price: '$299', feat: 'Custom solutions' }
-                        ].map((plan, i) => (
-                          <div key={i} className={`relative bg-white p-8 rounded-2xl border ${plan.highlight ? 'border-indigo-500 shadow-xl scale-105 z-10' : 'border-slate-200 shadow-sm'}`}>
-                            {plan.highlight && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">POPULAR</div>}
-                            <div className="text-slate-500 font-medium mb-2">{plan.name}</div>
-                            <div className="text-4xl font-extrabold text-slate-900 mb-6">{plan.price}<span className="text-lg font-normal text-slate-400">/mo</span></div>
-                            <ul className="space-y-3 mb-8">
-                               <li className="flex items-center gap-2 text-sm text-slate-600"><CheckCircle2 size={16} className="text-emerald-500"/> {plan.feat}</li>
-                               <li className="flex items-center gap-2 text-sm text-slate-600"><CheckCircle2 size={16} className="text-emerald-500"/> 24/7 Support</li>
-                               <li className="flex items-center gap-2 text-sm text-slate-600"><CheckCircle2 size={16} className="text-emerald-500"/> Secure</li>
-                            </ul>
-                            <button className={`w-full py-3 rounded-lg font-bold transition-colors ${plan.highlight ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}>Choose {plan.name}</button>
-                          </div>
-                        ))}
-                      </div>
-                   </div>
-                </section>
-              );
-            case 'cta':
-              return (
-                <section key={block.id} className="px-8 py-20 bg-indigo-600 text-white text-center">
-                   <div className="max-w-3xl mx-auto">
-                      <h3 className="text-3xl font-bold mb-6">{block.content}</h3>
-                      <p className="text-indigo-100 text-lg mb-8">Join thousands of others who have already started. No credit card required.</p>
-                      <div className="flex justify-center gap-4">
-                         <button className="bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-50 transition-colors">Get Started Now</button>
-                      </div>
-                   </div>
-                </section>
-              );
-            case 'faq_auto':
-              return (
-                <section key={block.id} className="px-8 py-16 max-w-3xl mx-auto">
-                  <h3 className="text-2xl font-bold mb-8 text-center">Frequently Asked Questions</h3>
-                  <div className="space-y-4">
-                    {[1, 2, 3].map(i => (
-                      <details key={i} className="group bg-white border border-slate-200 rounded-xl open:border-indigo-200 transition-all">
-                        <summary className="flex justify-between items-center cursor-pointer p-6 font-medium text-slate-900 list-none">
-                           <span>What is the answer to question {i}?</span>
-                           <ChevronDown size={20} className="text-slate-400 transition-transform group-open:rotate-180"/>
-                        </summary>
-                        <div className="px-6 pb-6 text-slate-600 leading-relaxed">
-                           This is a placeholder answer that expands. When you generate content, AI will fill this with relevant information about your keyword.
-                        </div>
-                      </details>
-                    ))}
-                  </div>
-                </section>
-              );
-            case 'trust_badges':
-              return (
-                 <section key={block.id} className="py-12 border-y border-slate-100 bg-slate-50/50">
-                    <div className="max-w-6xl mx-auto px-8">
-                       <p className="text-center text-sm font-bold text-slate-400 uppercase tracking-wider mb-8">Trusted by industry leaders</p>
-                       <div className="flex justify-center gap-12 opacity-50 grayscale flex-wrap">
-                          <div className="font-bold text-2xl text-slate-600 flex items-center gap-2"><ShieldCheck/> SecureAuth</div>
-                          <div className="font-bold text-2xl text-slate-600 flex items-center gap-2"><Users/> CrowdSource</div>
-                          <div className="font-bold text-2xl text-slate-600 flex items-center gap-2"><Zap/> FastNet</div>
-                          <div className="font-bold text-2xl text-slate-600 flex items-center gap-2"><Globe/> GlobalTech</div>
-                       </div>
-                    </div>
-                 </section>
-              );
-            case 'contact_form':
-               return (
-                  <section key={block.id} className="px-8 py-16 bg-slate-50">
-                     <div className="max-w-lg mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-                        <h3 className="text-xl font-bold mb-6 text-center">Contact Us</h3>
-                        <div className="space-y-4">
-                           <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
-                              <input type="text" className="w-full p-3 border rounded-lg bg-slate-50" placeholder="Your name"/>
-                           </div>
-                           <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                              <input type="email" className="w-full p-3 border rounded-lg bg-slate-50" placeholder="name@example.com"/>
-                           </div>
-                           <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
-                              <textarea className="w-full p-3 border rounded-lg bg-slate-50 h-24" placeholder="How can we help?"></textarea>
-                           </div>
-                           <button className="w-full py-3 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800">Send Message</button>
-                        </div>
-                     </div>
-                  </section>
-               );
-            case 'schema_service':
-            case 'schema_blog':
-               return (
-                  <div key={block.id} className="max-w-4xl mx-auto my-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
-                     <FileCode className="text-amber-600 mt-1" size={20}/>
-                     <div>
-                        <p className="text-sm font-bold text-amber-800">Invisible Schema Markup ({block.type})</p>
-                        <p className="text-xs text-amber-700 mt-1">This block adds structured data code to the page head for SEO. It will not be visible to human visitors.</p>
-                     </div>
-                  </div>
-               );
-            default:
-              return <div key={block.id} className="p-8 text-center border-b border-slate-100"><p className="text-slate-400 font-mono text-sm">Block: {block.type}</p></div>;
-          }
-        })}
-      </div>
-
-      {/* Mock Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-12 px-8">
-         <div className="max-w-5xl mx-auto grid md:grid-cols-4 gap-8 text-sm">
-            <div>
-               <div className="text-white font-bold text-lg mb-4">BrandLogo</div>
-               <p>© 2025 Company Inc.</p>
-            </div>
-            <div>
-               <h4 className="text-white font-bold mb-4">Product</h4>
-               <ul className="space-y-2"><li>Features</li><li>Pricing</li><li>Showcase</li></ul>
-            </div>
-            <div>
-               <h4 className="text-white font-bold mb-4">Company</h4>
-               <ul className="space-y-2"><li>About</li><li>Careers</li><li>Blog</li></ul>
-            </div>
-            <div>
-               <h4 className="text-white font-bold mb-4">Legal</h4>
-               <ul className="space-y-2"><li>Privacy</li><li>Terms</li><li>Security</li></ul>
-            </div>
-         </div>
-      </footer>
-
     </div>
   );
 };
 
-// --- 2. Template Builder Modal (UPDATED) ---
+// --- 2. Template Builder Modal ---
 const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'edit' }) => {
   const [name, setName] = useState('');
   const [blocks, setBlocks] = useState([]);
   const [saving, setSaving] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
-  const [currentMode, setCurrentMode] = useState(mode); // 'edit', 'create', 'preview_preset', 'preview_user'
-  const [viewTab, setViewTab] = useState('edit'); // 'edit' or 'preview' (Visual toggle)
+  const [currentMode, setCurrentMode] = useState(mode); 
+  const [viewTab, setViewTab] = useState('edit'); 
 
   useEffect(() => {
     if (isOpen) {
       setCurrentMode(mode);
-      // Default view tab based on mode
       setViewTab(mode.startsWith('preview') ? 'preview' : 'edit');
-      
       if (initialData) {
         const isPreset = initialData.id.toString().startsWith('preset');
         setName(initialData.name + (isPreset ? ' (Clone)' : ''));
@@ -353,7 +182,6 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
 
   const isReadOnly = currentMode.startsWith('preview');
 
-  // ... (Helper functions: addBlock, updateBlock, removeBlock same as before)
   const addBlock = (type, category = 'basic') => {
     if (isReadOnly) return;
     const newBlock = { id: Date.now(), type, category, content: getDefaultContent(type) };
@@ -388,14 +216,14 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
     }
   };
 
-  const updateBlock = (id, content) => {
+  const updateBlock = (id, content) => { if (!isReadOnly) setBlocks(blocks.map(b => b.id === id ? { ...b, content } : b)); };
+  const removeBlock = (id) => { if (!isReadOnly) setBlocks(blocks.filter(b => b.id !== id)); };
+  const moveBlock = (index, direction) => {
     if (isReadOnly) return;
-    setBlocks(blocks.map(b => b.id === id ? { ...b, content } : b));
-  };
-
-  const removeBlock = (id) => {
-    if (isReadOnly) return;
-    setBlocks(blocks.filter(b => b.id !== id));
+    const newBlocks = [...blocks];
+    if (direction === 'up' && index > 0) { [newBlocks[index], newBlocks[index - 1]] = [newBlocks[index - 1], newBlocks[index]]; } 
+    else if (direction === 'down' && index < newBlocks.length - 1) { [newBlocks[index], newBlocks[index + 1]] = [newBlocks[index + 1], newBlocks[index]]; }
+    setBlocks(newBlocks);
   };
 
   const handleSave = async () => {
@@ -420,41 +248,36 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
     if (!aiPrompt.trim()) return alert("Please enter a description for the AI.");
     setAiLoading(true);
     try {
-      const systemPrompt = `You are a JSON generator. Create a JSON structure for a website template based on this description: "${aiPrompt}".
-      Return ONLY a JSON array of objects. Each object must have: "id" (number), "type" (string), "category" (string), and "content" (string).
-      Allowed types: header, text, hero, pain_point, solution, usp, pricing, cta, schema_service, faq_auto, comparison, pros_cons.
-      Allowed categories: basic, marketing, seo, premium.`;
+      const systemPrompt = `You are a JSON generator. Create a JSON structure for a website template based on this description: "${aiPrompt}". Return ONLY a JSON array of objects. Each object must have: "id" (number), "type" (string), "category" (string), and "content" (string). Allowed types: header, text, hero, pain_point, solution, usp, pricing, cta, schema_service, faq_auto, comparison, pros_cons. Allowed categories: basic, marketing, seo, premium.`;
       
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: systemPrompt })
-      });
-      
+      const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: systemPrompt }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'AI Error');
       let cleanJson = data.content.replace(/```json/g, '').replace(/```/g, '').trim();
       const newBlocks = JSON.parse(cleanJson);
-      if (Array.isArray(newBlocks)) {
-        setBlocks([...blocks, ...newBlocks.map(b => ({...b, id: Date.now() + Math.random()}))]);
-      }
-    } catch (err) {
-      alert("Failed to generate template: " + err.message);
-    } finally {
-      setAiLoading(false);
-    }
+      
+      // SAFETY CHECK: Ensure all blocks have a valid 'type'
+      const sanitizedBlocks = newBlocks.filter(b => b.type).map(b => ({ ...b, id: Date.now() + Math.random() }));
+      if (sanitizedBlocks.length > 0) setBlocks([...blocks, ...sanitizedBlocks]);
+      else alert("AI returned empty blocks.");
+      
+    } catch (err) { alert("Failed to generate template: " + err.message); } finally { setAiLoading(false); }
   };
 
   const renderBlockEditor = (block, index) => {
+    if (!block || !block.type) return null; // Safety Check 2
     const isPremium = block.category === 'premium';
+    const needsTextArea = ['text', 'pain_point', 'solution', 'usp', 'pricing', 'cta', 'faq_auto', 'stats', 'hero', 'comparison', 'pros_cons', 'social_proof', 'process', 'case_study', 'schema_service', 'schema_blog', 'html', 'image'].includes(block.type);
+
     return (
       <div key={block.id} className={`group relative bg-white dark:bg-slate-800 p-4 rounded-xl border shadow-sm transition-all ${isPremium ? 'border-amber-200 dark:border-amber-700/50' : 'border-slate-200 dark:border-slate-700'}`}>
-        <div className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-100">
-          <div className={`text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${isPremium ? 'bg-amber-500' : 'bg-indigo-600'}`}>{index + 1}</div>
-        </div>
+        <div className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-100"><div className={`text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${isPremium ? 'bg-amber-500' : 'bg-indigo-600'}`}>{index + 1}</div></div>
         {!isReadOnly && (
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => removeBlock(block.id)} className="text-slate-400 hover:text-red-500 p-1"><Trash2 size={16}/></button>
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+            <button onClick={() => moveBlock(index, 'up')} disabled={index === 0} className="text-slate-300 hover:text-indigo-500 p-1 disabled:opacity-30"><ArrowUp size={16}/></button>
+            <button onClick={() => moveBlock(index, 'down')} disabled={index === blocks.length - 1} className="text-slate-300 hover:text-indigo-500 p-1 disabled:opacity-30"><ArrowDown size={16}/></button>
+            <div className="w-px h-4 bg-slate-200 mx-1"></div>
+            <button onClick={() => removeBlock(block.id)} className="text-slate-300 hover:text-red-500 p-1"><Trash2 size={16}/></button>
           </div>
         )}
         <div className={`mb-2 text-xs font-bold uppercase flex items-center gap-2 ${isPremium ? 'text-amber-600 dark:text-amber-400' : 'text-indigo-500'}`}>
@@ -463,13 +286,7 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
           {block.category === 'premium' && <Award size={12}/>}
           {block.type.replace('_', ' ')}
         </div>
-        <textarea 
-          value={block.content} 
-          onChange={(e) => updateBlock(block.id, e.target.value)} 
-          disabled={isReadOnly}
-          className={`w-full p-3 text-sm border rounded-lg bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white resize-y ${isReadOnly ? 'opacity-70 cursor-not-allowed' : ''} min-h-[80px]`}
-          placeholder={`Instructions for ${block.type}...`}
-        />
+        {needsTextArea ? <textarea value={block.content} onChange={(e) => updateBlock(block.id, e.target.value)} disabled={isReadOnly} className={`w-full p-3 text-sm border rounded-lg bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white resize-y ${isReadOnly ? 'opacity-70 cursor-not-allowed' : ''} min-h-[80px]`} /> : <input type="text" value={block.content} onChange={(e) => updateBlock(block.id, e.target.value)} disabled={isReadOnly} className={`w-full p-2.5 text-sm border rounded-lg bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-white ${isReadOnly ? 'opacity-70 cursor-not-allowed' : ''}`} />}
       </div>
     );
   };
@@ -483,48 +300,22 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-800 w-full max-w-6xl h-[90vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
-        
-        {/* Header with Toggle */}
         <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <LayoutTemplate className="text-indigo-600" size={20} /> 
-            {isReadOnly ? 'Template Preview' : 'Template Builder'}
-          </h3>
-          
-          {/* View Switcher */}
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"><LayoutTemplate className="text-indigo-600" size={20} /> {isReadOnly ? 'Template Preview' : 'Template Builder'}</h3>
           <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
-            <button 
-              onClick={() => setViewTab('edit')} 
-              className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${viewTab === 'edit' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Edit Structure
-            </button>
-            <button 
-              onClick={() => setViewTab('preview')} 
-              className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-1 ${viewTab === 'preview' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              <Eye size={12}/> Live Preview
-            </button>
+            <button onClick={() => setViewTab('edit')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${viewTab === 'edit' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Edit Structure</button>
+            <button onClick={() => setViewTab('preview')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-1 ${viewTab === 'preview' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}><Eye size={12}/> Live Preview</button>
           </div>
-
           <button onClick={onClose}><X className="text-slate-400 hover:text-slate-600" /></button>
         </div>
 
-        {/* CONDITIONAL RENDERING: BUILDER vs LIVE PREVIEW */}
-        {viewTab === 'preview' ? (
-          // LIVE PREVIEW MODE
-          <div className="flex-1 overflow-y-auto p-8 bg-slate-100 dark:bg-slate-950">
-             <LivePreview blocks={blocks} />
-          </div>
-        ) : (
-          // EDIT STRUCTURE MODE
+        {viewTab === 'preview' ? (<div className="flex-1 overflow-y-auto p-8 bg-slate-100 dark:bg-slate-950"><LivePreview blocks={blocks} /></div>) : (
           <div className="flex-1 flex overflow-hidden">
             <div className="w-72 border-r border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto">
               <div className="p-6 space-y-6">
-                {/* Sidebar Controls (Name, AI, Blocks) */}
                 <div className={`bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800 ${isReadOnly ? 'opacity-50 pointer-events-none' : ''}`}>
                    <label className="text-xs font-bold uppercase text-indigo-600 dark:text-indigo-400 mb-2 block flex items-center gap-1"><Wand2 size={12}/> Magic Build</label>
-                   <textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder={isReadOnly ? "Switch to edit mode to use AI" : "e.g. 'A landing page for a plumber with FAQ and pricing'"} className="w-full p-2 text-xs border rounded mb-2 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white" rows={3} disabled={isReadOnly}/>
+                   <textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder={isReadOnly ? "Switch to edit mode to use AI" : "e.g. 'A landing page for a plumber'"} className="w-full p-2 text-xs border rounded mb-2 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white" rows={3} disabled={isReadOnly}/>
                    <button onClick={handleMagicBuild} disabled={aiLoading} className="w-full py-1.5 bg-indigo-600 text-white text-xs font-bold rounded hover:bg-indigo-700 flex items-center justify-center gap-1">{aiLoading ? <Loader2 className="animate-spin" size={12}/> : <Sparkles size={12}/>} Auto-Generate</button>
                 </div>
                 <div><label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Template Name</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Landing Page" disabled={isReadOnly && currentMode !== 'preview_preset'} className={`w-full p-2.5 border rounded-lg text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white outline-none ${isReadOnly && currentMode !== 'preview_preset' ? 'opacity-70' : ''}`} /></div>
@@ -536,11 +327,7 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
             </div>
             <div className="flex-1 p-8 overflow-y-auto bg-slate-100 dark:bg-slate-950">
               <div className="max-w-3xl mx-auto space-y-4 pb-12">
-                {blocks.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full min-h-[400px] border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
-                    <LayoutTemplate size={48} className="text-slate-300 mb-4" /><p className="text-slate-900 dark:text-white font-bold text-lg">{isReadOnly ? "Empty Template" : "Start Building"}</p><p className="text-sm text-slate-500 max-w-xs text-center mt-1">{isReadOnly ? "This template has no blocks yet." : "Select elements from the sidebar to construct your page layout."}</p>
-                  </div>
-                ) : (blocks.map((block, index) => renderBlockEditor(block, index)))}
+                {blocks.length === 0 ? (<div className="flex flex-col items-center justify-center h-full min-h-[400px] border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl"><LayoutTemplate size={48} className="text-slate-300 mb-4" /><p className="text-slate-900 dark:text-white font-bold text-lg">{isReadOnly ? "Empty Template" : "Start Building"}</p><p className="text-sm text-slate-500 max-w-xs text-center mt-1">{isReadOnly ? "This template has no blocks yet." : "Select elements from the sidebar to construct your page layout."}</p></div>) : (blocks.map((block, index) => renderBlockEditor(block, index)))}
               </div>
             </div>
           </div>
@@ -561,10 +348,11 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
   );
 };
 
-// --- 3. Templates Tab View (Unchanged) ---
+// --- 3. Templates Tab View (UPDATED: Use = Copy HTML) ---
 const TemplatesView = ({ user, onNewTemplate, onPreview }) => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [copyId, setCopyId] = useState(null);
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -582,10 +370,18 @@ const TemplatesView = ({ user, onNewTemplate, onPreview }) => {
     }
   };
 
+  // NEW: Copy HTML to Clipboard
+  const handleUse = (template) => {
+    const html = template.structure.map(b => `<!-- ${b.type} -->\n<div class="block-${b.type}">${b.content}</div>`).join('\n\n');
+    navigator.clipboard.writeText(html);
+    setCopyId(template.id);
+    setTimeout(() => setCopyId(null), 2000); // Reset badge after 2 seconds
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-12">
       <div className="flex justify-between items-center"><div><h1 className="text-2xl font-bold text-slate-900 dark:text-white">Templates</h1><p className="text-slate-500 mt-1">Design your page layouts.</p></div><button onClick={onNewTemplate} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg hover:bg-indigo-700 transition-all"><Plus size={18}/> Create Template</button></div>
-      <div><h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2"><User size={18} className="text-indigo-500"/> My Templates</h2>{loading ? (<div className="text-center py-12 text-slate-400">Loading templates...</div>) : templates.length === 0 ? (<div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl"><p className="text-slate-500 mb-4">You haven't created any templates yet.</p><button onClick={onNewTemplate} className="text-indigo-600 font-bold hover:underline">Create your first one</button></div>) : (<div className="grid grid-cols-1 md:grid-cols-3 gap-6"><button onClick={onNewTemplate} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all group h-64"><div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/50 transition-colors"><Plus size={24} className="text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"/></div><p className="font-bold text-slate-600 dark:text-slate-300 group-hover:text-indigo-700 dark:group-hover:text-indigo-400">New Template</p></button>{templates.map(t => (<Card key={t.id} className="flex flex-col h-64 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors group relative overflow-hidden"><div className="h-2 bg-indigo-500 w-full"></div><div className="p-6 flex-1 flex flex-col"><div className="flex justify-between items-start mb-4"><div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg"><LayoutTemplate size={20} className="text-indigo-600 dark:text-indigo-400"/></div><button onClick={(e) => { e.stopPropagation(); deleteTemplate(t.id); }} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={18}/></button></div><h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1">{t.name}</h3><p className="text-sm text-slate-500">{t.structure?.length || 0} Blocks</p><div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2"><button onClick={() => onPreview(t, 'preview_user')} className="flex-1 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 rounded hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2"><Eye size={14}/> Preview</button><button className="flex-1 py-2 text-xs font-bold text-slate-600 bg-slate-50 dark:bg-slate-800 rounded hover:bg-slate-100 transition-colors">Use</button></div></div></Card>))}</div>)}</div>
+      <div><h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2"><User size={18} className="text-indigo-500"/> My Templates</h2>{loading ? (<div className="text-center py-12 text-slate-400">Loading templates...</div>) : templates.length === 0 ? (<div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl"><p className="text-slate-500 mb-4">You haven't created any templates yet.</p><button onClick={onNewTemplate} className="text-indigo-600 font-bold hover:underline">Create your first one</button></div>) : (<div className="grid grid-cols-1 md:grid-cols-3 gap-6"><button onClick={onNewTemplate} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all group h-64"><div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/50 transition-colors"><Plus size={24} className="text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"/></div><p className="font-bold text-slate-600 dark:text-slate-300 group-hover:text-indigo-700 dark:group-hover:text-indigo-400">New Template</p></button>{templates.map(t => (<Card key={t.id} className="flex flex-col h-64 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors group relative overflow-hidden"><div className="h-2 bg-indigo-500 w-full"></div><div className="p-6 flex-1 flex flex-col"><div className="flex justify-between items-start mb-4"><div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg"><LayoutTemplate size={20} className="text-indigo-600 dark:text-indigo-400"/></div><button onClick={(e) => { e.stopPropagation(); deleteTemplate(t.id); }} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={18}/></button></div><h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1">{t.name}</h3><p className="text-sm text-slate-500">{t.structure?.length || 0} Blocks</p><div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2"><button onClick={() => onPreview(t, 'preview_user')} className="flex-1 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 rounded hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2"><Eye size={14}/> Preview</button><button onClick={() => handleUse(t)} className={`flex-1 py-2 text-xs font-bold rounded transition-all ${copyId === t.id ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'text-slate-600 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100'}`}>{copyId === t.id ? 'Copied!' : 'Use'}</button></div></div></Card>))}</div>)}</div>
       <div className="border-t border-slate-200 dark:border-slate-700"></div>
       <div><h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2"><BookOpen size={18} className="text-emerald-500"/> Template Library</h2><p className="text-slate-500 text-sm mb-6">Start with a proven structure. Clone these to your library to customize.</p><div className="grid grid-cols-1 md:grid-cols-3 gap-6">{PRESET_TEMPLATES.map(t => (<Card key={t.id} className="flex flex-col h-64 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors group relative overflow-hidden"><div className="h-2 bg-emerald-500 w-full"></div><div className="p-6 flex-1 flex flex-col"><div className="flex justify-between items-start mb-4"><div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg"><LayoutTemplate size={20} className="text-emerald-600 dark:text-emerald-400"/></div></div><h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1">{t.name}</h3><p className="text-sm text-slate-500">{t.category} • {t.structure.length} Blocks</p><div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2"><button onClick={() => onPreview(t, 'preview_preset')} className="w-full py-2 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 rounded hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"><Eye size={14}/> Preview</button></div></div><div className="absolute top-3 right-3"><Badge type="success">Preset</Badge></div></Card>))}</div></div>
     </div>
@@ -599,9 +395,37 @@ const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [logs, setLogs] = useState([]);
+  const [userTemplates, setUserTemplates] = useState([]); 
+  const [selectedTemplateId, setSelectedTemplateId] = useState(''); 
   const abortControllerRef = useRef(null);
 
-  useEffect(() => { if (isOpen) { setLogs([]); setProgress({ current: 0, total: 0 }); setTargetColumn('AI_Output'); } }, [isOpen]);
+  useEffect(() => {
+    if (isOpen) {
+      setLogs([]);
+      setProgress({ current: 0, total: 0 });
+      setTargetColumn('AI_Output');
+      const fetchTemplates = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase.from('templates').select('*').order('created_at', { ascending: false });
+          if (data) setUserTemplates(data);
+        }
+      };
+      fetchTemplates();
+    }
+  }, [isOpen]);
+
+  const handleTemplateSelect = (e) => {
+    const id = e.target.value;
+    setSelectedTemplateId(id);
+    if (!id) { setPrompt(''); return; }
+    const template = [...PRESET_TEMPLATES, ...userTemplates].find(t => t.id.toString() === id);
+    if (template) {
+      const structurePrompt = template.structure.map(b => `[BLOCK: ${b.type}] Instructions: ${b.content}`).join('\n\n');
+      setPrompt(`Generate a full HTML page based on this structure. Wrap everything in a main <div> container. Do NOT output markdown code fences, just the raw HTML.\n\n${structurePrompt}`);
+    }
+  };
+
   if (!isOpen || !project) return null;
 
   const rows = Array.isArray(project.data) ? project.data : (project.data?.rows || []);
@@ -641,13 +465,33 @@ const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-slate-800 w-full max-w-4xl h-[85vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 w-full max-w-4xl h-[90vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"><Sparkles className="text-indigo-600" size={20} /> AI Generator: <span className="text-slate-500 font-normal">{project.name}</span></h3>
           <button onClick={onClose}><X className="text-slate-400 hover:text-slate-600" /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4"><div><label className="block text-xs font-bold uppercase text-slate-500 mb-2">Output Column</label><input value={targetColumn} onChange={(e) => setTargetColumn(e.target.value)} className="w-full p-3 rounded-lg border dark:bg-slate-700 dark:border-slate-600 dark:text-white" /></div><div><label className="block text-xs font-bold uppercase text-slate-500 mb-2">Model</label><div className="w-full p-3 rounded-lg border bg-slate-50 dark:bg-slate-900 text-slate-500 cursor-not-allowed">gpt-4o-mini</div></div></div>
+          <div className="grid grid-cols-2 gap-4">
+             <div><label className="block text-xs font-bold uppercase text-slate-500 mb-2">Output Column</label><input value={targetColumn} onChange={(e) => setTargetColumn(e.target.value)} className="w-full p-3 rounded-lg border dark:bg-slate-700 dark:border-slate-600 dark:text-white" /></div>
+             <div>
+               <label className="block text-xs font-bold uppercase text-slate-500 mb-2">Load Template (Optional)</label>
+               <select 
+                 value={selectedTemplateId} 
+                 onChange={handleTemplateSelect}
+                 className="w-full p-3 rounded-lg border dark:bg-slate-700 dark:border-slate-600 dark:text-white appearance-none cursor-pointer"
+               >
+                 <option value="">-- Select a Template --</option>
+                 <optgroup label="Presets">
+                   {PRESET_TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                 </optgroup>
+                 {userTemplates.length > 0 && (
+                   <optgroup label="My Templates">
+                     {userTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                   </optgroup>
+                 )}
+               </select>
+             </div>
+          </div>
           <div className="space-y-3"><label className="block text-xs font-bold uppercase text-slate-500">Prompt</label><div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border dark:border-slate-700 max-h-32 overflow-y-auto">{headers.map((h) => (<button key={h} onClick={() => insertVariable(h)} className="px-2 py-1 text-xs font-medium bg-white dark:bg-slate-800 border rounded hover:border-indigo-500 dark:text-slate-300">{`{{${h}}}`}</button>))}</div><textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Write a blog intro for {{City}}..." className="w-full h-40 p-4 rounded-lg border dark:bg-slate-800 dark:border-slate-600 dark:text-white resize-none font-mono text-sm" /></div>
           {(isGenerating || logs.length > 0) && (<div className="space-y-3"><div className="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-400"><span>Progress</span><span>{progress.current} / {progress.total}</span></div><div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2"><div className="bg-indigo-600 h-2 rounded-full transition-all" style={{ width: `${(progress.current / (progress.total || 1)) * 100}%` }}></div></div><div className="p-3 rounded-lg bg-slate-900 text-emerald-400 font-mono text-xs h-32 overflow-y-auto">{logs.map((log, i) => <div key={i}>{log}</div>)}</div></div>)}
         </div>
@@ -658,16 +502,17 @@ const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess }) => {
 };
 
 // --- 5. New Project Modal (Unchanged) ---
-const NewProjectModal = ({ isOpen, onClose, onUploadSuccess }) => {
+const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, datasets }) => {
   const [mode, setMode] = useState('csv');
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [platform, setPlatform] = useState('Wordpress');
   const [projectName, setProjectName] = useState('');
+  const [selectedDataset, setSelectedDataset] = useState('');
   const fileInputRef = useRef(null);
 
-  useEffect(() => { if(isOpen) { setMode('csv'); setFile(null); setPreview(null); setProjectName(''); } }, [isOpen]);
+  useEffect(() => { if(isOpen) { setMode('csv'); setFile(null); setPreview(null); setProjectName(''); setSelectedDataset(''); } }, [isOpen]);
   if (!isOpen) return null;
 
   const processFile = (uploadedFile) => {
@@ -691,7 +536,24 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess }) => {
     let payload = { rows: [], platform, headers: [] };
     let name = projectName;
     let count = 0;
-    if (mode === 'csv') { if (!preview) return setUploading(false); name = file.name.replace('.csv', ''); count = preview.totalRows; payload = { rows: preview.fullData, platform, headers: preview.headers }; }
+
+    if (mode === 'csv') {
+      if (!preview) return setUploading(false);
+      name = file.name.replace('.csv', '');
+      count = preview.totalRows;
+      payload = { rows: preview.fullData, platform, headers: preview.headers };
+    } else if (mode === 'library') {
+       if (!selectedDataset) return setUploading(false);
+       const dataset = datasets.find(d => d.id.toString() === selectedDataset);
+       name = dataset.name;
+       count = dataset.row_count;
+       payload = { rows: dataset.data.rows, platform, headers: dataset.data.headers };
+    } else {
+      if (!projectName) return;
+      name = projectName;
+      payload = { rows: [], platform, headers: [] };
+    }
+
     const { error } = await supabase.from('projects').insert({ user_id: user.id, name, row_count: count, status: 'Draft', data: payload });
     setUploading(false);
     if (!error) { onUploadSuccess(); onClose(); }
@@ -703,8 +565,27 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess }) => {
         <div className="p-6 border-b dark:border-slate-700 flex justify-between items-center"><h3 className="text-lg font-bold dark:text-white">New Project</h3><button onClick={onClose}><X className="text-slate-400"/></button></div>
         <div className="p-6 space-y-4">
           <div><label className="text-xs font-bold uppercase text-slate-500">Platform</label><div className="grid grid-cols-3 gap-2 mt-2">{['Wordpress', 'Webflow', 'Shopify'].map(p => <button key={p} onClick={() => setPlatform(p)} className={`p-2 border rounded text-sm ${platform===p?'bg-indigo-50 border-indigo-500 text-indigo-700':'dark:border-slate-600 dark:text-slate-300'}`}>{p}</button>)}</div></div>
-          <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg"><button onClick={() => setMode('csv')} className={`flex-1 py-2 text-sm rounded ${mode === 'csv' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>CSV Upload</button><button onClick={() => setMode('manual')} className={`flex-1 py-2 text-sm rounded ${mode === 'manual' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>Manual</button></div>
-          {mode === 'csv' ? (!preview ? <div onClick={() => fileInputRef.current.click()} className="border-2 border-dashed p-8 text-center rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50"><input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={(e) => processFile(e.target.files[0])} /><UploadCloud className="mx-auto mb-2 text-indigo-500" /><p className="text-sm dark:text-slate-300">Click to upload CSV</p></div> : <div className="p-4 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 flex items-center gap-2"><FileSpreadsheet size={16}/> {preview.totalRows} rows found</div>) : <input value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="Project Name" className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white" />}
+          <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg">
+             <button onClick={() => setMode('csv')} className={`flex-1 py-2 text-sm rounded ${mode === 'csv' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>Upload CSV</button>
+             <button onClick={() => setMode('library')} className={`flex-1 py-2 text-sm rounded ${mode === 'library' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>From Library</button>
+             <button onClick={() => setMode('manual')} className={`flex-1 py-2 text-sm rounded ${mode === 'manual' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>Manual</button>
+          </div>
+          
+          {mode === 'csv' && (!preview ? <div onClick={() => fileInputRef.current.click()} className="border-2 border-dashed p-8 text-center rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50"><input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={(e) => processFile(e.target.files[0])} /><UploadCloud className="mx-auto mb-2 text-indigo-500" /><p className="text-sm dark:text-slate-300">Click to upload CSV</p></div> : <div className="p-4 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 flex items-center gap-2"><FileSpreadsheet size={16}/> {preview.totalRows} rows found</div>)}
+          
+          {mode === 'library' && (
+             <div>
+                <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Select Dataset</label>
+                {datasets && datasets.length > 0 ? (
+                   <select className="w-full p-3 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white" onChange={(e) => setSelectedDataset(e.target.value)}>
+                      <option value="">-- Choose File --</option>
+                      {datasets.map(d => <option key={d.id} value={d.id}>{d.name} ({d.row_count} rows)</option>)}
+                   </select>
+                ) : <div className="text-sm text-slate-500 text-center py-4">No saved datasets found.</div>}
+             </div>
+          )}
+
+          {mode === 'manual' && <input value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="Project Name" className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white" />}
         </div>
         <div className="p-6 border-t dark:border-slate-700 flex justify-end gap-2"><button onClick={onClose} className="px-4 py-2 text-slate-500">Cancel</button><button onClick={handleSave} disabled={uploading} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium">{uploading ? <Loader2 className="animate-spin"/> : 'Create'}</button></div>
       </div>
@@ -817,7 +698,90 @@ const SettingsView = ({ email, onLogout }) => (
   </div>
 );
 
-// --- 8. Main Layout ---
+// --- 8. Datasets Tab (Functional) ---
+const DatasetsView = ({ user, onUpload }) => {
+  const [datasets, setDatasets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+     const fetchDatasets = async () => {
+        const { data } = await supabase.from('datasets').select('*').order('created_at', { ascending: false });
+        if (data) setDatasets(data);
+        setLoading(false);
+     };
+     fetchDatasets();
+  }, []);
+
+  const handleUpload = async (e) => {
+     const file = e.target.files[0];
+     if (!file) return;
+     
+     const reader = new FileReader();
+     reader.onload = async (e) => {
+        const text = e.target.result;
+        const lines = text.split('\n').filter(l => l.trim());
+        if (lines.length > 0) {
+           const headers = lines[0].split(',').map(h => h.trim());
+           const rows = lines.slice(1).map(line => {
+              const v = line.split(',');
+              return headers.reduce((acc, h, i) => ({ ...acc, [h]: v[i]?.trim() }), {});
+           });
+           
+           const { error } = await supabase.from('datasets').insert({
+              user_id: user.id,
+              name: file.name,
+              row_count: lines.length - 1,
+              data: { rows, headers }
+           });
+           
+           if (!error) window.location.reload(); 
+        }
+     };
+     reader.readAsText(file);
+  };
+
+  const handleDelete = async (id) => {
+     if (confirm("Delete dataset?")) {
+        await supabase.from('datasets').delete().eq('id', id);
+        setDatasets(datasets.filter(d => d.id !== id));
+     }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="flex justify-between items-center">
+        <div><h1 className="text-2xl font-bold dark:text-white">Datasets</h1><p className="text-slate-500 mt-1">Manage your uploaded CSV files.</p></div>
+        <button onClick={() => fileInputRef.current.click()} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg hover:bg-indigo-700 transition-all"><UploadCloud size={18}/> Upload New</button>
+        <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleUpload} />
+      </div>
+      
+      {loading ? <div className="text-center py-12 text-slate-400">Loading...</div> : datasets.length === 0 ? (
+        <Card className="p-12 text-center border-dashed border-2">
+          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4"><HardDrive size={32} className="text-slate-400"/></div>
+          <h3 className="text-lg font-bold dark:text-white">No Datasets Yet</h3>
+          <p className="text-slate-500 max-w-sm mx-auto mt-2">Upload your CSV files here to reuse them across multiple projects.</p>
+          <button onClick={() => fileInputRef.current.click()} className="mt-6 text-indigo-600 font-bold hover:underline">Upload First Dataset</button>
+        </Card>
+      ) : (
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {datasets.map(d => (
+               <Card key={d.id} className="p-6 flex flex-col group relative overflow-hidden hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+                  <div className="flex justify-between items-start mb-4">
+                     <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600"><FileSpreadsheet size={24}/></div>
+                     <button onClick={() => handleDelete(d.id)} className="text-slate-300 hover:text-red-500"><Trash2 size={18}/></button>
+                  </div>
+                  <h3 className="font-bold text-lg text-slate-900 dark:text-white truncate">{d.name}</h3>
+                  <p className="text-sm text-slate-500">{d.row_count} Rows • CSV</p>
+               </Card>
+            ))}
+         </div>
+      )}
+    </div>
+  );
+};
+
+// --- 9. Main Layout ---
 function NavItem({ icon: Icon, label, active, onClick, expanded }) {
   return <button onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${active ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'} ${!expanded ? 'justify-center' : ''}`}><Icon size={20} strokeWidth={active?2.5:2} />{expanded && <span className="text-sm font-medium">{label}</span>}</button>;
 }
@@ -832,41 +796,33 @@ export default function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [editTemplate, setEditTemplate] = useState(null);
-  const [previewTemplate, setPreviewTemplate] = useState(null); // For read-only previews
+  const [previewTemplate, setPreviewTemplate] = useState(null);
   const [viewProject, setViewProject] = useState(null);
   const [generateProject, setGenerateProject] = useState(null);
   const [projects, setProjects] = useState([]);
+  const [datasets, setDatasets] = useState([]); // NEW: Store datasets
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => { setSession(session); if(session) fetchProjects(); setLoading(false); });
-    supabase.auth.onAuthStateChange((_event, session) => { setSession(session); if(session) fetchProjects(); });
+    supabase.auth.getSession().then(({ data: { session } }) => { 
+       setSession(session); 
+       if(session) { fetchProjects(); fetchDatasets(); } // Fetch both
+       setLoading(false); 
+    });
+    supabase.auth.onAuthStateChange((_event, session) => { 
+       setSession(session); 
+       if(session) { fetchProjects(); fetchDatasets(); }
+    });
   }, []);
 
   const fetchProjects = async () => { const { data } = await supabase.from('projects').select('*').order('created_at', { ascending: false }); if(data) setProjects(data); };
+  const fetchDatasets = async () => { const { data } = await supabase.from('datasets').select('*').order('created_at', { ascending: false }); if(data) setDatasets(data); };
+
   const handleDelete = async (id) => { if(confirm('Delete?')) { await supabase.from('projects').delete().eq('id', id); fetchProjects(); } };
   const handleLogout = async () => await supabase.auth.signOut();
 
-  // Handler for Template Previews
-  const handleTemplatePreview = (template, mode) => {
-    // mode can be 'preview_preset' or 'preview_user'
-    setEditTemplate(null); 
-    setIsTemplateModalOpen(false);
-    setPreviewTemplate({ ...template, mode });
-  };
-
-  // Handler for Template Editing (User Templates only)
-  const handleTemplateEdit = (template) => {
-    setPreviewTemplate(null);
-    setIsTemplateModalOpen(false);
-    setEditTemplate(template);
-  };
-
-  // Handler for New Template
-  const handleNewTemplate = () => {
-    setPreviewTemplate(null);
-    setEditTemplate(null);
-    setIsTemplateModalOpen(true);
-  };
+  const handleTemplatePreview = (template, mode) => { setEditTemplate(null); setIsTemplateModalOpen(false); setPreviewTemplate({ ...template, mode }); };
+  const handleTemplateEdit = (template) => { setPreviewTemplate(null); setIsTemplateModalOpen(false); setEditTemplate(template); };
+  const handleNewTemplate = () => { setPreviewTemplate(null); setEditTemplate(null); setIsTemplateModalOpen(true); };
 
   if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-400">Loading...</div>;
   if (!session) return <LoginScreen />;
@@ -874,18 +830,12 @@ export default function App() {
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
-        <NewProjectModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={fetchProjects} />
+        {/* Pass datasets to NewProjectModal */}
+        <NewProjectModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={fetchProjects} datasets={datasets} />
+        
         <ViewModal isOpen={!!viewProject} onClose={() => setViewProject(null)} project={viewProject} onProjectUpdate={(p) => { setProjects(projects.map(pr => pr.id === p.id ? p : pr)); }} />
         <GenerateModal isOpen={!!generateProject} onClose={() => setGenerateProject(null)} project={generateProject} onUpdateSuccess={fetchProjects} />
-        
-        {/* Template Modal: Handles Create, Edit, and Preview */}
-        <TemplateModal 
-          isOpen={isTemplateModalOpen || !!editTemplate || !!previewTemplate} 
-          onClose={() => { setIsTemplateModalOpen(false); setEditTemplate(null); setPreviewTemplate(null); }} 
-          initialData={editTemplate || previewTemplate}
-          mode={previewTemplate ? previewTemplate.mode : (editTemplate ? 'edit' : 'create')}
-          onSaveSuccess={() => { /* Refresh if needed */ }} 
-        />
+        <TemplateModal isOpen={isTemplateModalOpen || !!editTemplate || !!previewTemplate} onClose={() => { setIsTemplateModalOpen(false); setEditTemplate(null); setPreviewTemplate(null); }} initialData={editTemplate || previewTemplate} mode={previewTemplate ? previewTemplate.mode : (editTemplate ? 'edit' : 'create')} onSaveSuccess={() => {}} />
 
         <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300 z-20`}>
           <div className="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-700 cursor-pointer" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
@@ -895,6 +845,7 @@ export default function App() {
           <nav className="flex-1 p-4 space-y-1">
             <NavItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'dashboard'} expanded={isSidebarOpen} onClick={() => setActiveTab('dashboard')} />
             <NavItem icon={Layers} label="Projects" active={activeTab === 'projects'} expanded={isSidebarOpen} onClick={() => setActiveTab('projects')} />
+            <NavItem icon={Database} label="Datasets" active={activeTab === 'datasets'} expanded={isSidebarOpen} onClick={() => setActiveTab('datasets')} />
             <NavItem icon={FileText} label="Templates" active={activeTab === 'templates'} expanded={isSidebarOpen} onClick={() => setActiveTab('templates')} />
             <NavItem icon={Settings} label="Settings" active={activeTab === 'settings'} expanded={isSidebarOpen} onClick={() => setActiveTab('settings')} />
           </nav>
@@ -922,6 +873,7 @@ export default function App() {
           <div className="flex-1 overflow-auto p-8">
             {activeTab === 'dashboard' && <DashboardView projects={projects} onNewProject={() => setIsUploadModalOpen(true)} />}
             {activeTab === 'projects' && <ProjectsView projects={projects} onDelete={handleDelete} onView={setViewProject} onGenerate={setGenerateProject} />}
+            {activeTab === 'datasets' && <DatasetsView user={session.user} onUpload={() => {}} />} {/* onUpload handled internally now */}
             {activeTab === 'templates' && (
               <TemplatesView 
                 user={session.user} 
