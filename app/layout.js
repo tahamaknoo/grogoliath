@@ -3,8 +3,7 @@ import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'] });
 
-// We define metadata using a standard JavaScript object export,
-// which is compatible with Next.js App Router for JS files.
+// This metadata object is standard JavaScript and defines the title for the browser tab.
 export const metadata = {
   title: 'GroGoliath pSEO Tool',
   description: 'Programmatic SEO Dashboard.',
@@ -13,7 +12,12 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      {/* We add suppressHydrationWarning to ignore attributes injected by 
+         browser extensions (like Grammarly) which cause the mismatch error.
+      */}
+      <body className={inter.className} suppressHydrationWarning={true}>
+        {children}
+      </body>
     </html>
   );
 }
