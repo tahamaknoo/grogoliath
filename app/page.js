@@ -1,14 +1,174 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient'; 
 import { 
-  LayoutDashboard, FileText, Database, Settings, Zap, BarChart3, Plus, 
-  Search, Bell, User, ChevronDown, MoreHorizontal, ArrowUpRight, 
-  ArrowDownRight, Layers, Globe, Moon, Sun, CheckCircle2, AlertCircle, 
-  TrendingUp, Target, LogOut, Mail, Loader2
+  LayoutDashboard, FileText, Database, Settings, BarChart3, Plus, 
+  Search, Bell, User, ChevronDown, MoreHorizontal, Layers, 
+  CheckCircle2, AlertCircle, TrendingUp, Target, LogOut, Mail, 
+  Loader2, UploadCloud, X, FileSpreadsheet, Trash2, Eye, Table as TableIcon,
+  Moon, Sun, ArrowUpRight, ArrowDownRight // <--- Added ALL missing icons
 } from 'lucide-react';
 
-// --- 1. Login Component ---
+// --- 1. Upload Modal ---
+const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  if (!isOpen) return null;
+
+  const processFile = (uploadedFile) => {
+    if (!uploadedFile || !uploadedFile.name.endsWith('.csv')) {
+      alert("Please upload a CSV file.");
+      return;
+    }
+    setFile(uploadedFile);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+      
+      if (lines.length > 0) {
+        const headers = lines[0].split(',').map(h => h.trim());
+        const fullData = lines.slice(1).map(line => {
+          const values = line.split(',');
+          return headers.reduce((obj, header, index) => {
+            obj[header] = values[index]?.trim();
+            return obj;
+          }, {});
+        });
+
+        setPreview({ 
+          headers, 
+          rows: fullData.slice(0, 5), 
+          fullData: fullData,         
+          totalRows: lines.length - 1 
+        });
+      }
+    };
+    reader.readAsText(uploadedFile);
+  };
+
+  const handleSaveProject = async () => {
+    if (!preview || !file) return;
+    setUploading(true);
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("You must be logged in.");
+      setUploading(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('projects')
+      .insert({
+        user_id: user.id,
+        name: file.name.replace('.csv', ''),
+        row_count: preview.totalRows,
+        status: 'Draft',
+        data: preview.fullData 
+      });
+
+    setUploading(false);
+
+    if (error) {
+      alert("Failed to save project: " + error.message);
+    } else {
+      onUploadSuccess();
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Database className="text-indigo-600" size={20} />
+            Upload Dataset
+          </h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"><X size={24} /></button>
+        </div>
+        <div className="p-6 space-y-6">
+          {!preview ? (
+            <div 
+              className={`border-2 border-dashed rounded-xl p-10 text-center transition-all cursor-pointer
+                ${isDragging ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-300 dark:border-slate-600 hover:border-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
+              onDragOver={(e)=>{e.preventDefault();setIsDragging(true)}} 
+              onDragLeave={()=>setIsDragging(false)} 
+              onDrop={(e)=>{e.preventDefault();setIsDragging(false);processFile(e.dataTransfer.files[0])}} 
+              onClick={() => fileInputRef.current.click()}
+            >
+              <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={(e) => processFile(e.target.files[0])} />
+              <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4"><UploadCloud size={32} /></div>
+              <p className="text-slate-900 dark:text-white font-medium">Click to upload or drag and drop</p>
+              <p className="text-slate-500 text-sm mt-1">CSV files only (max 10MB)</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                <div className="flex items-center gap-3"><FileSpreadsheet className="text-emerald-600" /><div><p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">{file?.name}</p><p className="text-xs text-emerald-600 dark:text-emerald-400">{preview.totalRows.toLocaleString()} rows detected</p></div></div>
+                <button onClick={() => setPreview(null)} className="text-xs font-medium text-emerald-700 hover:underline">Change File</button>
+              </div>
+              <button onClick={handleSaveProject} disabled={uploading} className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2">
+                {uploading ? <Loader2 className="animate-spin" /> : 'Import Dataset'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- 2. View Data Modal ---
+const ViewModal = ({ isOpen, onClose, project }) => {
+  if (!isOpen || !project) return null;
+
+  const headers = project.data && project.data.length > 0 ? Object.keys(project.data[0]) : [];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-800 w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <TableIcon className="text-indigo-600" size={20} />
+              Data Preview
+            </h3>
+            <p className="text-sm text-slate-500">Viewing data for: <span className="font-semibold text-indigo-600">{project.name}</span></p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"><X size={24} /></button>
+        </div>
+        <div className="flex-1 overflow-auto p-6">
+          <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 sticky top-0">
+                <tr>{headers.map((h, i) => <th key={i} className="px-4 py-3 font-medium whitespace-nowrap border-b border-slate-200 dark:border-slate-700">{h}</th>)}</tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-800">
+                {project.data.map((row, i) => (
+                  <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                    {headers.map((h, j) => (
+                      <td key={j} className="px-4 py-3 text-slate-700 dark:text-slate-300 whitespace-nowrap max-w-[200px] truncate" title={row[h]}>{row[h]}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- 3. Login Component ---
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,20 +178,10 @@ const LoginScreen = () => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
-    
-    // Send Magic Link
     const { error } = await supabase.auth.signInWithOtp({ email });
-
-    if (error) {
-      setMessage({ type: 'error', text: error.message });
-    } else {
-      setMessage({ type: 'success', text: 'Check your email for the login link!' });
-    }
+    if (error) setMessage({ type: 'error', text: error.message });
+    else setMessage({ type: 'success', text: 'Check your email for the login link!' });
     setLoading(false);
-  };
-
-  const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({ provider: 'google' });
   };
 
   return (
@@ -40,112 +190,100 @@ const LoginScreen = () => {
         <div className="w-16 h-16 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-3xl shadow-lg shadow-indigo-600/20 mx-auto mb-6">G</div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Welcome back</h1>
         <p className="text-slate-500 mb-8">Sign in to access your GroGoliath dashboard</p>
-
         <form onSubmit={handleEmailLogin} className="space-y-4 text-left">
           <div>
             <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Email Address</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.com"
-              className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-              required
-            />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all" required />
           </div>
           <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50">
-            {loading ? <Loader2 className="animate-spin" size={20} /> : <Mail size={20} />}
-            {loading ? 'Sending Link...' : 'Send Magic Link'}
+            {loading ? <Loader2 className="animate-spin" size={20} /> : <Mail size={20} />} {loading ? 'Sending Link...' : 'Send Magic Link'}
           </button>
         </form>
-
         {message && <div className={`mt-4 p-3 rounded-lg text-sm ${message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>{message.text}</div>}
-        
-        <div className="relative my-8">
-          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-slate-700"></div></div>
-          <div className="relative flex justify-center text-sm"><span className="px-2 bg-white dark:bg-slate-800 text-slate-500">Or continue with</span></div>
-        </div>
-
-        <button onClick={handleGoogleLogin} className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-white font-medium py-3 px-4 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-6 h-6" alt="Google" />
-          Google
-        </button>
       </div>
     </div>
   );
 };
 
-// --- 2. Dashboard Components ---
-const Card = ({ children, className = "" }) => (
-  <div className={`bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm ${className}`}>{children}</div>
-);
-
+// --- 4. Helper Components ---
+const Card = ({ children, className = "" }) => (<div className={`bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm ${className}`}>{children}</div>);
 const Badge = ({ children, type = "neutral" }) => {
-  const styles = {
-    success: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
-    warning: "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
-    neutral: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
-    primary: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400",
-  };
+  const styles = { success: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400", warning: "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400", neutral: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300", primary: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400" };
   return <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[type] || styles.neutral}`}>{children}</span>;
 };
+function NavItem({ icon: Icon, label, active, onClick, expanded }) {
+  return (
+    <button onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${active ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200'} ${!expanded ? 'justify-center' : ''}`}>
+      <Icon size={20} className={active ? 'stroke-[2.5px]' : 'stroke-[2px]'} />
+      {expanded && <span className="text-sm font-medium">{label}</span>}
+      {!expanded && active && <div className="absolute left-14 bg-slate-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">{label}</div>}
+    </button>
+  );
+}
 
-// --- 3. Main App Logic ---
+// --- 5. Main App Logic ---
 export default function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [viewProject, setViewProject] = useState(null);
+  const [projects, setProjects] = useState([]);
 
-  // AUTH CHECK: This runs when the page loads
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
+    supabase.auth.getSession().then(({ data: { session } }) => { 
+      setSession(session); 
+      if(session) fetchProjects(session.user.id);
+      setLoading(false); 
     });
-
-    // FIX: Changed from onAuthStateChanged to onAuthStateChange
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { 
       setSession(session);
+      if(session) fetchProjects(session.user.id);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const fetchProjects = async (userId) => {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error && data) setProjects(data);
   };
 
+  const handleDelete = async (id) => {
+    if (confirm("Are you sure you want to delete this project?")) {
+      const { error } = await supabase.from('projects').delete().eq('id', id);
+      if (!error) fetchProjects(session.user.id);
+    }
+  };
+
+  const handleLogout = async () => await supabase.auth.signOut();
   const toggleTheme = () => setDarkMode(!darkMode);
 
-  // LOADING STATE
-  if (loading) {
-    return <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-400 animate-pulse">Loading GroGoliath...</div>;
-  }
+  if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-400 animate-pulse">Loading GroGoliath...</div>;
+  if (!session) return <LoginScreen />;
 
-  // LOGIN GATE: If no session, show Login Screen
-  if (!session) {
-    return <LoginScreen />;
-  }
-
-  // DASHBOARD: If session exists, show Dashboard
   const userEmail = session.user.email;
+  const totalProjects = projects.length;
+  const totalRows = projects.reduce((acc, curr) => acc + (curr.row_count || 0), 0);
+
   const stats = [
-    { label: 'Total Pages Generated', value: '12,405', change: '+12%', trend: 'up', icon: FileText },
-    { label: 'Total Keywords', value: '15,200', change: '+8.4%', trend: 'up', icon: Target },
-    { label: 'Avg. Keyword Difficulty', value: '14', change: '-2%', trend: 'down', icon: BarChart3 },
-    { label: 'Est. Monthly Traffic', value: '45.2k', change: '+22%', trend: 'up', icon: TrendingUp },
-  ];
-  const projects = [
-    { id: 1, name: 'Best Coffee Near Me', pages: 4500, status: 'Live', lastRun: '2h ago', platform: 'Wordpress' },
-    { id: 2, name: 'SaaS Alternatives', pages: 120, status: 'Building', lastRun: 'Just now', platform: 'Webflow' },
-    { id: 3, name: 'Local Plumbers Dir', pages: 8900, status: 'Paused', lastRun: '3d ago', platform: 'Next.js' },
+    { label: 'Total Projects', value: totalProjects, change: 'Active', trend: 'neutral', icon: Layers },
+    { label: 'Total Keywords (Rows)', value: totalRows.toLocaleString(), change: 'Potential Pages', trend: 'up', icon: Target },
+    { label: 'Avg. Keyword Difficulty', value: '-', change: 'N/A', trend: 'neutral', icon: BarChart3 },
+    { label: 'Est. Monthly Traffic', value: '-', change: 'N/A', trend: 'neutral', icon: TrendingUp },
   ];
 
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
+        <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={() => fetchProjects(session.user.id)} />
+        <ViewModal isOpen={!!viewProject} onClose={() => setViewProject(null)} project={viewProject} />
+
         <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300`}>
           <div className="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
@@ -158,9 +296,7 @@ export default function App() {
             <NavItem icon={Layers} label="Projects" active={activeTab === 'projects'} expanded={isSidebarOpen} onClick={() => setActiveTab('projects')} />
             <NavItem icon={Database} label="Datasets" active={activeTab === 'datasets'} expanded={isSidebarOpen} onClick={() => setActiveTab('datasets')} />
             <NavItem icon={FileText} label="Templates" active={activeTab === 'templates'} expanded={isSidebarOpen} onClick={() => setActiveTab('templates')} />
-            <div className="pt-4 pb-2">
-              {isSidebarOpen && <p className="px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Settings</p>}
-            </div>
+            <div className="pt-4 pb-2">{isSidebarOpen && <p className="px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Settings</p>}</div>
             <NavItem icon={Settings} label="Configuration" active={activeTab === 'settings'} expanded={isSidebarOpen} onClick={() => setActiveTab('settings')} />
             <NavItem icon={User} label="Account" active={activeTab === 'account'} expanded={isSidebarOpen} onClick={() => setActiveTab('account')} />
           </nav>
@@ -177,31 +313,19 @@ export default function App() {
         </aside>
         <main className="flex-1 flex flex-col overflow-hidden">
           <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-8">
-            <div className="flex items-center gap-4 text-slate-500">
-              <span className="text-sm font-medium">Organization</span>
-              <span className="text-slate-300">/</span>
-              <span className="text-sm font-medium text-slate-900 dark:text-white">GroGoliath HQ</span>
-            </div>
+            <div className="flex items-center gap-4 text-slate-500"><span className="text-sm font-medium">Organization</span><span className="text-slate-300">/</span><span className="text-sm font-medium text-slate-900 dark:text-white">GroGoliath HQ</span></div>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3 pl-6 border-l border-slate-200 dark:border-slate-700">
-                <div className="w-8 h-8 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                  {userEmail?.[0]?.toUpperCase() || 'U'}
-                </div>
-                <div className="hidden md:block text-sm">
-                  <p className="font-medium text-slate-700 dark:text-slate-200">{userEmail}</p>
-                  <p className="text-xs text-slate-400">Admin</p>
-                </div>
+                <div className="w-8 h-8 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">{userEmail?.[0]?.toUpperCase() || 'U'}</div>
+                <div className="hidden md:block text-sm"><p className="font-medium text-slate-700 dark:text-slate-200">{userEmail}</p><p className="text-xs text-slate-400">Admin</p></div>
               </div>
             </div>
           </header>
           <div className="flex-1 overflow-auto p-8">
             <div className="max-w-6xl mx-auto space-y-8">
               <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Overview</h1>
-                  <p className="text-slate-500 mt-1">Here's what's happening with your GroGoliath sites.</p>
-                </div>
-                <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all shadow-lg shadow-indigo-600/20"><Plus size={18} />New Project</button>
+                <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white">Overview</h1><p className="text-slate-500 mt-1">Here's what's happening with your GroGoliath sites.</p></div>
+                <button onClick={() => setIsUploadModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all shadow-lg shadow-indigo-600/20"><Plus size={18} />New Project</button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, index) => (
@@ -223,7 +347,20 @@ export default function App() {
                 <div className="lg:col-span-2 space-y-6">
                   <Card className="overflow-hidden">
                     <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between"><h2 className="font-semibold text-slate-900 dark:text-white">Active Deployments</h2><button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">View All</button></div>
-                    <div className="overflow-x-auto"><table className="w-full text-sm text-left"><thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-500"><tr><th className="px-6 py-4 font-medium">Project Name</th><th className="px-6 py-4 font-medium">Status</th><th className="px-6 py-4 font-medium">Pages</th><th className="px-6 py-4 font-medium">Platform</th><th className="px-6 py-4 font-medium text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-200 dark:divide-slate-700">{projects.map((project) => (<tr key={project.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"><td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{project.name}</td><td className="px-6 py-4"><Badge type={project.status === 'Live' ? 'success' : project.status === 'Building' ? 'primary' : 'neutral'}>{project.status}</Badge></td><td className="px-6 py-4 text-slate-600 dark:text-slate-300">{project.pages.toLocaleString()}</td><td className="px-6 py-4 text-slate-600 dark:text-slate-300 flex items-center gap-2">{project.platform}</td><td className="px-6 py-4 text-right"><button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><MoreHorizontal size={18} /></button></td></tr>))}</tbody></table></div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-500"><tr><th className="px-6 py-4 font-medium">Project Name</th><th className="px-6 py-4 font-medium">Status</th><th className="px-6 py-4 font-medium">Pages</th><th className="px-6 py-4 font-medium">Platform</th><th className="px-6 py-4 font-medium text-right">Actions</th></tr></thead>
+                        <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                          {projects.length === 0 ? (<tr><td colSpan={5} className="px-6 py-12 text-center text-slate-500">No projects yet. Upload a dataset to get started!</td></tr>) : (projects.map((project) => (<tr key={project.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"><td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{project.name}</td><td className="px-6 py-4"><Badge type={project.status === 'Draft' ? 'neutral' : 'success'}>{project.status}</Badge></td><td className="px-6 py-4 text-slate-600 dark:text-slate-300">{project.row_count || 0}</td><td className="px-6 py-4 text-slate-600 dark:text-slate-300 flex items-center gap-2">Wordpress</td><td className="px-6 py-4 text-right flex justify-end gap-2"><button onClick={() => setViewProject(project)} className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="View Data"><Eye size={18} /></button><button onClick={() => handleDelete(project.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Delete Project"><Trash2 size={18} /></button></td></tr>)))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
+                   <Card className="p-6 bg-gradient-to-r from-indigo-600 to-purple-600 border-none text-white">
+                    <div className="flex items-start justify-between">
+                      <div><h2 className="text-lg font-bold mb-2">Start a new campaign</h2><p className="text-indigo-100 max-w-md">Import your CSV dataset, map your keywords, and generate 1000s of landing pages in minutes.</p><button onClick={() => setIsUploadModalOpen(true)} className="mt-6 bg-white text-indigo-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-50 transition-colors shadow-lg">Upload Dataset</button></div>
+                      <div className="hidden sm:block bg-white/10 p-4 rounded-xl backdrop-blur-sm"><FileText size={48} className="text-indigo-100" /></div>
+                    </div>
                   </Card>
                 </div>
                 <div className="space-y-6">
@@ -241,16 +378,5 @@ export default function App() {
         </main>
       </div>
     </div>
-  );
-}
-
-// Helper NavItem Component
-function NavItem({ icon: Icon, label, active, onClick, expanded }) {
-  return (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${active ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200'} ${!expanded ? 'justify-center' : ''}`}>
-      <Icon size={20} className={active ? 'stroke-[2.5px]' : 'stroke-[2px]'} />
-      {expanded && <span className="text-sm font-medium">{label}</span>}
-      {!expanded && active && <div className="absolute left-14 bg-slate-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">{label}</div>}
-    </button>
   );
 }
