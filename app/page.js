@@ -9,10 +9,10 @@ import {
   Moon, Sun, ArrowUpRight, ArrowDownRight, Monitor, Globe, Keyboard, Save, Key, 
   Sparkles, Play, StopCircle, LayoutTemplate, Type, Image as ImageIcon, AlignLeft, Code,
   List, CheckSquare, DollarSign, Megaphone, Scale, ThumbsUp, HelpCircle, Link, 
-  FileCode, ShieldCheck, Users, Workflow, Briefcase, FormInput, Award, Zap, Download, Wand2, Copy, BookOpen, Palette, ChevronRight, ArrowUp, ArrowDown, Smartphone, Check, Star, ThumbsDown, HardDrive, FolderOpen
+  FileCode, ShieldCheck, Users, Workflow, Briefcase, FormInput, Award, Zap, Download, Wand2, Copy, BookOpen, Palette, ChevronRight, ArrowUp, ArrowDown, Smartphone, Check, Star, ThumbsDown, HardDrive, FolderOpen, Maximize2
 } from 'lucide-react';
 
-// --- 0. PRESET TEMPLATES (Unchanged) ---
+// --- 0. PRESET TEMPLATES ---
 const PRESET_TEMPLATES = [
   {
     id: 'preset-1',
@@ -104,6 +104,7 @@ const LivePreview = ({ blocks }) => {
 
   return (
     <div className={`mx-auto transition-all duration-300 flex flex-col ${viewMode === 'mobile' ? 'max-w-sm' : 'w-full max-w-5xl'}`}>
+      
       <div className="bg-slate-100 border border-b-0 border-slate-200 p-3 flex items-center justify-between gap-2 rounded-t-lg">
         <div className="flex items-center flex-1 gap-4">
            <div className="flex gap-1.5"><div className="w-3 h-3 rounded-full bg-red-400"></div><div className="w-3 h-3 rounded-full bg-amber-400"></div><div className="w-3 h-3 rounded-full bg-green-400"></div></div>
@@ -152,7 +153,54 @@ const LivePreview = ({ blocks }) => {
   );
 };
 
-// --- 2. Template Builder Modal ---
+// --- 3. Content Inspector Modal ---
+const InspectorModal = ({ isOpen, onClose, content, headerName, onSave }) => {
+  const [mode, setMode] = useState('visual'); // 'visual' or 'code'
+  const [editedContent, setEditedContent] = useState(content);
+
+  useEffect(() => {
+    setEditedContent(content);
+  }, [content]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-800 w-full max-w-5xl h-[90vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+          <div className="flex items-center gap-4">
+             <h3 className="font-bold text-slate-700 dark:text-white flex items-center gap-2">
+               <Maximize2 size={18} className="text-indigo-600"/> 
+               Inspecting: <span className="font-mono text-sm bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded">{headerName}</span>
+             </h3>
+             <div className="flex bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 p-0.5">
+                <button onClick={() => setMode('visual')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1 ${mode === 'visual' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-500 hover:text-slate-700'}`}><Eye size={12}/> Visual</button>
+                <button onClick={() => setMode('code')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1 ${mode === 'code' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-500 hover:text-slate-700'}`}><Code size={12}/> Code</button>
+             </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2"><X size={20}/></button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-hidden relative bg-white dark:bg-slate-950">
+           {mode === 'visual' ? (
+             <div className="w-full h-full overflow-y-auto p-8">
+               <div className="max-w-3xl mx-auto prose dark:prose-invert prose-headings:font-bold prose-a:text-indigo-600"><div dangerouslySetInnerHTML={{ __html: editedContent }} /></div>
+             </div>
+           ) : (
+             <textarea value={editedContent} onChange={(e) => setEditedContent(e.target.value)} className="w-full h-full p-6 font-mono text-sm bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none resize-none" spellCheck="false" />
+           )}
+        </div>
+        <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3 bg-white dark:bg-slate-800">
+          <button onClick={onClose} className="px-4 py-2 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">Cancel</button>
+          <button onClick={() => { onSave(editedContent); onClose(); }} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 flex items-center gap-2"><Save size={16}/> Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- 4. Template Builder Modal ---
 const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'edit' }) => {
   const [name, setName] = useState('');
   const [blocks, setBlocks] = useState([]);
@@ -348,7 +396,7 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
   );
 };
 
-// --- 3. Templates Tab View (UPDATED: Use = Copy HTML) ---
+// --- 5. Templates Tab View (UPDATED: Use = Copy HTML) ---
 const TemplatesView = ({ user, onNewTemplate, onPreview }) => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -388,7 +436,7 @@ const TemplatesView = ({ user, onNewTemplate, onPreview }) => {
   );
 };
 
-// --- 4. AI Generation Modal (Unchanged) ---
+// --- 6. AI Generation Modal (Unchanged) ---
 const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess }) => {
   const [prompt, setPrompt] = useState('');
   const [targetColumn, setTargetColumn] = useState('AI_Output');
@@ -501,7 +549,7 @@ const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess }) => {
   );
 };
 
-// --- 5. New Project Modal (Unchanged) ---
+// --- 7. New Project Modal (Unchanged) ---
 const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, datasets }) => {
   const [mode, setMode] = useState('csv');
   const [file, setFile] = useState(null);
@@ -593,25 +641,43 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, datasets }) => {
   );
 };
 
-// --- 6. View Data Modal (Unchanged) ---
+// --- 8. View Data Modal (Updated with Inspector) ---
 const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
   const [localProject, setLocalProject] = useState(project);
   const [newRow, setNewRow] = useState({});
   const [showAddRow, setShowAddRow] = useState(false);
   const [newHeader, setNewHeader] = useState('');
+  
+  // Inspector State
+  const [inspectCell, setInspectCell] = useState(null); // { rowIndex, headerName, content }
+
   useEffect(() => { setLocalProject(project); }, [project]);
   if (!isOpen || !localProject) return null;
+
   const rows = Array.isArray(localProject.data) ? localProject.data : (localProject.data?.rows || []);
   const headers = (localProject.data?.headers && localProject.data.headers.length > 0) ? localProject.data.headers : (rows.length > 0 ? Object.keys(rows[0]) : []);
-  const handleUpdate = async (newRows, newHeaders) => { const updatedData = { ...localProject.data, rows: newRows, headers: newHeaders }; const { error } = await supabase.from('projects').update({ data: updatedData, row_count: newRows.length }).eq('id', localProject.id); if (!error) { const updated = { ...localProject, data: updatedData, row_count: newRows.length }; setLocalProject(updated); onProjectUpdate(updated); } };
+
+  const handleUpdate = async (newRows, newHeaders) => { 
+    const updatedData = { ...localProject.data, rows: newRows, headers: newHeaders }; 
+    const { error } = await supabase.from('projects').update({ data: updatedData, row_count: newRows.length }).eq('id', localProject.id); 
+    if (!error) { 
+      const updated = { ...localProject, data: updatedData, row_count: newRows.length }; 
+      setLocalProject(updated); 
+      onProjectUpdate(updated); 
+    } 
+  };
+
+  const handleCellSave = (newContent) => {
+    if (!inspectCell) return;
+    const newRows = [...rows];
+    newRows[inspectCell.rowIndex] = { ...newRows[inspectCell.rowIndex], [inspectCell.headerName]: newContent };
+    handleUpdate(newRows, headers);
+    setInspectCell(null);
+  };
   
-  // EXPORT FUNCTIONALITY
   const handleExport = () => {
     if (rows.length === 0) return alert("No data to export.");
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => headers.map(h => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
+    const csvContent = [headers.join(','), ...rows.map(row => headers.map(h => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -625,6 +691,17 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+      
+      {inspectCell && (
+        <InspectorModal 
+          isOpen={!!inspectCell} 
+          onClose={() => setInspectCell(null)} 
+          content={inspectCell.content} 
+          headerName={inspectCell.headerName}
+          onSave={handleCellSave}
+        />
+      )}
+
       <div className="bg-white dark:bg-slate-800 w-full max-w-6xl h-[85vh] rounded-2xl shadow-2xl border dark:border-slate-700 flex flex-col overflow-hidden">
         <div className="p-6 border-b dark:border-slate-700 flex justify-between items-center">
           <h3 className="text-lg font-bold dark:text-white">{localProject.name}</h3>
@@ -636,7 +713,26 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
         </div>
         <div className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-900/50">
           {headers.length === 0 && rows.length === 0 ? (<div className="text-center p-12"><p className="mb-4 text-slate-500">Empty Project.</p><div className="flex justify-center gap-2"><input value={newHeader} onChange={(e) => setNewHeader(e.target.value)} placeholder="Column Name" className="p-2 border rounded text-sm" /><button onClick={() => { if(newHeader) handleUpdate(rows, [...headers, newHeader]); setNewHeader(''); }} className="px-3 py-2 bg-indigo-600 text-white rounded text-sm">Add</button></div></div>) : (
-            <table className="w-full text-sm text-left bg-white dark:bg-slate-800"><thead className="bg-slate-100 dark:bg-slate-700"><tr>{headers.map((h, i) => <th key={i} className="px-4 py-2 border-b dark:border-slate-600">{h}</th>)}<th className="w-10 border-b dark:border-slate-600"></th></tr></thead><tbody>{showAddRow && (<tr className="bg-indigo-50">{headers.map((h, i) => <td key={i} className="p-2"><input placeholder={h} value={newRow[h]||''} onChange={(e)=>setNewRow({...newRow, [h]:e.target.value})} className="w-full border rounded p-1 text-xs" /></td>)}<td className="p-2"><button onClick={() => { handleUpdate([...rows, newRow], headers); setNewRow({}); setShowAddRow(false); }} className="bg-indigo-600 text-white p-1 rounded"><Save size={14}/></button></td></tr>)}{rows.map((row, i) => (<tr key={i} className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 group">{headers.map((h, j) => <td key={j} className="px-4 py-2 truncate max-w-[200px]">{row[h]}</td>)}<td className="px-4 py-2"><button onClick={() => { if(confirm('Delete?')) handleUpdate(rows.filter((_,idx)=>idx!==i), headers); }} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button></td></tr>))}</tbody></table>
+            <table className="w-full text-sm text-left bg-white dark:bg-slate-800"><thead className="bg-slate-100 dark:bg-slate-700"><tr>{headers.map((h, i) => <th key={i} className="px-4 py-2 border-b dark:border-slate-600">{h}</th>)}<th className="w-10 border-b dark:border-slate-600"></th></tr></thead><tbody>{showAddRow && (<tr className="bg-indigo-50">{headers.map((h, i) => <td key={i} className="p-2"><input placeholder={h} value={newRow[h]||''} onChange={(e)=>setNewRow({...newRow, [h]:e.target.value})} className="w-full border rounded p-1 text-xs" /></td>)}<td className="p-2"><button onClick={() => { handleUpdate([...rows, newRow], headers); setNewRow({}); setShowAddRow(false); }} className="bg-indigo-600 text-white p-1 rounded"><Save size={14}/></button></td></tr>)}{rows.map((row, i) => (<tr key={i} className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 group">{headers.map((h, j) => {
+              const cellData = row[h];
+              // Check if it looks like HTML (starts with <)
+              const isHTML = typeof cellData === 'string' && cellData.trim().startsWith('<');
+              
+              return (
+                <td key={j} className="px-4 py-2 truncate max-w-[200px]">
+                  {isHTML ? (
+                    <button 
+                      onClick={() => setInspectCell({ rowIndex: i, headerName: h, content: cellData })}
+                      className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 flex items-center gap-1 font-bold"
+                    >
+                      <Eye size={12}/> Preview Page
+                    </button>
+                  ) : (
+                    cellData
+                  )}
+                </td>
+              );
+            })}<td className="px-4 py-2"><button onClick={() => { if(confirm('Delete?')) handleUpdate(rows.filter((_,idx)=>idx!==i), headers); }} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button></td></tr>))}</tbody></table>
           )}
         </div>
       </div>
@@ -644,7 +740,7 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
   );
 };
 
-// --- 7. Dashboard Views ---
+// --- 9. Dashboard Views ---
 const DashboardView = ({ projects, onNewProject }) => {
   const totalProjects = projects.length;
   const totalRows = projects.reduce((acc, curr) => acc + (curr.row_count || 0), 0);
@@ -698,7 +794,7 @@ const SettingsView = ({ email, onLogout }) => (
   </div>
 );
 
-// --- 8. Datasets Tab (Functional) ---
+// --- 10. Datasets Tab (Functional) ---
 const DatasetsView = ({ user, onUpload }) => {
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -751,7 +847,7 @@ const DatasetsView = ({ user, onUpload }) => {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex justify-between items-center">
-        <div><h1 className="text-2xl font-bold dark:text-white">Datasets</h1><p className="text-slate-500 mt-1">Manage your uploaded CSV files.</p></div>
+        <div><h1 className="text-2xl font-bold dark:text-white">Datasets</h1><p className="text-slate-500 mt-1">Manage your uploaded files.</p></div>
         <button onClick={() => fileInputRef.current.click()} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg hover:bg-indigo-700 transition-all"><UploadCloud size={18}/> Upload New</button>
         <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleUpload} />
       </div>
@@ -781,7 +877,7 @@ const DatasetsView = ({ user, onUpload }) => {
   );
 };
 
-// --- 9. Main Layout ---
+// --- 11. Main Layout ---
 function NavItem({ icon: Icon, label, active, onClick, expanded }) {
   return <button onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${active ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'} ${!expanded ? 'justify-center' : ''}`}><Icon size={20} strokeWidth={active?2.5:2} />{expanded && <span className="text-sm font-medium">{label}</span>}</button>;
 }
@@ -800,12 +896,12 @@ export default function App() {
   const [viewProject, setViewProject] = useState(null);
   const [generateProject, setGenerateProject] = useState(null);
   const [projects, setProjects] = useState([]);
-  const [datasets, setDatasets] = useState([]); // NEW: Store datasets
+  const [datasets, setDatasets] = useState([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => { 
        setSession(session); 
-       if(session) { fetchProjects(); fetchDatasets(); } // Fetch both
+       if(session) { fetchProjects(); fetchDatasets(); } 
        setLoading(false); 
     });
     supabase.auth.onAuthStateChange((_event, session) => { 
@@ -830,9 +926,7 @@ export default function App() {
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
-        {/* Pass datasets to NewProjectModal */}
         <NewProjectModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={fetchProjects} datasets={datasets} />
-        
         <ViewModal isOpen={!!viewProject} onClose={() => setViewProject(null)} project={viewProject} onProjectUpdate={(p) => { setProjects(projects.map(pr => pr.id === p.id ? p : pr)); }} />
         <GenerateModal isOpen={!!generateProject} onClose={() => setGenerateProject(null)} project={generateProject} onUpdateSuccess={fetchProjects} />
         <TemplateModal isOpen={isTemplateModalOpen || !!editTemplate || !!previewTemplate} onClose={() => { setIsTemplateModalOpen(false); setEditTemplate(null); setPreviewTemplate(null); }} initialData={editTemplate || previewTemplate} mode={previewTemplate ? previewTemplate.mode : (editTemplate ? 'edit' : 'create')} onSaveSuccess={() => {}} />
@@ -873,7 +967,7 @@ export default function App() {
           <div className="flex-1 overflow-auto p-8">
             {activeTab === 'dashboard' && <DashboardView projects={projects} onNewProject={() => setIsUploadModalOpen(true)} />}
             {activeTab === 'projects' && <ProjectsView projects={projects} onDelete={handleDelete} onView={setViewProject} onGenerate={setGenerateProject} />}
-            {activeTab === 'datasets' && <DatasetsView user={session.user} onUpload={() => {}} />} {/* onUpload handled internally now */}
+            {activeTab === 'datasets' && <DatasetsView user={session.user} onUpload={() => setIsUploadModalOpen(true)} />}
             {activeTab === 'templates' && (
               <TemplatesView 
                 user={session.user} 
