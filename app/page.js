@@ -433,13 +433,50 @@ const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess }) => {
       for (let i = 0; i < total; i++) {
         if (abortControllerRef.current.signal.aborted) break;
         const row = newRows[i];
-        let filledPrompt = prompt;
+        let filledPrompt = `
+You are an SEO page generator.
+
+Return ONLY valid JSON in this exact structure:
+
+{
+  "slug": "string",
+  "title": "string",
+  "meta_description": "string",
+  "schema": "string",
+  "html_body": "string"
+}
+
+Rules:
+- slug must be URL-safe (lowercase, hyphens, no spaces)
+- meta_description max 160 characters
+- schema must be valid JSON-LD as a string
+- html_body must be full HTML (no markdown)
+
+Content instructions:
+${prompt}
+`;
+
         headers.forEach(h => { const regex = new RegExp(`{{${h}}}`, 'g'); filledPrompt = filledPrompt.replace(regex, row[h] || ''); });
         try {
           const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: filledPrompt }), signal: abortControllerRef.current.signal });
           const data = await response.json();
           if (!response.ok || data.error) throw new Error(data.error || 'Server Error');
-          newRows[i] = { ...row, [targetColumn]: data.content };
+          let parsed;
+try {
+  parsed = JSON.parse(data.content);
+} catch (e) {
+  throw new Error("AI returned invalid JSON");
+}
+
+newRows[i] = {
+  ...row,
+  slug: parsed.slug,
+  title: parsed.title,
+  meta_description: parsed.meta_description,
+  schema: parsed.schema,
+  html_body: parsed.html_body
+};
+
           addLog(`✅ Row ${i + 1}: Success`);
         } catch (err) { if (err.name !== 'AbortError') addLog(`❌ Row ${i + 1}: Failed`); }
         setProgress({ current: i + 1, total });
@@ -849,6 +886,50 @@ const TemplatesView = ({ user, onNewTemplate, onPreview }) => {
 // --- 12. Main App ---
 function NavItem({ icon: Icon, label, active, onClick, expanded }) {
   return <button onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${active ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'} ${!expanded ? 'justify-center' : ''}`}><Icon size={20} strokeWidth={active?2.5:2} />{expanded && <span className="text-sm font-medium">{label}</span>}</button>;
+}
+function LoginScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    if (error) alert(error.message);
+    setLoading(false);
+  };
+
+  return (
+    <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
+      <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg w-full max-w-md border dark:border-slate-700">
+        <h1 className="text-2xl font-bold mb-6 text-center">GroGoliath</h1>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          className="w-full mb-3 p-3 border rounded dark:bg-slate-700 dark:text-white"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          className="w-full mb-4 p-3 border rounded dark:bg-slate-700 dark:text-white"
+        />
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          className="w-full bg-indigo-600 text-white p-3 rounded font-bold hover:bg-indigo-700"
+        >
+          {loading ? 'Signing in…' : 'Sign In'}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
