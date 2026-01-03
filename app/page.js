@@ -9,10 +9,12 @@ import {
   Moon, Sun, ArrowUpRight, ArrowDownRight, Monitor, Globe, Keyboard, Save, Key, 
   Sparkles, Play, StopCircle, LayoutTemplate, Type, Image as ImageIcon, AlignLeft, Code,
   List, CheckSquare, DollarSign, Megaphone, Scale, ThumbsUp, HelpCircle, Link, 
-  FileCode, ShieldCheck, Users, Workflow, Briefcase, FormInput, Award, Zap, Download, Wand2, Copy, BookOpen, Palette, ChevronRight, ArrowUp, ArrowDown, Smartphone, Check, Star, ThumbsDown, HardDrive, FolderOpen, Maximize2
+  FileCode, ShieldCheck, Users, Workflow, Briefcase, FormInput, Award, Zap, Download, Wand2, Copy, BookOpen, Palette, ChevronRight, ArrowUp, ArrowDown, Smartphone, Check, Star, ThumbsDown, HardDrive, FolderOpen, Maximize2, Edit3, Info
 } from 'lucide-react';
 
-// --- 0. PRESET TEMPLATES ---
+// ==========================================
+// 0. DATA & CONSTANTS
+// ==========================================
 const PRESET_TEMPLATES = [
   {
     id: 'preset-1',
@@ -43,7 +45,7 @@ const PRESET_TEMPLATES = [
   },
   {
     id: 'preset-3',
-    name: 'Product Review / Comparison',
+    name: 'Product Review',
     category: 'Affiliate',
     structure: [
       { id: 1, type: 'header', category: 'basic', content: 'H1: {{Product}} Review - Is it Worth It?' },
@@ -56,7 +58,9 @@ const PRESET_TEMPLATES = [
   }
 ];
 
-// --- 1. UI Components ---
+// ==========================================
+// 1. SHARED UI COMPONENTS
+// ==========================================
 const Card = ({ children, className = "" }) => (
   <div className={`bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm transition-all duration-200 ${className}`}>
     {children}
@@ -78,7 +82,10 @@ const Badge = ({ children, type = "neutral" }) => {
   );
 };
 
-// --- Live Preview Component ---
+// ==========================================
+// 2. HELPER COMPONENTS (Modals & Previews)
+// ==========================================
+
 const LivePreview = ({ blocks }) => {
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState('desktop');
@@ -124,7 +131,7 @@ const LivePreview = ({ blocks }) => {
         </nav>
         <div className="flex-1 overflow-y-auto bg-white">
           {blocks.map((block) => {
-            if (!block || !block.type) return null; 
+            if (!block || !block.type) return null;
             switch (block.type) {
               case 'header': return <section key={block.id} className="px-6 py-8"><h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">{block.content}</h2></section>;
               case 'hero': return <section key={block.id} className="text-center py-16 px-6 bg-gradient-to-b from-slate-50 to-white border-b border-slate-100"><h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 tracking-tight leading-tight">{block.content}</h1><p className="text-lg text-slate-500 mb-8">Your compelling subheadline goes here.</p><button className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 w-full md:w-auto">Start Now</button></section>;
@@ -155,13 +162,10 @@ const LivePreview = ({ blocks }) => {
 
 // --- 3. Content Inspector Modal ---
 const InspectorModal = ({ isOpen, onClose, content, headerName, onSave }) => {
-  const [mode, setMode] = useState('visual'); // 'visual' or 'code'
+  const [mode, setMode] = useState('visual');
   const [editedContent, setEditedContent] = useState(content);
 
-  useEffect(() => {
-    setEditedContent(content);
-  }, [content]);
-
+  useEffect(() => { setEditedContent(content); }, [content]);
   if (!isOpen) return null;
 
   return (
@@ -169,31 +173,24 @@ const InspectorModal = ({ isOpen, onClose, content, headerName, onSave }) => {
       <div className="bg-white dark:bg-slate-800 w-full max-w-5xl h-[90vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
           <div className="flex items-center gap-4">
-             <h3 className="font-bold text-slate-700 dark:text-white flex items-center gap-2">
-               <Maximize2 size={18} className="text-indigo-600"/> 
-               Inspecting: <span className="font-mono text-sm bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded">{headerName}</span>
-             </h3>
+             <h3 className="font-bold text-slate-700 dark:text-white flex items-center gap-2"><Maximize2 size={18} className="text-indigo-600"/> Inspecting: <span className="font-mono text-sm bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded">{headerName}</span></h3>
              <div className="flex bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 p-0.5">
                 <button onClick={() => setMode('visual')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1 ${mode === 'visual' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-500 hover:text-slate-700'}`}><Eye size={12}/> Visual</button>
                 <button onClick={() => setMode('code')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1 ${mode === 'code' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-500 hover:text-slate-700'}`}><Code size={12}/> Code</button>
              </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2"><X size={20}/></button>
-          </div>
+          <div className="flex gap-2"><button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2"><X size={20}/></button></div>
         </div>
         <div className="flex-1 overflow-hidden relative bg-white dark:bg-slate-950">
            {mode === 'visual' ? (
-             <div className="w-full h-full overflow-y-auto p-8">
-               <div className="max-w-3xl mx-auto prose dark:prose-invert prose-headings:font-bold prose-a:text-indigo-600"><div dangerouslySetInnerHTML={{ __html: editedContent }} /></div>
-             </div>
+             <div className="w-full h-full overflow-y-auto p-8"><div className="max-w-3xl mx-auto prose dark:prose-invert"><div dangerouslySetInnerHTML={{ __html: editedContent }} /></div></div>
            ) : (
              <textarea value={editedContent} onChange={(e) => setEditedContent(e.target.value)} className="w-full h-full p-6 font-mono text-sm bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none resize-none" spellCheck="false" />
            )}
         </div>
-        <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3 bg-white dark:bg-slate-800">
-          <button onClick={onClose} className="px-4 py-2 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">Cancel</button>
-          <button onClick={() => { onSave(editedContent); onClose(); }} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 flex items-center gap-2"><Save size={16}/> Save Changes</button>
+        <div className="p-4 border-t flex justify-end gap-3 bg-white dark:bg-slate-800">
+          <button onClick={onClose} className="px-4 py-2 text-slate-600 font-medium">Cancel</button>
+          <button onClick={() => { onSave(editedContent); onClose(); }} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg">Save Changes</button>
         </div>
       </div>
     </div>
@@ -205,10 +202,10 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
   const [name, setName] = useState('');
   const [blocks, setBlocks] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
   const [currentMode, setCurrentMode] = useState(mode); 
   const [viewTab, setViewTab] = useState('edit'); 
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -222,7 +219,6 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
         setName('');
         setBlocks([]);
       }
-      setAiPrompt('');
     }
   }, [isOpen, initialData, mode]);
 
@@ -230,38 +226,38 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
 
   const isReadOnly = currentMode.startsWith('preview');
 
-  const addBlock = (type, category = 'basic') => {
+  const addBlock = (type) => {
     if (isReadOnly) return;
-    const newBlock = { id: Date.now(), type, category, content: getDefaultContent(type) };
-    setBlocks([...blocks, newBlock]);
-  };
-
-  const getDefaultContent = (type) => {
+    // Default Content Logic
+    let content = 'Content...';
+    // Determine category if not provided, but it's passed in args.
     switch(type) {
-      case 'header': return 'H2: Guide to {{Keyword}}';
-      case 'text': return 'Write a 100-word engaging introduction about {{Keyword}}. Use short paragraphs.';
-      case 'service_keyword': return '{{Keyword}}'; 
-      case 'image': return 'Image Description: {{Keyword}}';
-      case 'html': return '<div class="custom-block">...</div>';
-      case 'pain_point': return 'Identify 3 pain points for {{Keyword}}.';
-      case 'solution': return 'Explain how we solve {{Keyword}} issues.';
-      case 'usp': return 'List 5 USPs for {{Keyword}}.';
-      case 'pricing': return 'Create a 3-column HTML Pricing Table.';
-      case 'cta': return 'Sign up now for {{Keyword}} solutions.';
-      case 'schema_service': return '{"@type": "Service", "name": "{{Keyword}}"}';
-      case 'schema_blog': return '{"@type": "BlogPosting", "headline": "Guide to {{Keyword}}"}';
-      case 'faq_auto': return 'Generate 5 FAQs about {{Keyword}}.';
-      case 'stats': return 'Find 3 stats about {{Keyword}}.';
-      case 'hero': return 'Hero Title: Best {{Keyword}} Service';
-      case 'comparison': return 'Compare Us vs Competitors for {{Keyword}}.';
-      case 'pros_cons': return 'List Pros and Cons for {{Keyword}}.';
-      case 'social_proof': return 'Generate a testimonial for {{Keyword}}.';
-      case 'process': return 'Create a 3-step process for {{Keyword}}.';
-      case 'case_study': return 'Write a mini case study for {{Keyword}}.';
-      case 'contact_form': return '<!-- Contact Form Placeholder -->';
-      case 'trust_badges': return '[Trust Badges: Secure, Verified, Top Rated]';
-      default: return 'Write content...';
+      case 'header': content = 'H2: Guide to {{Keyword}}'; break;
+      case 'text': content = 'Write a 100-word engaging introduction about {{Keyword}}. Use short paragraphs.'; break;
+      case 'service_keyword': content = '{{Keyword}}'; break;
+      case 'image': content = 'Image Description: {{Keyword}}'; break;
+      case 'html': content = '<div class="custom-block">...</div>'; break;
+      case 'pain_point': content = 'Identify 3 pain points for {{Keyword}}.'; break;
+      case 'solution': content = 'Explain how we solve {{Keyword}} issues.'; break;
+      case 'usp': content = 'List 5 USPs for {{Keyword}}.'; break;
+      case 'pricing': content = 'Create a 3-column HTML Pricing Table.'; break;
+      case 'cta': content = 'Sign up now for {{Keyword}} solutions.'; break;
+      case 'schema_service': content = '{"@type": "Service", "name": "{{Keyword}}"}'; break;
+      case 'schema_blog': content = '{"@type": "BlogPosting", "headline": "Guide to {{Keyword}}"}'; break;
+      case 'faq_auto': content = 'Generate 5 FAQs about {{Keyword}}.'; break;
+      case 'stats': content = 'Find 3 stats about {{Keyword}}.'; break;
+      case 'hero': content = 'Hero Title: Best {{Keyword}} Service'; break;
+      case 'comparison': content = 'Compare Us vs Competitors for {{Keyword}}.'; break;
+      case 'pros_cons': content = 'List Pros and Cons for {{Keyword}}.'; break;
+      case 'social_proof': content = 'Generate a testimonial for {{Keyword}}.'; break;
+      case 'process': content = 'Create a 3-step process for {{Keyword}}.'; break;
+      case 'case_study': content = 'Write a mini case study for {{Keyword}}.'; break;
+      case 'contact_form': content = '<!-- Contact Form Placeholder -->'; break;
+      case 'trust_badges': content = '[Trust Badges: Secure, Verified, Top Rated]'; break;
     }
+    
+    const newBlock = { id: Date.now(), type, category: 'basic', content };
+    setBlocks([...blocks, newBlock]);
   };
 
   const updateBlock = (id, content) => { if (!isReadOnly) setBlocks(blocks.map(b => b.id === id ? { ...b, content } : b)); };
@@ -292,28 +288,22 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
   };
 
   const handleMagicBuild = async () => {
-    if (isReadOnly) return;
-    if (!aiPrompt.trim()) return alert("Please enter a description for the AI.");
+    if (!aiPrompt.trim()) return alert("Enter prompt");
     setAiLoading(true);
     try {
       const systemPrompt = `You are a JSON generator. Create a JSON structure for a website template based on this description: "${aiPrompt}". Return ONLY a JSON array of objects. Each object must have: "id" (number), "type" (string), "category" (string), and "content" (string). Allowed types: header, text, hero, pain_point, solution, usp, pricing, cta, schema_service, faq_auto, comparison, pros_cons. Allowed categories: basic, marketing, seo, premium.`;
-      
       const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: systemPrompt }) });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'AI Error');
+      if (!response.ok) throw new Error(data.error);
       let cleanJson = data.content.replace(/```json/g, '').replace(/```/g, '').trim();
       const newBlocks = JSON.parse(cleanJson);
-      
-      // SAFETY CHECK: Ensure all blocks have a valid 'type'
       const sanitizedBlocks = newBlocks.filter(b => b.type).map(b => ({ ...b, id: Date.now() + Math.random() }));
       if (sanitizedBlocks.length > 0) setBlocks([...blocks, ...sanitizedBlocks]);
-      else alert("AI returned empty blocks.");
-      
-    } catch (err) { alert("Failed to generate template: " + err.message); } finally { setAiLoading(false); }
+    } catch (e) { alert(e.message); } finally { setAiLoading(false); }
   };
 
   const renderBlockEditor = (block, index) => {
-    if (!block || !block.type) return null; // Safety Check 2
+    if (!block || !block.type) return null; 
     const isPremium = block.category === 'premium';
     const needsTextArea = ['text', 'pain_point', 'solution', 'usp', 'pricing', 'cta', 'faq_auto', 'stats', 'hero', 'comparison', 'pros_cons', 'social_proof', 'process', 'case_study', 'schema_service', 'schema_blog', 'html', 'image'].includes(block.type);
 
@@ -348,95 +338,38 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-800 w-full max-w-6xl h-[90vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"><LayoutTemplate className="text-indigo-600" size={20} /> {isReadOnly ? 'Template Preview' : 'Template Builder'}</h3>
-          <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
-            <button onClick={() => setViewTab('edit')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${viewTab === 'edit' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Edit Structure</button>
-            <button onClick={() => setViewTab('preview')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-1 ${viewTab === 'preview' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}><Eye size={12}/> Live Preview</button>
-          </div>
-          <button onClick={onClose}><X className="text-slate-400 hover:text-slate-600" /></button>
+        <div className="flex items-center justify-between p-6 border-b bg-white dark:bg-slate-800">
+          <h3 className="text-lg font-bold dark:text-white">{isReadOnly ? 'Preview' : 'Builder'}</h3>
+          <div className="flex gap-2"><button onClick={() => setViewTab('edit')}>Edit</button><button onClick={() => setViewTab('preview')}>Preview</button></div>
+          <button onClick={onClose}><X/></button>
         </div>
-
-        {viewTab === 'preview' ? (<div className="flex-1 overflow-y-auto p-8 bg-slate-100 dark:bg-slate-950"><LivePreview blocks={blocks} /></div>) : (
-          <div className="flex-1 flex overflow-hidden">
-            <div className="w-72 border-r border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto">
-              <div className="p-6 space-y-6">
-                <div className={`bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800 ${isReadOnly ? 'opacity-50 pointer-events-none' : ''}`}>
-                   <label className="text-xs font-bold uppercase text-indigo-600 dark:text-indigo-400 mb-2 block flex items-center gap-1"><Wand2 size={12}/> Magic Build</label>
-                   <textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder={isReadOnly ? "Switch to edit mode to use AI" : "e.g. 'A landing page for a plumber'"} className="w-full p-2 text-xs border rounded mb-2 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white" rows={3} disabled={isReadOnly}/>
-                   <button onClick={handleMagicBuild} disabled={aiLoading} className="w-full py-1.5 bg-indigo-600 text-white text-xs font-bold rounded hover:bg-indigo-700 flex items-center justify-center gap-1">{aiLoading ? <Loader2 className="animate-spin" size={12}/> : <Sparkles size={12}/>} Auto-Generate</button>
-                </div>
-                <div><label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Template Name</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Landing Page" disabled={isReadOnly && currentMode !== 'preview_preset'} className={`w-full p-2.5 border rounded-lg text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white outline-none ${isReadOnly && currentMode !== 'preview_preset' ? 'opacity-70' : ''}`} /></div>
-                <div><label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1"><Layers size={12}/> Core Elements</label><div className="space-y-2"><BlockButton label="Heading (H2/H3)" icon={Type} onClick={() => addBlock('header')} /><BlockButton label="Text Paragraph" icon={AlignLeft} onClick={() => addBlock('text')} /><BlockButton label="Dynamic Keyword" icon={Key} onClick={() => addBlock('service_keyword')} /><BlockButton label="Image / Visual" icon={ImageIcon} onClick={() => addBlock('image')} /><BlockButton label="Custom HTML" icon={Code} onClick={() => addBlock('html')} /></div></div>
-                <div><label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1"><Megaphone size={12}/> Marketing</label><div className="space-y-2"><BlockButton label="Pain Point Block" icon={AlertCircle} onClick={() => addBlock('pain_point')} /><BlockButton label="Solution Block" icon={CheckCircle2} onClick={() => addBlock('solution')} /><BlockButton label="USP Features" icon={Award} onClick={() => addBlock('usp')} /><BlockButton label="Pricing Table" icon={DollarSign} onClick={() => addBlock('pricing')} /><BlockButton label="Call to Action" icon={Megaphone} onClick={() => addBlock('cta')} /></div></div>
-                <div><label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1"><Search size={12}/> SEO & Logic</label><div className="space-y-2"><BlockButton label="Service Schema" icon={FileCode} onClick={() => addBlock('schema_service')} /><BlockButton label="Article Schema" icon={FileCode} onClick={() => addBlock('schema_blog')} /><BlockButton label="Auto FAQs" icon={HelpCircle} onClick={() => addBlock('faq_auto')} /><BlockButton label="Auto Statistics" icon={TrendingUp} onClick={() => addBlock('stats')} /></div></div>
-                <div><label className="text-xs font-bold uppercase text-amber-500 mb-2 block flex items-center gap-1"><Zap size={12}/> Premium ($99+)</label><div className="space-y-2"><BlockButton label="Hero Headline" icon={Type} onClick={() => addBlock('hero', 'premium')} premium /><BlockButton label="Comparison Table" icon={Scale} onClick={() => addBlock('comparison', 'premium')} premium /><BlockButton label="Pros & Cons" icon={ThumbsUp} onClick={() => addBlock('pros_cons', 'premium')} premium /><BlockButton label="Social Proof" icon={Users} onClick={() => addBlock('social_proof', 'premium')} premium /><BlockButton label="Process Steps" icon={Workflow} onClick={() => addBlock('process', 'premium')} premium /><BlockButton label="Case Studies" icon={Briefcase} onClick={() => addBlock('case_study', 'premium')} premium /><BlockButton label="Contact Form" icon={FormInput} onClick={() => addBlock('contact_form', 'premium')} premium /><BlockButton label="Trust Badges" icon={ShieldCheck} onClick={() => addBlock('trust_badges', 'premium')} premium /></div></div>
-              </div>
+        {viewTab === 'preview' ? <div className="flex-1 overflow-y-auto p-8"><LivePreview blocks={blocks}/></div> : (
+          <div className="flex-1 flex">
+            <div className="w-64 border-r p-4 bg-slate-50 dark:bg-slate-900 overflow-y-auto">
+               <div className="mb-4"><input value={aiPrompt} onChange={e=>setAiPrompt(e.target.value)} placeholder="Magic Build Prompt" className="w-full p-2 border rounded mb-2 text-xs"/><button onClick={handleMagicBuild} className="w-full bg-indigo-600 text-white p-1 rounded text-xs">{aiLoading?'...':'Auto-Generate'}</button></div>
+               <input value={name} onChange={e => setName(e.target.value)} placeholder="Template Name" className="w-full p-2 border rounded mb-4 dark:bg-slate-800 dark:text-white"/>
+               <div className="space-y-6">
+                 <div><label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1"><Layers size={12}/> Core</label><div className="space-y-2"><BlockButton label="Heading" icon={Type} onClick={() => addBlock('header')} /><BlockButton label="Text" icon={AlignLeft} onClick={() => addBlock('text')} /><BlockButton label="Image" icon={ImageIcon} onClick={() => addBlock('image')} /><BlockButton label="HTML" icon={Code} onClick={() => addBlock('html')} /></div></div>
+                 <div><label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1"><Megaphone size={12}/> Marketing</label><div className="space-y-2"><BlockButton label="Pain Point" icon={AlertCircle} onClick={() => addBlock('pain_point')} /><BlockButton label="Solution" icon={CheckCircle2} onClick={() => addBlock('solution')} /><BlockButton label="USP" icon={Award} onClick={() => addBlock('usp')} /><BlockButton label="Pricing" icon={DollarSign} onClick={() => addBlock('pricing')} /><BlockButton label="CTA" icon={Megaphone} onClick={() => addBlock('cta')} /></div></div>
+                 <div><label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1"><Search size={12}/> SEO</label><div className="space-y-2"><BlockButton label="Schema (Service)" icon={FileCode} onClick={() => addBlock('schema_service')} /><BlockButton label="Schema (Blog)" icon={FileCode} onClick={() => addBlock('schema_blog')} /><BlockButton label="FAQ" icon={HelpCircle} onClick={() => addBlock('faq_auto')} /><BlockButton label="Stats" icon={TrendingUp} onClick={() => addBlock('stats')} /></div></div>
+                 <div><label className="text-xs font-bold uppercase text-amber-500 mb-2 block flex items-center gap-1"><Zap size={12}/> Premium</label><div className="space-y-2"><BlockButton label="Hero" icon={Type} onClick={() => addBlock('hero')} premium /><BlockButton label="Comparison" icon={Scale} onClick={() => addBlock('comparison')} premium /><BlockButton label="Pros/Cons" icon={ThumbsUp} onClick={() => addBlock('pros_cons')} premium /><BlockButton label="Social Proof" icon={Users} onClick={() => addBlock('social_proof')} premium /><BlockButton label="Process" icon={Workflow} onClick={() => addBlock('process')} premium /><BlockButton label="Case Study" icon={Briefcase} onClick={() => addBlock('case_study')} premium /><BlockButton label="Contact" icon={FormInput} onClick={() => addBlock('contact_form')} premium /><BlockButton label="Badges" icon={ShieldCheck} onClick={() => addBlock('trust_badges')} premium /></div></div>
+               </div>
             </div>
-            <div className="flex-1 p-8 overflow-y-auto bg-slate-100 dark:bg-slate-950">
-              <div className="max-w-3xl mx-auto space-y-4 pb-12">
-                {blocks.length === 0 ? (<div className="flex flex-col items-center justify-center h-full min-h-[400px] border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl"><LayoutTemplate size={48} className="text-slate-300 mb-4" /><p className="text-slate-900 dark:text-white font-bold text-lg">{isReadOnly ? "Empty Template" : "Start Building"}</p><p className="text-sm text-slate-500 max-w-xs text-center mt-1">{isReadOnly ? "This template has no blocks yet." : "Select elements from the sidebar to construct your page layout."}</p></div>) : (blocks.map((block, index) => renderBlockEditor(block, index)))}
-              </div>
+            <div className="flex-1 p-8 bg-slate-100 dark:bg-slate-950 overflow-y-auto">
+               {blocks.map((b, i) => renderBlockEditor(b, i))}
             </div>
           </div>
         )}
-
-        <div className="p-6 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3 bg-white dark:bg-slate-800">
-          <button onClick={onClose} className="px-4 py-2 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">Cancel</button>
-          {currentMode === 'preview_preset' ? (
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 flex items-center gap-2 shadow-lg shadow-emerald-600/20">{saving ? <Loader2 className="animate-spin" size={18}/> : <Copy size={18}/>} Clone Template</button>
-          ) : currentMode === 'preview_user' ? (
-             <button onClick={() => { setCurrentMode('edit'); setViewTab('edit'); }} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 flex items-center gap-2"><FileText size={18}/> Edit Template</button>
-          ) : (
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 flex items-center gap-2">{saving ? <Loader2 className="animate-spin" size={18}/> : <Save size={18}/>} Save Changes</button>
-          )}
+        <div className="p-4 border-t bg-white dark:bg-slate-800 flex justify-end gap-2">
+           <button onClick={onClose} className="px-4 py-2 border rounded">Cancel</button>
+           <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-indigo-600 text-white rounded">{saving?'Saving...':'Save'}</button>
         </div>
       </div>
     </div>
   );
 };
 
-// --- 5. Templates Tab View (UPDATED: Use = Copy HTML) ---
-const TemplatesView = ({ user, onNewTemplate, onPreview }) => {
-  const [templates, setTemplates] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [copyId, setCopyId] = useState(null);
-
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      const { data } = await supabase.from('templates').select('*').order('created_at', { ascending: false });
-      if (data) setTemplates(data);
-      setLoading(false);
-    };
-    fetchTemplates();
-  }, []);
-
-  const deleteTemplate = async (id) => {
-    if (confirm("Delete template?")) {
-      await supabase.from('templates').delete().eq('id', id);
-      setTemplates(templates.filter(t => t.id !== id));
-    }
-  };
-
-  // NEW: Copy HTML to Clipboard
-  const handleUse = (template) => {
-    const html = template.structure.map(b => `<!-- ${b.type} -->\n<div class="block-${b.type}">${b.content}</div>`).join('\n\n');
-    navigator.clipboard.writeText(html);
-    setCopyId(template.id);
-    setTimeout(() => setCopyId(null), 2000); // Reset badge after 2 seconds
-  };
-
-  return (
-    <div className="max-w-6xl mx-auto space-y-12">
-      <div className="flex justify-between items-center"><div><h1 className="text-2xl font-bold text-slate-900 dark:text-white">Templates</h1><p className="text-slate-500 mt-1">Design your page layouts.</p></div><button onClick={onNewTemplate} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg hover:bg-indigo-700 transition-all"><Plus size={18}/> Create Template</button></div>
-      <div><h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2"><User size={18} className="text-indigo-500"/> My Templates</h2>{loading ? (<div className="text-center py-12 text-slate-400">Loading templates...</div>) : templates.length === 0 ? (<div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl"><p className="text-slate-500 mb-4">You haven't created any templates yet.</p><button onClick={onNewTemplate} className="text-indigo-600 font-bold hover:underline">Create your first one</button></div>) : (<div className="grid grid-cols-1 md:grid-cols-3 gap-6"><button onClick={onNewTemplate} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all group h-64"><div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/50 transition-colors"><Plus size={24} className="text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"/></div><p className="font-bold text-slate-600 dark:text-slate-300 group-hover:text-indigo-700 dark:group-hover:text-indigo-400">New Template</p></button>{templates.map(t => (<Card key={t.id} className="flex flex-col h-64 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors group relative overflow-hidden"><div className="h-2 bg-indigo-500 w-full"></div><div className="p-6 flex-1 flex flex-col"><div className="flex justify-between items-start mb-4"><div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg"><LayoutTemplate size={20} className="text-indigo-600 dark:text-indigo-400"/></div><button onClick={(e) => { e.stopPropagation(); deleteTemplate(t.id); }} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={18}/></button></div><h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1">{t.name}</h3><p className="text-sm text-slate-500">{t.structure?.length || 0} Blocks</p><div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2"><button onClick={() => onPreview(t, 'preview_user')} className="flex-1 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 rounded hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2"><Eye size={14}/> Preview</button><button onClick={() => handleUse(t)} className={`flex-1 py-2 text-xs font-bold rounded transition-all ${copyId === t.id ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'text-slate-600 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100'}`}>{copyId === t.id ? 'Copied!' : 'Use'}</button></div></div></Card>))}</div>)}</div>
-      <div className="border-t border-slate-200 dark:border-slate-700"></div>
-      <div><h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2"><BookOpen size={18} className="text-emerald-500"/> Template Library</h2><p className="text-slate-500 text-sm mb-6">Start with a proven structure. Clone these to your library to customize.</p><div className="grid grid-cols-1 md:grid-cols-3 gap-6">{PRESET_TEMPLATES.map(t => (<Card key={t.id} className="flex flex-col h-64 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors group relative overflow-hidden"><div className="h-2 bg-emerald-500 w-full"></div><div className="p-6 flex-1 flex flex-col"><div className="flex justify-between items-start mb-4"><div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg"><LayoutTemplate size={20} className="text-emerald-600 dark:text-emerald-400"/></div></div><h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1">{t.name}</h3><p className="text-sm text-slate-500">{t.category} • {t.structure.length} Blocks</p><div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2"><button onClick={() => onPreview(t, 'preview_preset')} className="w-full py-2 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 rounded hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"><Eye size={14}/> Preview</button></div></div><div className="absolute top-3 right-3"><Badge type="success">Preset</Badge></div></Card>))}</div></div>
-    </div>
-  );
-};
-
-// --- 6. AI Generation Modal (Unchanged) ---
+// --- 5. AI Generation Modal ---
 const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess }) => {
   const [prompt, setPrompt] = useState('');
   const [targetColumn, setTargetColumn] = useState('AI_Output');
@@ -506,51 +439,38 @@ const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess }) => {
         setProgress({ current: i + 1, total });
       }
       const updatedData = { rows: newRows, headers: newHeaders, platform: project.data?.platform || 'Wordpress' };
-      await supabase.from('projects').update({ data: updatedData, row_count: newRows.length }).eq('id', project.id);
+      await supabase.from('projects').update({ data: updatedData, row_count: newRows.length, status: 'Completed' }).eq('id', project.id);
       onUpdateSuccess();
     } catch (error) { console.error(error); } finally { setIsGenerating(false); }
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-slate-800 w-full max-w-4xl h-[90vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"><Sparkles className="text-indigo-600" size={20} /> AI Generator: <span className="text-slate-500 font-normal">{project.name}</span></h3>
-          <button onClick={onClose}><X className="text-slate-400 hover:text-slate-600" /></button>
-        </div>
+      <div className="bg-white dark:bg-slate-800 w-full max-w-2xl h-[80vh] rounded-2xl shadow-2xl border dark:border-slate-700 flex flex-col overflow-hidden">
+        <div className="p-6 border-b dark:border-slate-700 flex justify-between"><h3 className="font-bold dark:text-white">Generate Content: {project.name}</h3><button onClick={onClose}><X/></button></div>
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-             <div><label className="block text-xs font-bold uppercase text-slate-500 mb-2">Output Column</label><input value={targetColumn} onChange={(e) => setTargetColumn(e.target.value)} className="w-full p-3 rounded-lg border dark:bg-slate-700 dark:border-slate-600 dark:text-white" /></div>
-             <div>
-               <label className="block text-xs font-bold uppercase text-slate-500 mb-2">Load Template (Optional)</label>
-               <select 
-                 value={selectedTemplateId} 
-                 onChange={handleTemplateSelect}
-                 className="w-full p-3 rounded-lg border dark:bg-slate-700 dark:border-slate-600 dark:text-white appearance-none cursor-pointer"
-               >
-                 <option value="">-- Select a Template --</option>
-                 <optgroup label="Presets">
-                   {PRESET_TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                 </optgroup>
-                 {userTemplates.length > 0 && (
-                   <optgroup label="My Templates">
-                     {userTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                   </optgroup>
-                 )}
-               </select>
-             </div>
-          </div>
-          <div className="space-y-3"><label className="block text-xs font-bold uppercase text-slate-500">Prompt</label><div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border dark:border-slate-700 max-h-32 overflow-y-auto">{headers.map((h) => (<button key={h} onClick={() => insertVariable(h)} className="px-2 py-1 text-xs font-medium bg-white dark:bg-slate-800 border rounded hover:border-indigo-500 dark:text-slate-300">{`{{${h}}}`}</button>))}</div><textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Write a blog intro for {{City}}..." className="w-full h-40 p-4 rounded-lg border dark:bg-slate-800 dark:border-slate-600 dark:text-white resize-none font-mono text-sm" /></div>
-          {(isGenerating || logs.length > 0) && (<div className="space-y-3"><div className="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-400"><span>Progress</span><span>{progress.current} / {progress.total}</span></div><div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2"><div className="bg-indigo-600 h-2 rounded-full transition-all" style={{ width: `${(progress.current / (progress.total || 1)) * 100}%` }}></div></div><div className="p-3 rounded-lg bg-slate-900 text-emerald-400 font-mono text-xs h-32 overflow-y-auto">{logs.map((log, i) => <div key={i}>{log}</div>)}</div></div>)}
+           <div><label className="block text-xs font-bold mb-2 dark:text-white">Target Column</label><input value={targetColumn} onChange={e=>setTargetColumn(e.target.value)} className="w-full p-2 border rounded dark:bg-slate-700 dark:text-white"/></div>
+           <div><label className="block text-xs font-bold mb-2 dark:text-white">Load Template</label>
+             <select value={selectedTemplateId} onChange={handleTemplateSelect} className="w-full p-2 border rounded dark:bg-slate-700 dark:text-white">
+               <option value="">-- Select --</option>
+               <optgroup label="Presets">{PRESET_TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup>
+               <optgroup label="My Templates">{userTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup>
+             </select>
+           </div>
+           <div><label className="block text-xs font-bold mb-2 dark:text-white">Prompt</label><div className="flex flex-wrap gap-2 mb-2">{headers.map(h=><button key={h} onClick={()=>setPrompt(p=>p+` {{${h}}} `)} className="px-2 py-1 text-xs border rounded bg-slate-100 dark:bg-slate-800 dark:text-white">{`{{${h}}}`}</button>)}</div><textarea value={prompt} onChange={e=>setPrompt(e.target.value)} className="w-full h-32 p-2 border rounded dark:bg-slate-700 dark:text-white"/></div>
+           {isGenerating && <div className="p-4 bg-slate-100 dark:bg-slate-900 rounded h-32 overflow-y-auto font-mono text-xs">{logs.map((l,i)=><div key={i}>{l}</div>)}</div>}
         </div>
-        <div className="p-6 border-t dark:border-slate-700 flex justify-end gap-3 bg-slate-50 dark:bg-slate-800/50">{!isGenerating ? (<button onClick={handleGenerate} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 flex items-center gap-2"><Sparkles size={18} /> Generate</button>) : (<button onClick={() => abortControllerRef.current?.abort()} className="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 flex items-center gap-2"><StopCircle size={18} /> Stop</button>)}</div>
+        <div className="p-6 border-t dark:border-slate-700 flex justify-end gap-2">
+           <button onClick={onClose} className="px-4 py-2 border rounded">Cancel</button>
+           <button onClick={handleGenerate} disabled={isGenerating} className="px-4 py-2 bg-indigo-600 text-white rounded">{isGenerating?'Generating...':'Generate'}</button>
+        </div>
       </div>
     </div>
   );
 };
 
-// --- 7. New Project Modal (Unchanged) ---
-const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, datasets }) => {
+// --- 6. New Project Modal (Unchanged) ---
+const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, datasets, initialData }) => {
   const [mode, setMode] = useState('csv');
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -560,7 +480,18 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, datasets }) => {
   const [selectedDataset, setSelectedDataset] = useState('');
   const fileInputRef = useRef(null);
 
-  useEffect(() => { if(isOpen) { setMode('csv'); setFile(null); setPreview(null); setProjectName(''); setSelectedDataset(''); } }, [isOpen]);
+  useEffect(() => { 
+    if(isOpen) { 
+      if (initialData) {
+        setMode('manual'); 
+        setProjectName(initialData.name);
+        setPlatform(initialData.data?.platform || 'Wordpress');
+      } else {
+        setMode('csv'); setFile(null); setPreview(null); setProjectName(''); setSelectedDataset(''); setPlatform('Wordpress');
+      }
+    } 
+  }, [isOpen, initialData]);
+  
   if (!isOpen) return null;
 
   const processFile = (uploadedFile) => {
@@ -581,6 +512,16 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, datasets }) => {
   const handleSave = async () => {
     setUploading(true);
     const { data: { user } } = await supabase.auth.getUser();
+    
+    if (initialData) {
+       const updatedData = { ...initialData.data, platform };
+       const { error } = await supabase.from('projects').update({ name: projectName, data: updatedData }).eq('id', initialData.id);
+       if (error) alert(error.message);
+       else { onUploadSuccess(); onClose(); }
+       setUploading(false);
+       return;
+    }
+
     let payload = { rows: [], platform, headers: [] };
     let name = projectName;
     let count = 0;
@@ -610,18 +551,21 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, datasets }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl border dark:border-slate-700 overflow-hidden">
-        <div className="p-6 border-b dark:border-slate-700 flex justify-between items-center"><h3 className="text-lg font-bold dark:text-white">New Project</h3><button onClick={onClose}><X className="text-slate-400"/></button></div>
+        <div className="p-6 border-b dark:border-slate-700 flex justify-between items-center"><h3 className="text-lg font-bold dark:text-white">{initialData ? 'Edit Project' : 'New Project'}</h3><button onClick={onClose}><X className="text-slate-400"/></button></div>
         <div className="p-6 space-y-4">
           <div><label className="text-xs font-bold uppercase text-slate-500">Platform</label><div className="grid grid-cols-3 gap-2 mt-2">{['Wordpress', 'Webflow', 'Shopify'].map(p => <button key={p} onClick={() => setPlatform(p)} className={`p-2 border rounded text-sm ${platform===p?'bg-indigo-50 border-indigo-500 text-indigo-700':'dark:border-slate-600 dark:text-slate-300'}`}>{p}</button>)}</div></div>
-          <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg">
-             <button onClick={() => setMode('csv')} className={`flex-1 py-2 text-sm rounded ${mode === 'csv' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>Upload CSV</button>
-             <button onClick={() => setMode('library')} className={`flex-1 py-2 text-sm rounded ${mode === 'library' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>From Library</button>
-             <button onClick={() => setMode('manual')} className={`flex-1 py-2 text-sm rounded ${mode === 'manual' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>Manual</button>
-          </div>
           
-          {mode === 'csv' && (!preview ? <div onClick={() => fileInputRef.current.click()} className="border-2 border-dashed p-8 text-center rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50"><input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={(e) => processFile(e.target.files[0])} /><UploadCloud className="mx-auto mb-2 text-indigo-500" /><p className="text-sm dark:text-slate-300">Click to upload CSV</p></div> : <div className="p-4 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 flex items-center gap-2"><FileSpreadsheet size={16}/> {preview.totalRows} rows found</div>)}
+          {!initialData && (
+            <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg">
+               <button onClick={() => setMode('csv')} className={`flex-1 py-2 text-sm rounded ${mode === 'csv' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>Upload CSV</button>
+               <button onClick={() => setMode('library')} className={`flex-1 py-2 text-sm rounded ${mode === 'library' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>From Library</button>
+               <button onClick={() => setMode('manual')} className={`flex-1 py-2 text-sm rounded ${mode === 'manual' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>Manual</button>
+            </div>
+          )}
           
-          {mode === 'library' && (
+          {mode === 'csv' && !initialData && (!preview ? <div onClick={() => fileInputRef.current.click()} className="border-2 border-dashed p-8 text-center rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50"><input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={(e) => processFile(e.target.files[0])} /><UploadCloud className="mx-auto mb-2 text-indigo-500" /><p className="text-sm dark:text-slate-300">Click to upload CSV</p></div> : <div className="p-4 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 flex items-center gap-2"><FileSpreadsheet size={16}/> {preview.totalRows} rows found</div>)}
+          
+          {mode === 'library' && !initialData && (
              <div>
                 <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Select Dataset</label>
                 {datasets && datasets.length > 0 ? (
@@ -633,23 +577,21 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, datasets }) => {
              </div>
           )}
 
-          {mode === 'manual' && <input value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="Project Name" className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white" />}
+          {(mode === 'manual' || initialData) && <input value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="Project Name" className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white" />}
         </div>
-        <div className="p-6 border-t dark:border-slate-700 flex justify-end gap-2"><button onClick={onClose} className="px-4 py-2 text-slate-500">Cancel</button><button onClick={handleSave} disabled={uploading} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium">{uploading ? <Loader2 className="animate-spin"/> : 'Create'}</button></div>
+        <div className="p-6 border-t dark:border-slate-700 flex justify-end gap-2"><button onClick={onClose} className="px-4 py-2 text-slate-500">Cancel</button><button onClick={handleSave} disabled={uploading} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium">{uploading ? <Loader2 className="animate-spin"/> : (initialData ? 'Save Changes' : 'Create')}</button></div>
       </div>
     </div>
   );
 };
 
-// --- 8. View Data Modal (Updated with Inspector) ---
+// --- 7. View Data Modal (With Inspector & Export) ---
 const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
   const [localProject, setLocalProject] = useState(project);
   const [newRow, setNewRow] = useState({});
   const [showAddRow, setShowAddRow] = useState(false);
   const [newHeader, setNewHeader] = useState('');
-  
-  // Inspector State
-  const [inspectCell, setInspectCell] = useState(null); // { rowIndex, headerName, content }
+  const [inspectCell, setInspectCell] = useState(null); 
 
   useEffect(() => { setLocalProject(project); }, [project]);
   if (!isOpen || !localProject) return null;
@@ -660,11 +602,7 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
   const handleUpdate = async (newRows, newHeaders) => { 
     const updatedData = { ...localProject.data, rows: newRows, headers: newHeaders }; 
     const { error } = await supabase.from('projects').update({ data: updatedData, row_count: newRows.length }).eq('id', localProject.id); 
-    if (!error) { 
-      const updated = { ...localProject, data: updatedData, row_count: newRows.length }; 
-      setLocalProject(updated); 
-      onProjectUpdate(updated); 
-    } 
+    if (!error) { const updated = { ...localProject, data: updatedData, row_count: newRows.length }; setLocalProject(updated); onProjectUpdate(updated); } 
   };
 
   const handleCellSave = (newContent) => {
@@ -680,59 +618,26 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
     const csvContent = [headers.join(','), ...rows.map(row => headers.map(h => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${localProject.name}_export.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
+    link.href = URL.createObjectURL(blob);
+    link.download = `${localProject.name}_export.csv`;
     link.click();
-    document.body.removeChild(link);
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-      
-      {inspectCell && (
-        <InspectorModal 
-          isOpen={!!inspectCell} 
-          onClose={() => setInspectCell(null)} 
-          content={inspectCell.content} 
-          headerName={inspectCell.headerName}
-          onSave={handleCellSave}
-        />
-      )}
-
+      {inspectCell && <InspectorModal isOpen={!!inspectCell} onClose={() => setInspectCell(null)} content={inspectCell.content} headerName={inspectCell.headerName} onSave={handleCellSave}/>}
       <div className="bg-white dark:bg-slate-800 w-full max-w-6xl h-[85vh] rounded-2xl shadow-2xl border dark:border-slate-700 flex flex-col overflow-hidden">
         <div className="p-6 border-b dark:border-slate-700 flex justify-between items-center">
           <h3 className="text-lg font-bold dark:text-white">{localProject.name}</h3>
           <div className="flex gap-2">
-            <button onClick={handleExport} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"><Download size={16} /> Export CSV</button>
+            <button onClick={handleExport} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-sm font-medium flex items-center gap-1"><Download size={16} /> Export CSV</button>
             <button onClick={() => setShowAddRow(!showAddRow)} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium"><Plus size={16} className="inline" /> Add Row</button>
             <button onClick={onClose}><X className="text-slate-400"/></button>
           </div>
         </div>
         <div className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-900/50">
           {headers.length === 0 && rows.length === 0 ? (<div className="text-center p-12"><p className="mb-4 text-slate-500">Empty Project.</p><div className="flex justify-center gap-2"><input value={newHeader} onChange={(e) => setNewHeader(e.target.value)} placeholder="Column Name" className="p-2 border rounded text-sm" /><button onClick={() => { if(newHeader) handleUpdate(rows, [...headers, newHeader]); setNewHeader(''); }} className="px-3 py-2 bg-indigo-600 text-white rounded text-sm">Add</button></div></div>) : (
-            <table className="w-full text-sm text-left bg-white dark:bg-slate-800"><thead className="bg-slate-100 dark:bg-slate-700"><tr>{headers.map((h, i) => <th key={i} className="px-4 py-2 border-b dark:border-slate-600">{h}</th>)}<th className="w-10 border-b dark:border-slate-600"></th></tr></thead><tbody>{showAddRow && (<tr className="bg-indigo-50">{headers.map((h, i) => <td key={i} className="p-2"><input placeholder={h} value={newRow[h]||''} onChange={(e)=>setNewRow({...newRow, [h]:e.target.value})} className="w-full border rounded p-1 text-xs" /></td>)}<td className="p-2"><button onClick={() => { handleUpdate([...rows, newRow], headers); setNewRow({}); setShowAddRow(false); }} className="bg-indigo-600 text-white p-1 rounded"><Save size={14}/></button></td></tr>)}{rows.map((row, i) => (<tr key={i} className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 group">{headers.map((h, j) => {
-              const cellData = row[h];
-              // Check if it looks like HTML (starts with <)
-              const isHTML = typeof cellData === 'string' && cellData.trim().startsWith('<');
-              
-              return (
-                <td key={j} className="px-4 py-2 truncate max-w-[200px]">
-                  {isHTML ? (
-                    <button 
-                      onClick={() => setInspectCell({ rowIndex: i, headerName: h, content: cellData })}
-                      className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 flex items-center gap-1 font-bold"
-                    >
-                      <Eye size={12}/> Preview Page
-                    </button>
-                  ) : (
-                    cellData
-                  )}
-                </td>
-              );
-            })}<td className="px-4 py-2"><button onClick={() => { if(confirm('Delete?')) handleUpdate(rows.filter((_,idx)=>idx!==i), headers); }} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button></td></tr>))}</tbody></table>
+            <table className="w-full text-sm text-left bg-white dark:bg-slate-800"><thead className="bg-slate-100 dark:bg-slate-700"><tr>{headers.map((h, i) => <th key={i} className="px-4 py-2 border-b dark:border-slate-600">{h}</th>)}<th className="w-10 border-b dark:border-slate-600"></th></tr></thead><tbody>{showAddRow && (<tr className="bg-indigo-50">{headers.map((h, i) => <td key={i} className="p-2"><input placeholder={h} value={newRow[h]||''} onChange={(e)=>setNewRow({...newRow, [h]:e.target.value})} className="w-full border rounded p-1 text-xs" /></td>)}<td className="p-2"><button onClick={() => { handleUpdate([...rows, newRow], headers); setNewRow({}); setShowAddRow(false); }} className="bg-indigo-600 text-white p-1 rounded"><Save size={14}/></button></td></tr>)}{rows.map((row, i) => (<tr key={i} className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 group">{headers.map((h, j) => { const cellData = row[h]; const isHTML = typeof cellData === 'string' && cellData.trim().startsWith('<'); return (<td key={j} className="px-4 py-2 truncate max-w-[200px]">{isHTML ? (<button onClick={() => setInspectCell({ rowIndex: i, headerName: h, content: cellData })} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 flex items-center gap-1 font-bold"><Eye size={12}/> Preview Page</button>) : cellData}</td>); })}<td className="px-4 py-2"><button onClick={() => { if(confirm('Delete?')) handleUpdate(rows.filter((_,idx)=>idx!==i), headers); }} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button></td></tr>))}</tbody></table>
           )}
         </div>
       </div>
@@ -740,7 +645,7 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
   );
 };
 
-// --- 9. Dashboard Views ---
+// --- 8. Dashboard Views ---
 const DashboardView = ({ projects, onNewProject }) => {
   const totalProjects = projects.length;
   const totalRows = projects.reduce((acc, curr) => acc + (curr.row_count || 0), 0);
@@ -762,39 +667,71 @@ const DashboardView = ({ projects, onNewProject }) => {
   );
 };
 
-const ProjectsView = ({ projects, onDelete, onView, onGenerate }) => (
-  <div className="max-w-6xl mx-auto space-y-8">
-    <h1 className="text-2xl font-bold dark:text-white">Projects</h1>
-    <Card className="overflow-hidden border border-slate-200 dark:border-slate-700">
-      <table className="w-full text-sm text-left">
-        <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 uppercase tracking-wider text-xs"><tr><th className="px-6 py-4 font-medium">Name</th><th className="px-6 py-4 font-medium">Rows</th><th className="px-6 py-4 font-medium">Platform</th><th className="px-6 py-4 font-medium text-right">Actions</th></tr></thead>
-        <tbody className="divide-y dark:divide-slate-700">
-          {projects.length === 0 ? <tr><td colSpan={4} className="text-center py-12 text-slate-500">No projects found.</td></tr> : projects.map(p => (
-            <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-              <td className="px-6 py-4 font-medium dark:text-white">{p.name}</td>
-              <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{p.row_count}</td>
-              <td className="px-6 py-4 text-slate-600 dark:text-slate-400 flex items-center gap-2">{p.data?.platform === 'Wordpress' ? <Globe size={14} /> : <Monitor size={14} />} {p.data?.platform}</td>
-              <td className="px-6 py-4 text-right flex justify-end gap-2">
-                <button onClick={() => onGenerate(p)} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs"><Sparkles size={14}/> Generate</button>
-                <button onClick={() => onView(p)} className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 transition-colors"><Eye size={18}/></button>
-                <button onClick={() => onDelete(p.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-2 transition-colors"><Trash2 size={18}/></button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </Card>
-  </div>
-);
+const ProjectsView = ({ projects, onDelete, onView, onGenerate, onEdit }) => {
+  const [search, setSearch] = useState('');
+  const [activeStatus, setActiveStatus] = useState('All');
+  const tabs = ['All', 'Draft', 'Completed'];
+
+  const filtered = projects.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = activeStatus === 'All' || p.status === activeStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusColor = (s) => s==='Completed'?'success':s==='Draft'?'neutral':'warning';
+
+  const handleDownload = (e, project) => {
+    e.stopPropagation();
+    const rows = Array.isArray(project.data) ? project.data : (project.data?.rows || []);
+    const headers = (project.data?.headers && project.data.headers.length > 0) ? project.data.headers : (rows.length > 0 ? Object.keys(rows[0]) : []);
+    if (rows.length === 0) return alert("No data.");
+    const csvContent = [headers.join(','), ...rows.map(row => headers.map(h => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${project.name}.csv`; link.click();
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="flex justify-between items-center">
+         <div><h1 className="text-2xl font-bold dark:text-white">Projects</h1><p className="text-slate-500 mt-1">Manage your active campaigns.</p></div>
+         <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16}/>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search projects..." className="pl-10 pr-4 py-2 border rounded-lg text-sm w-64 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
+        </div>
+      </div>
+
+      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700 mb-4">
+        {tabs.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveStatus(tab)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeStatus === tab ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <Card className="overflow-hidden border border-slate-200 dark:border-slate-700"><table className="w-full text-sm text-left"><thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 uppercase tracking-wider text-xs"><tr><th className="px-6 py-4 font-medium">Name</th><th className="px-6 py-4 font-medium">Status</th><th className="px-6 py-4 font-medium">Rows</th><th className="px-6 py-4 font-medium">Platform</th><th className="px-6 py-4 font-medium">Created</th><th className="px-6 py-4 font-medium text-right">Actions</th></tr></thead><tbody className="divide-y dark:divide-slate-700">{filtered.length === 0 ? <tr><td colSpan={6} className="text-center py-12 text-slate-500">No projects found.</td></tr> : filtered.map(p => (<tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><td className="px-6 py-4 font-medium dark:text-white">{p.name}</td><td className="px-6 py-4"><Badge type={getStatusColor(p.status)}>{p.status}</Badge></td><td className="px-6 py-4 text-slate-600 dark:text-slate-400">{p.row_count}</td><td className="px-6 py-4 text-slate-600 dark:text-slate-400 flex items-center gap-2">{p.data?.platform === 'Wordpress' ? <Globe size={14} className="text-blue-500"/> : <Monitor size={14} className="text-indigo-500"/>} {p.data?.platform}</td><td className="px-6 py-4 text-slate-500 text-xs">{new Date(p.created_at).toLocaleDateString()}</td><td className="px-6 py-4 text-right flex justify-end gap-2">
+        <button onClick={(e) => { e.stopPropagation(); onGenerate(p); }} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs"><Sparkles size={14}/> Generate</button>
+        <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 transition-colors" title="Edit Project"><Edit3 size={18}/></button>
+        <button onClick={(e) => { e.stopPropagation(); onView(p); }} className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 transition-colors" title="View Data"><Eye size={18}/></button>
+        <button onClick={(e) => handleDownload(e, p)} className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 p-2 transition-colors" title="Download CSV"><Download size={18}/></button>
+        <button onClick={(e) => { e.stopPropagation(); onDelete(p.id); }} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-2 transition-colors" title="Delete"><Trash2 size={18}/></button>
+      </td></tr>))}</tbody></table></Card>
+    </div>
+  );
+};
 
 const SettingsView = ({ email, onLogout }) => (
   <div className="max-w-3xl mx-auto space-y-6">
     <h1 className="text-2xl font-bold dark:text-white">Settings</h1>
+    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg mb-6 flex gap-3 items-start"><Info className="text-blue-600 mt-0.5" size={18}/><div><h4 className="font-bold text-blue-800 dark:text-blue-300 text-sm">Account & API</h4><p className="text-xs text-blue-600 dark:text-blue-400">Manage your profile settings and API keys here.</p></div></div>
     <Card className="p-6"><h3 className="font-bold dark:text-white mb-4">Account</h3><p className="mb-4 text-slate-600 dark:text-slate-300">{email}</p><button onClick={onLogout} className="px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 font-medium transition-colors"><LogOut size={16}/> Sign Out</button></Card>
   </div>
 );
 
-// --- 10. Datasets Tab (Functional) ---
+// --- 9. Datasets Tab ---
 const DatasetsView = ({ user, onUpload }) => {
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -812,7 +749,6 @@ const DatasetsView = ({ user, onUpload }) => {
   const handleUpload = async (e) => {
      const file = e.target.files[0];
      if (!file) return;
-     
      const reader = new FileReader();
      reader.onload = async (e) => {
         const text = e.target.result;
@@ -823,14 +759,7 @@ const DatasetsView = ({ user, onUpload }) => {
               const v = line.split(',');
               return headers.reduce((acc, h, i) => ({ ...acc, [h]: v[i]?.trim() }), {});
            });
-           
-           const { error } = await supabase.from('datasets').insert({
-              user_id: user.id,
-              name: file.name,
-              row_count: lines.length - 1,
-              data: { rows, headers }
-           });
-           
+           const { error } = await supabase.from('datasets').insert({ user_id: user.id, name: file.name, row_count: lines.length - 1, data: { rows, headers } });
            if (!error) window.location.reload(); 
         }
      };
@@ -851,24 +780,13 @@ const DatasetsView = ({ user, onUpload }) => {
         <button onClick={() => fileInputRef.current.click()} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg hover:bg-indigo-700 transition-all"><UploadCloud size={18}/> Upload New</button>
         <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleUpload} />
       </div>
-      
       {loading ? <div className="text-center py-12 text-slate-400">Loading...</div> : datasets.length === 0 ? (
-        <Card className="p-12 text-center border-dashed border-2">
-          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4"><HardDrive size={32} className="text-slate-400"/></div>
-          <h3 className="text-lg font-bold dark:text-white">No Datasets Yet</h3>
-          <p className="text-slate-500 max-w-sm mx-auto mt-2">Upload your CSV files here to reuse them across multiple projects.</p>
-          <button onClick={() => fileInputRef.current.click()} className="mt-6 text-indigo-600 font-bold hover:underline">Upload First Dataset</button>
-        </Card>
+        <Card className="p-12 text-center border-dashed border-2"><div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4"><HardDrive size={32} className="text-slate-400"/></div><h3 className="text-lg font-bold dark:text-white">No Datasets Yet</h3><p className="text-slate-500 max-w-sm mx-auto mt-2">Upload your CSV files here to reuse them across multiple projects.</p><button onClick={() => fileInputRef.current.click()} className="mt-6 text-indigo-600 font-bold hover:underline">Upload First Dataset</button></Card>
       ) : (
          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {datasets.map(d => (
                <Card key={d.id} className="p-6 flex flex-col group relative overflow-hidden hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
-                  <div className="flex justify-between items-start mb-4">
-                     <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600"><FileSpreadsheet size={24}/></div>
-                     <button onClick={() => handleDelete(d.id)} className="text-slate-300 hover:text-red-500"><Trash2 size={18}/></button>
-                  </div>
-                  <h3 className="font-bold text-lg text-slate-900 dark:text-white truncate">{d.name}</h3>
-                  <p className="text-sm text-slate-500">{d.row_count} Rows • CSV</p>
+                  <div className="flex justify-between items-start mb-4"><div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600"><FileSpreadsheet size={24}/></div><button onClick={() => handleDelete(d.id)} className="text-slate-300 hover:text-red-500"><Trash2 size={18}/></button></div><h3 className="font-bold text-lg text-slate-900 dark:text-white truncate">{d.name}</h3><p className="text-sm text-slate-500">{d.row_count} Rows • CSV</p>
                </Card>
             ))}
          </div>
@@ -877,7 +795,52 @@ const DatasetsView = ({ user, onUpload }) => {
   );
 };
 
-// --- 11. Main Layout ---
+// --- 10. Templates Tab View (Restored) ---
+const TemplatesView = ({ user, onNewTemplate, onPreview }) => {
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [copyId, setCopyId] = useState(null);
+
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      const { data } = await supabase.from('templates').select('*').order('created_at', { ascending: false });
+      if (data) setTemplates(data);
+      setLoading(false);
+    };
+    fetchTemplates();
+  }, []);
+
+  const deleteTemplate = async (id) => {
+    if (confirm("Delete template?")) {
+      await supabase.from('templates').delete().eq('id', id);
+      setTemplates(templates.filter(t => t.id !== id));
+    }
+  };
+
+  const handleUse = (template) => {
+    const html = template.structure.map(b => `<!-- ${b.type} -->\n<div class="block-${b.type}">${b.content}</div>`).join('\n\n');
+    navigator.clipboard.writeText(html);
+    setCopyId(template.id);
+    setTimeout(() => setCopyId(null), 2000); 
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-12">
+      <div className="flex justify-between items-center"><div><h1 className="text-2xl font-bold text-slate-900 dark:text-white">Templates</h1><p className="text-slate-500 mt-1">Design your page layouts.</p></div><button onClick={onNewTemplate} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg hover:bg-indigo-700 transition-all"><Plus size={18}/> Create Template</button></div>
+      
+      <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg border border-indigo-100 dark:border-indigo-800 flex gap-3 items-center text-sm text-indigo-800 dark:text-indigo-300">
+         <Info size={18}/>
+         <p>Build layouts using the drag-and-drop builder. Use <strong>{`{{Variable}}`}</strong> syntax to inject data from your CSV columns.</p>
+      </div>
+
+      <div><h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2"><User size={18} className="text-indigo-500"/> My Templates</h2>{loading ? (<div className="text-center py-12 text-slate-400">Loading templates...</div>) : templates.length === 0 ? (<div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl"><p className="text-slate-500 mb-4">You haven't created any templates yet.</p><button onClick={onNewTemplate} className="text-indigo-600 font-bold hover:underline">Create your first one</button></div>) : (<div className="grid grid-cols-1 md:grid-cols-3 gap-6"><button onClick={onNewTemplate} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all group h-64"><div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/50 transition-colors"><Plus size={24} className="text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"/></div><p className="font-bold text-slate-600 dark:text-slate-300 group-hover:text-indigo-700 dark:group-hover:text-indigo-400">New Template</p></button>{templates.map(t => (<Card key={t.id} className="flex flex-col h-64 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors group relative overflow-hidden"><div className="h-2 bg-indigo-500 w-full"></div><div className="p-6 flex-1 flex flex-col"><div className="flex justify-between items-start mb-4"><div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg"><LayoutTemplate size={20} className="text-indigo-600 dark:text-indigo-400"/></div><button onClick={(e) => { e.stopPropagation(); deleteTemplate(t.id); }} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={18}/></button></div><h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1">{t.name}</h3><p className="text-sm text-slate-500">{t.structure?.length || 0} Blocks</p><div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2"><button onClick={() => onPreview(t, 'preview_user')} className="flex-1 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 rounded hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2"><Eye size={14}/> Preview</button><button onClick={() => handleUse(t)} className={`flex-1 py-2 text-xs font-bold rounded transition-all ${copyId === t.id ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'text-slate-600 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100'}`}>{copyId === t.id ? 'Copied!' : 'Use'}</button></div></div></Card>))}</div>)}</div>
+      <div className="border-t border-slate-200 dark:border-slate-700"></div>
+      <div><h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2"><BookOpen size={18} className="text-emerald-500"/> Template Library</h2><p className="text-slate-500 text-sm mb-6">Start with a proven structure. Clone these to your library to customize.</p><div className="grid grid-cols-1 md:grid-cols-3 gap-6">{PRESET_TEMPLATES.map(t => (<Card key={t.id} className="flex flex-col h-64 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors group relative overflow-hidden"><div className="h-2 bg-emerald-500 w-full"></div><div className="p-6 flex-1 flex flex-col"><div className="flex justify-between items-start mb-4"><div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg"><LayoutTemplate size={20} className="text-emerald-600 dark:text-emerald-400"/></div></div><h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1">{t.name}</h3><p className="text-sm text-slate-500">{t.category} • {t.structure.length} Blocks</p><div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2"><button onClick={() => onPreview(t, 'preview_preset')} className="w-full py-2 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 rounded hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"><Eye size={14}/> Preview</button></div></div><div className="absolute top-3 right-3"><Badge type="success">Preset</Badge></div></Card>))}</div></div>
+    </div>
+  );
+};
+
+// --- 12. Main App ---
 function NavItem({ icon: Icon, label, active, onClick, expanded }) {
   return <button onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${active ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'} ${!expanded ? 'justify-center' : ''}`}><Icon size={20} strokeWidth={active?2.5:2} />{expanded && <span className="text-sm font-medium">{label}</span>}</button>;
 }
@@ -895,6 +858,7 @@ export default function App() {
   const [previewTemplate, setPreviewTemplate] = useState(null);
   const [viewProject, setViewProject] = useState(null);
   const [generateProject, setGenerateProject] = useState(null);
+  const [editProjectData, setEditProjectData] = useState(null); // For Editing Project Metadata
   const [projects, setProjects] = useState([]);
   const [datasets, setDatasets] = useState([]);
 
@@ -913,7 +877,13 @@ export default function App() {
   const fetchProjects = async () => { const { data } = await supabase.from('projects').select('*').order('created_at', { ascending: false }); if(data) setProjects(data); };
   const fetchDatasets = async () => { const { data } = await supabase.from('datasets').select('*').order('created_at', { ascending: false }); if(data) setDatasets(data); };
 
-  const handleDelete = async (id) => { if(confirm('Delete?')) { await supabase.from('projects').delete().eq('id', id); fetchProjects(); } };
+  const handleDelete = async (id) => { 
+    if (confirm("Are you sure you want to delete this project?")) {
+      const { error } = await supabase.from('projects').delete().eq('id', id);
+      if (error) alert("Error deleting project: " + error.message);
+      else fetchProjects(); // Refresh list immediately
+    } 
+  };
   const handleLogout = async () => await supabase.auth.signOut();
 
   const handleTemplatePreview = (template, mode) => { setEditTemplate(null); setIsTemplateModalOpen(false); setPreviewTemplate({ ...template, mode }); };
@@ -926,7 +896,15 @@ export default function App() {
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
-        <NewProjectModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={fetchProjects} datasets={datasets} />
+        {/* Reusing NewProjectModal for Edit Mode */}
+        <NewProjectModal 
+           isOpen={isUploadModalOpen || !!editProjectData} 
+           onClose={() => { setIsUploadModalOpen(false); setEditProjectData(null); }} 
+           onUploadSuccess={fetchProjects} 
+           datasets={datasets} 
+           initialData={editProjectData}
+        />
+        
         <ViewModal isOpen={!!viewProject} onClose={() => setViewProject(null)} project={viewProject} onProjectUpdate={(p) => { setProjects(projects.map(pr => pr.id === p.id ? p : pr)); }} />
         <GenerateModal isOpen={!!generateProject} onClose={() => setGenerateProject(null)} project={generateProject} onUpdateSuccess={fetchProjects} />
         <TemplateModal isOpen={isTemplateModalOpen || !!editTemplate || !!previewTemplate} onClose={() => { setIsTemplateModalOpen(false); setEditTemplate(null); setPreviewTemplate(null); }} initialData={editTemplate || previewTemplate} mode={previewTemplate ? previewTemplate.mode : (editTemplate ? 'edit' : 'create')} onSaveSuccess={() => {}} />
@@ -956,7 +934,7 @@ export default function App() {
         </aside>
         <main className="flex-1 flex flex-col overflow-hidden">
           <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-10">
-            <div className="flex items-center gap-4 text-slate-500"><span className="text-sm font-medium">Organization</span><span className="text-slate-300">/</span><span className="text-sm font-medium text-slate-900 dark:text-white">GroGoliath HQ</span></div>
+            <div className="flex items-center gap-4 text-slate-500"><span className="text-sm font-medium">Organization</span><span className="text-sm font-medium text-slate-900 dark:text-white">GroGoliath HQ</span></div>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3 pl-6 border-l border-slate-200 dark:border-slate-700">
                 <div className="w-8 h-8 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">{session.user.email[0].toUpperCase()}</div>
@@ -966,7 +944,15 @@ export default function App() {
           </header>
           <div className="flex-1 overflow-auto p-8">
             {activeTab === 'dashboard' && <DashboardView projects={projects} onNewProject={() => setIsUploadModalOpen(true)} />}
-            {activeTab === 'projects' && <ProjectsView projects={projects} onDelete={handleDelete} onView={setViewProject} onGenerate={setGenerateProject} />}
+            {activeTab === 'projects' && (
+              <ProjectsView 
+                 projects={projects} 
+                 onDelete={handleDelete} 
+                 onView={setViewProject} 
+                 onGenerate={setGenerateProject} 
+                 onEdit={(p) => setEditProjectData(p)} 
+              />
+            )}
             {activeTab === 'datasets' && <DatasetsView user={session.user} onUpload={() => setIsUploadModalOpen(true)} />}
             {activeTab === 'templates' && (
               <TemplatesView 
