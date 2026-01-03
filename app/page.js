@@ -1,3 +1,9 @@
+/**
+ * ⚠️ DO NOT REWRITE THIS FILE
+ * This file is the MVP monolith.
+ * Only extract components OUT of this file.
+ * No new features should be added directly here.
+ */
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient'; 
