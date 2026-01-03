@@ -5,6 +5,7 @@
  * No new features should be added directly here.
  */
 "use client";
+import { ensureProfile } from "../lib/profile";
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient'; 
 import { 
@@ -376,7 +377,15 @@ const TemplateModal = ({ isOpen, onClose, onSaveSuccess, initialData, mode = 'ed
 };
 
 // --- 5. AI Generation Modal ---
-const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess }) => {
+const GenerateModal = ({
+  isOpen,
+  onClose,
+  project,
+  onUpdateSuccess,
+  profile,
+  session,
+  setProfile
+}) => {
   const [prompt, setPrompt] = useState('');
   const [targetColumn, setTargetColumn] = useState('AI_Output');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -420,15 +429,41 @@ const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess }) => {
   const insertVariable = (header) => setPrompt(prev => prev + ` {{${header}}} `);
   const addLog = (message) => setLogs(prev => [...prev, message]);
 
-  const handleGenerate = async () => {
-    if (!prompt) return alert("Please enter a prompt.");
-    setIsGenerating(true);
-    abortControllerRef.current = new AbortController();
-    const total = rows.length;
-    setProgress({ current: 0, total });
-    const newRows = [...rows];
-    const newHeaders = headers.includes(targetColumn) ? headers : [...headers, targetColumn];
+const handleGenerate = async () => {
+  if (!profile) {
+    alert("Profile not loaded yet. Please wait.");
+    return;
+  }
 
+  if (!prompt) {
+    alert("Please enter a prompt.");
+    return;
+  }
+
+  if (rows.length === 0) {
+    alert("No rows to generate content for.");
+    return;
+  }
+
+  const pagesRemaining = profile.page_limit - profile.pages_used;
+
+  if (rows.length > pagesRemaining) {
+    alert(
+      `You can only generate ${pagesRemaining} more pages on your current plan.\n\nUpgrade to Pro to generate more.`
+    );
+    return;
+  }
+
+  setIsGenerating(true);
+  abortControllerRef.current = new AbortController();
+
+  const total = rows.length;
+  setProgress({ current: 0, total });
+
+  const newRows = [...rows];
+  const newHeaders = headers.includes(targetColumn)
+    ? headers
+    : [...headers, targetColumn];
     try {
       for (let i = 0; i < total; i++) {
         if (abortControllerRef.current.signal.aborted) break;
@@ -474,7 +509,8 @@ newRows[i] = {
   title: parsed.title,
   meta_description: parsed.meta_description,
   schema: parsed.schema,
-  html_body: parsed.html_body
+  html_body: parsed.html_body,
+blocks: [] // future-proof: structured blocks will live here
 };
 
           addLog(`✅ Row ${i + 1}: Success`);
@@ -484,6 +520,17 @@ newRows[i] = {
       const updatedData = { rows: newRows, headers: newHeaders, platform: project.data?.platform || 'Wordpress' };
       await supabase.from('projects').update({ data: updatedData, row_count: newRows.length, status: 'Completed' }).eq('id', project.id);
       onUpdateSuccess();
+      await supabase
+  .from("profiles")
+  .update({
+    pages_used: profile.pages_used + rows.length
+  })
+  .eq("id", session.user.id);
+
+setProfile({
+  ...profile,
+  pages_used: profile.pages_used + rows.length
+});
     } catch (error) { console.error(error); } finally { setIsGenerating(false); }
   };
 
@@ -640,7 +687,9 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
   if (!isOpen || !localProject) return null;
 
   const rows = Array.isArray(localProject.data) ? localProject.data : (localProject.data?.rows || []);
-  const headers = (localProject.data?.headers && localProject.data.headers.length > 0) ? localProject.data.headers : (rows.length > 0 ? Object.keys(rows[0]) : []);
+  const headers = ['slug', 'title', 'meta_description', 'html_body', 'schema']
+  .filter(h => rows.some(r => r[h]));
+
 
   const handleUpdate = async (newRows, newHeaders) => { 
     const updatedData = { ...localProject.data, rows: newRows, headers: newHeaders }; 
@@ -665,6 +714,27 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
     link.download = `${localProject.name}_export.csv`;
     link.click();
   };
+  const handleExportJSON = () => {
+  if (rows.length === 0) return alert("No data to export.");
+
+  const pages = rows.map(r => ({
+    slug: r.slug,
+    title: r.title,
+    meta_description: r.meta_description,
+    html_body: r.html_body,
+    schema: r.schema
+  }));
+
+  const blob = new Blob([JSON.stringify(pages, null, 2)], {
+    type: 'application/json'
+  });
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${localProject.name}_pages.json`;
+  link.click();
+};
+
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
@@ -674,13 +744,20 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
           <h3 className="text-lg font-bold dark:text-white">{localProject.name}</h3>
           <div className="flex gap-2">
             <button onClick={handleExport} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-sm font-medium flex items-center gap-1"><Download size={16} /> Export CSV</button>
+            <button
+  onClick={handleExportJSON}
+  className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-sm font-medium flex items-center gap-1"
+>
+  Export JSON
+</button>
             <button onClick={() => setShowAddRow(!showAddRow)} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium"><Plus size={16} className="inline" /> Add Row</button>
             <button onClick={onClose}><X className="text-slate-400"/></button>
           </div>
         </div>
         <div className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-900/50">
           {headers.length === 0 && rows.length === 0 ? (<div className="text-center p-12"><p className="mb-4 text-slate-500">Empty Project.</p><div className="flex justify-center gap-2"><input value={newHeader} onChange={(e) => setNewHeader(e.target.value)} placeholder="Column Name" className="p-2 border rounded text-sm" /><button onClick={() => { if(newHeader) handleUpdate(rows, [...headers, newHeader]); setNewHeader(''); }} className="px-3 py-2 bg-indigo-600 text-white rounded text-sm">Add</button></div></div>) : (
-            <table className="w-full text-sm text-left bg-white dark:bg-slate-800"><thead className="bg-slate-100 dark:bg-slate-700"><tr>{headers.map((h, i) => <th key={i} className="px-4 py-2 border-b dark:border-slate-600">{h}</th>)}<th className="w-10 border-b dark:border-slate-600"></th></tr></thead><tbody>{showAddRow && (<tr className="bg-indigo-50">{headers.map((h, i) => <td key={i} className="p-2"><input placeholder={h} value={newRow[h]||''} onChange={(e)=>setNewRow({...newRow, [h]:e.target.value})} className="w-full border rounded p-1 text-xs" /></td>)}<td className="p-2"><button onClick={() => { handleUpdate([...rows, newRow], headers); setNewRow({}); setShowAddRow(false); }} className="bg-indigo-600 text-white p-1 rounded"><Save size={14}/></button></td></tr>)}{rows.map((row, i) => (<tr key={i} className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 group">{headers.map((h, j) => { const cellData = row[h]; const isHTML = typeof cellData === 'string' && cellData.trim().startsWith('<'); return (<td key={j} className="px-4 py-2 truncate max-w-[200px]">{isHTML ? (<button onClick={() => setInspectCell({ rowIndex: i, headerName: h, content: cellData })} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 flex items-center gap-1 font-bold"><Eye size={12}/> Preview Page</button>) : cellData}</td>); })}<td className="px-4 py-2"><button onClick={() => { if(confirm('Delete?')) handleUpdate(rows.filter((_,idx)=>idx!==i), headers); }} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button></td></tr>))}</tbody></table>
+            <table className="w-full text-sm text-left bg-white dark:bg-slate-800"><thead className="bg-slate-100 dark:bg-slate-700"><tr>{headers.map((h, i) => <th key={i} className="px-4 py-2 border-b dark:border-slate-600">{h}</th>)}<th className="w-10 border-b dark:border-slate-600"></th></tr></thead><tbody>{showAddRow && (<tr className="bg-indigo-50">{headers.map((h, i) => <td key={i} className="p-2"><input placeholder={h} value={newRow[h]||''} onChange={(e)=>setNewRow({...newRow, [h]:e.target.value})} className="w-full border rounded p-1 text-xs" /></td>)}<td className="p-2"><button onClick={() => { handleUpdate([...rows, newRow], headers); setNewRow({}); setShowAddRow(false); }} className="bg-indigo-600 text-white p-1 rounded"><Save size={14}/></button></td></tr>)}{rows.map((row, i) => (<tr key={i} className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 group">{headers.map((h, j) => { const cellData = row[h]; const isHTML = h === 'html_body';
+ return (<td key={j} className="px-4 py-2 truncate max-w-[200px]">{isHTML ? (<button onClick={() => setInspectCell({ rowIndex: i, headerName: h, content: cellData })} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 flex items-center gap-1 font-bold"><Eye size={12}/> View Page</button>) : cellData}</td>); })}<td className="px-4 py-2"><button onClick={() => { if(confirm('Delete?')) handleUpdate(rows.filter((_,idx)=>idx!==i), headers); }} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button></td></tr>))}</tbody></table>
           )}
         </div>
       </div>
@@ -689,7 +766,9 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
 };
 
 // --- 8. Dashboard Views ---
-const DashboardView = ({ projects, onNewProject }) => {
+const DashboardView = ({ projects, profile, onNewProject }) => {
+const projectLimit = profile?.project_limit ?? 0;
+const canCreateProject = projects.length < projectLimit;
   const totalProjects = projects.length;
   const totalRows = projects.reduce((acc, curr) => acc + (curr.row_count || 0), 0);
   const stats = [
@@ -700,7 +779,46 @@ const DashboardView = ({ projects, onNewProject }) => {
   ];
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <div className="flex justify-between items-center"><h1 className="text-2xl font-bold dark:text-white">Overview</h1><button onClick={onNewProject} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg hover:bg-indigo-700 transition-colors"><Plus size={18}/> New Project</button></div>
+      <div className="flex justify-between items-center">
+  <h1 className="text-2xl font-bold dark:text-white">Overview</h1>
+
+  <button
+    onClick={onNewProject}
+    disabled={!canCreateProject}
+    className={`px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg transition-colors
+      ${
+        canCreateProject
+          ? "bg-indigo-600 text-white hover:bg-indigo-700"
+          : "bg-slate-300 text-slate-500 cursor-not-allowed"
+      }`}
+  >
+    <Plus size={18}/> New Project
+  </button>
+</div>
+
+{!canCreateProject && (
+  <p className="mt-2 text-xs text-amber-600 font-medium">
+    Project limit reached. Upgrade to Pro to create more projects.
+  </p>
+)}
+<button
+  onClick={onNewProject}
+  disabled={!canCreateProject}
+  className={`px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg transition-colors
+    ${
+      canCreateProject
+        ? "bg-indigo-600 text-white hover:bg-indigo-700"
+        : "bg-slate-300 text-slate-500 cursor-not-allowed"
+    }`}
+>
+  <Plus size={18}/> New Project
+</button>
+
+{!canCreateProject && (
+  <p className="mt-2 text-xs text-amber-600 font-medium">
+    Project limit reached. Upgrade to Pro to create more projects.
+  </p>
+)}      
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">{stats.map((s, i) => <Card key={i} className="p-6"><div className="flex justify-between items-start"><div><p className="text-slate-500 text-sm font-medium">{s.label}</p><h3 className="text-2xl font-bold dark:text-white mt-1">{s.value}</h3></div><div className="p-2 bg-slate-50 dark:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300"><s.icon size={20}/></div></div></Card>)}</div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6"><Card className="p-8 bg-gradient-to-r from-indigo-600 to-violet-600 border-none text-white shadow-xl shadow-indigo-600/20"><div className="flex justify-between items-start"><div><h2 className="text-xl font-bold mb-2">Ready to scale?</h2><p className="text-indigo-100 max-w-md mb-6 text-sm leading-relaxed">Import your dataset, map your keywords, and let AI write thousands of pages for you in minutes.</p><button onClick={onNewProject} className="bg-white text-indigo-600 px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-indigo-50 transition-colors shadow-lg">Upload Dataset</button></div><FileText size={64} className="text-indigo-100 opacity-80"/></div></Card></div>
@@ -933,6 +1051,7 @@ function LoginScreen() {
 }
 
 export default function App() {
+  const [profile, setProfile] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -950,16 +1069,51 @@ export default function App() {
   const [datasets, setDatasets] = useState([]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => { 
-       setSession(session); 
-       if(session) { fetchProjects(); fetchDatasets(); } 
-       setLoading(false); 
-    });
-    supabase.auth.onAuthStateChange((_event, session) => { 
-       setSession(session); 
-       if(session) { fetchProjects(); fetchDatasets(); }
-    });
-  }, []);
+  let unsubscribe;
+
+  const initAuth = async () => {
+    // 1️⃣ Get initial session
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    setSession(session);
+
+    if (session) {
+      const profileData = await ensureProfile(session.user);
+      setProfile(profileData);
+
+      fetchProjects();
+      fetchDatasets();
+    }
+
+    setLoading(false);
+
+    // 2️⃣ Listen for auth changes
+    const { data: { subscription } } =
+  supabase.auth.onAuthStateChange(async (_event, session) => {
+    setSession(session);
+
+    if (session) {
+      const profileData = await ensureProfile(session.user);
+      setProfile(profileData);
+
+      fetchProjects();
+      fetchDatasets();
+    } else {
+      setProfile(null);
+    }
+  });
+
+unsubscribe = subscription;
+  };
+
+  initAuth();
+
+  return () => {
+    if (unsubscribe) unsubscribe();
+  };
+}, []);
 
   const fetchProjects = async () => { const { data } = await supabase.from('projects').select('*').order('created_at', { ascending: false }); if(data) setProjects(data); };
   const fetchDatasets = async () => { const { data } = await supabase.from('datasets').select('*').order('created_at', { ascending: false }); if(data) setDatasets(data); };
@@ -993,7 +1147,15 @@ export default function App() {
         />
         
         <ViewModal isOpen={!!viewProject} onClose={() => setViewProject(null)} project={viewProject} onProjectUpdate={(p) => { setProjects(projects.map(pr => pr.id === p.id ? p : pr)); }} />
-        <GenerateModal isOpen={!!generateProject} onClose={() => setGenerateProject(null)} project={generateProject} onUpdateSuccess={fetchProjects} />
+        <GenerateModal
+  isOpen={!!generateProject}
+  onClose={() => setGenerateProject(null)}
+  project={generateProject}
+  onUpdateSuccess={fetchProjects}
+  profile={profile}
+  session={session}
+  setProfile={setProfile}
+/>
         <TemplateModal isOpen={isTemplateModalOpen || !!editTemplate || !!previewTemplate} onClose={() => { setIsTemplateModalOpen(false); setEditTemplate(null); setPreviewTemplate(null); }} initialData={editTemplate || previewTemplate} mode={previewTemplate ? previewTemplate.mode : (editTemplate ? 'edit' : 'create')} onSaveSuccess={() => {}} />
 
         <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300 z-20`}>
@@ -1030,7 +1192,13 @@ export default function App() {
             </div>
           </header>
           <div className="flex-1 overflow-auto p-8">
-            {activeTab === 'dashboard' && <DashboardView projects={projects} onNewProject={() => setIsUploadModalOpen(true)} />}
+            {activeTab === 'dashboard' && (
+  <DashboardView
+    projects={projects}
+    profile={profile}
+    onNewProject={() => setIsUploadModalOpen(true)}
+  />
+)}
             {activeTab === 'projects' && (
               <ProjectsView 
                  projects={projects} 
