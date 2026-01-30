@@ -1,7 +1,11 @@
-import './globals.css';
-import { Inter } from 'next/font/google';
+import "./globals.css";
+import { DM_Sans } from "next/font/google";
 
-const inter = Inter({ subsets: ['latin'] });
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-body"
+});
 
 // This metadata object is standard JavaScript and defines the title for the browser tab.
 export const metadata = {
@@ -15,7 +19,7 @@ export default function RootLayout({ children }) {
       {/* We add suppressHydrationWarning to ignore attributes injected by 
          browser extensions (like Grammarly) which cause the mismatch error.
       */}
-      <body className={inter.className} suppressHydrationWarning={true}>
+      <body className={`${dmSans.variable}`} suppressHydrationWarning={true}>
         {children}
       </body>
     </html>
