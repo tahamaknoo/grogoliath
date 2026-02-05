@@ -29,7 +29,7 @@ function NavItem({ icon: Icon, label, active, onClick, expanded }) {
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
         active
-          ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+          ? "bg-[#2B5E44]/10 text-[#2B5E44] dark:bg-[#2B5E44]/25 dark:text-emerald-300"
           : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
       } ${!expanded ? "justify-center" : ""}`}
     >
@@ -69,7 +69,7 @@ function LoginScreen() {
           onChange={(e) => setPassword(e.target.value)}
           className="w-full mb-4 p-3 border rounded dark:bg-slate-700 dark:text-white"
         />
-        <button onClick={handleLogin} disabled={loading} className="w-full bg-indigo-600 text-white p-3 rounded font-bold hover:bg-indigo-700">
+        <button onClick={handleLogin} disabled={loading} className="w-full bg-[#2B5E44] text-white p-3 rounded font-bold hover:bg-[#234d37]">
           {loading ? "Signing in..." : "Sign In"}
         </button>
       </div>
@@ -96,6 +96,29 @@ export default function App() {
   const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0);
   const [initialTemplateId, setInitialTemplateId] = useState("");
   const [generateTemplateId, setGenerateTemplateId] = useState("");
+  const [autoStartFirstDraft, setAutoStartFirstDraft] = useState(false);
+  const [generationExpandSignal, setGenerationExpandSignal] = useState(0);
+  const [generationCenter, setGenerationCenter] = useState({
+    projectId: null,
+    projectName: "",
+    isGenerating: false,
+    isMinimized: false,
+    awaitingConfirm: false,
+    progress: { current: 0, total: 0 },
+    etaSeconds: null
+  });
+
+  const resetGenerationCenter = () => {
+    setGenerationCenter({
+      projectId: null,
+      projectName: "",
+      isGenerating: false,
+      isMinimized: false,
+      awaitingConfirm: false,
+      progress: { current: 0, total: 0 },
+      etaSeconds: null
+    });
+  };
 
   useEffect(() => {
     let unsubscribe;
@@ -184,7 +207,7 @@ export default function App() {
 
   return (
     <div className={darkMode ? "dark" : ""}>
-      <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
+      <div className="flex h-screen bg-gradient-to-br from-[#f4f8f5] via-white to-[#edf6f0] dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
         <NewProjectModal
           isOpen={isUploadModalOpen || !!editProjectData}
           onClose={() => {
@@ -196,7 +219,13 @@ export default function App() {
           onCreateProject={(project, templateId) => {
             setGenerateProject(project);
             setGenerateTemplateId(templateId || "");
+            setAutoStartFirstDraft(true);
             setActiveTab("projects");
+          }}
+          onOpenTemplateBuilder={() => {
+            setIsUploadModalOpen(false);
+            setEditProjectData(null);
+            handleNewTemplate();
           }}
           initialData={editProjectData}
           initialTemplateId={initialTemplateId}
@@ -216,6 +245,8 @@ export default function App() {
           onClose={() => {
             setGenerateProject(null);
             setGenerateTemplateId("");
+            setAutoStartFirstDraft(false);
+            resetGenerationCenter();
           }}
           project={generateProject}
           onUpdateSuccess={fetchProjects}
@@ -223,6 +254,9 @@ export default function App() {
           session={session}
           setProfile={setProfile}
           initialTemplateId={generateTemplateId}
+          autoStartFirstDraft={autoStartFirstDraft}
+          onStatusChange={(status) => setGenerationCenter((prev) => ({ ...prev, ...status }))}
+          expandSignal={generationExpandSignal}
         />
 
         <TemplateModal
@@ -243,7 +277,7 @@ export default function App() {
             className="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-700 cursor-pointer"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           >
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-600/20">G</div>
+            <div className="w-8 h-8 bg-[#2B5E44] rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-[#2B5E44]/30">G</div>
             {isSidebarOpen && <span className="ml-3 font-bold text-lg tracking-tight">GroGoliath</span>}
           </div>
 
@@ -275,7 +309,7 @@ export default function App() {
         </aside>
 
         <main className="flex-1 flex flex-col overflow-hidden">
-          <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-10">
+          <header className="h-16 bg-white/90 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-10 backdrop-blur-sm">
             <div className="flex items-center gap-4 text-slate-500">
               <span className="text-sm font-medium">Organization</span>
               <span className="text-sm font-medium text-slate-900 dark:text-white">GroGoliath HQ</span>
@@ -283,7 +317,7 @@ export default function App() {
 
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3 pl-6 border-l border-slate-200 dark:border-slate-700">
-                <div className="w-8 h-8 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-8 h-8 bg-gradient-to-tr from-[#2B5E44] to-[#3d7a5b] rounded-full flex items-center justify-center text-white text-xs font-bold">
                   {session.user.email[0].toUpperCase()}
                 </div>
                 <div className="hidden md:block text-sm">
@@ -312,6 +346,7 @@ export default function App() {
                 onGenerate={(p) => {
                   setGenerateProject(p);
                   setGenerateTemplateId("");
+                  setAutoStartFirstDraft(false);
                 }}
                 onEdit={(p) => setEditProjectData(p)}
               />
@@ -334,6 +369,59 @@ export default function App() {
           </div>
         </main>
       </div>
+
+      {!!generateProject && (generationCenter.isGenerating || generationCenter.isMinimized || generationCenter.awaitingConfirm) && (
+        <div className="fixed bottom-4 right-4 z-[95] w-[340px] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase font-bold text-slate-500">Generation Center</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+                {generationCenter.projectName || generateProject?.name}
+              </p>
+            </div>
+            {!generationCenter.isGenerating && !generationCenter.awaitingConfirm && (
+              <button
+                onClick={() => {
+                  setGenerateProject(null);
+                  setGenerateTemplateId("");
+                  setAutoStartFirstDraft(false);
+                  resetGenerationCenter();
+                }}
+                className="text-xs text-slate-500 hover:text-slate-700"
+              >
+                Dismiss
+              </button>
+            )}
+          </div>
+          <div className="mt-3 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#2B5E44] to-[#3d7a5b] transition-all duration-300"
+              style={{
+                width: `${
+                  generationCenter.progress?.total > 0
+                    ? (generationCenter.progress.current / generationCenter.progress.total) * 100
+                    : 0
+                }%`
+              }}
+            />
+          </div>
+          <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+            Progress: {generationCenter.progress?.current || 0}/{generationCenter.progress?.total || 0}
+            {generationCenter.etaSeconds ? ` - ETA ~${Math.ceil(generationCenter.etaSeconds / 60)}m` : ""}
+          </div>
+          {generationCenter.awaitingConfirm && (
+            <div className="mt-2 text-xs text-amber-600">First draft ready. Open generator and click Generate Remaining.</div>
+          )}
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={() => setGenerationExpandSignal((n) => n + 1)}
+              className="px-3 py-1.5 text-xs rounded bg-[#2B5E44] text-white hover:bg-[#234d37]"
+            >
+              Open Generator
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

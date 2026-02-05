@@ -27,7 +27,7 @@ const DashboardView = ({ projects, profile, onNewProject, onOpenTemplates }) => 
           onClick={onNewProject}
           disabled={!canCreateProject}
           className={`px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg transition-colors ${
-            canCreateProject ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-slate-300 text-slate-500 cursor-not-allowed"
+            canCreateProject ? "bg-[#2B5E44] text-white hover:bg-[#234d37]" : "bg-slate-300 text-slate-500 cursor-not-allowed"
           }`}
         >
           <Plus size={18} /> New Project
@@ -56,29 +56,31 @@ const DashboardView = ({ projects, profile, onNewProject, onOpenTemplates }) => 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <Card className="p-8 bg-gradient-to-r from-indigo-600 to-violet-600 border-none text-white shadow-xl shadow-indigo-600/20">
+          <Card className="p-8 bg-gradient-to-r from-[#2B5E44] to-[#3f7c5d] border-none text-white shadow-xl shadow-[#2B5E44]/25 relative overflow-hidden">
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
+            <div className="absolute -left-10 -bottom-12 w-52 h-52 bg-white/10 rounded-full"></div>
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-xl font-bold mb-2">Ready to scale?</h2>
-                <p className="text-indigo-100 max-w-md mb-6 text-sm leading-relaxed">
+                <p className="text-emerald-50 max-w-md mb-6 text-sm leading-relaxed">
                   Start with a template, then add your keywords to generate pages in bulk.
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={onOpenTemplates}
-                    className="bg-white text-indigo-600 px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-indigo-50 transition-colors shadow-lg"
+                    className="bg-white text-[#2B5E44] px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-emerald-50 transition-colors shadow-lg"
                   >
                     Create Template
                   </button>
                   <button
                     onClick={onNewProject}
-                    className="bg-indigo-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-indigo-400 transition-colors shadow-lg"
+                    className="bg-[#1f4633] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#193b2b] transition-colors shadow-lg"
                   >
                     New Project
                   </button>
                 </div>
               </div>
-              <FileText size={64} className="text-indigo-100 opacity-80" />
+              <FileText size={64} className="text-emerald-100 opacity-80" />
             </div>
           </Card>
         </div>

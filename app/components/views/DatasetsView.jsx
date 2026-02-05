@@ -80,7 +80,7 @@ const DatasetsView = ({ user }) => {
         </div>
         <button
           onClick={() => fileInputRef.current.click()}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg hover:bg-indigo-700 transition-all"
+          className="bg-[#2B5E44] text-white px-4 py-2 rounded-lg font-bold flex gap-2 shadow-lg hover:bg-[#234d37] transition-all"
         >
           <UploadCloud size={18} /> Upload New
         </button>
@@ -96,16 +96,16 @@ const DatasetsView = ({ user }) => {
           </div>
           <h3 className="text-lg font-bold dark:text-white">No Datasets Yet</h3>
           <p className="text-slate-500 max-w-sm mx-auto mt-2">Upload your CSV files here to reuse them across multiple projects.</p>
-          <button onClick={() => fileInputRef.current.click()} className="mt-6 text-indigo-600 font-bold hover:underline">
+          <button onClick={() => fileInputRef.current.click()} className="mt-6 text-[#2B5E44] font-bold hover:underline">
             Upload First Dataset
           </button>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {datasets.map((d) => (
-            <Card key={d.id} className="p-6 flex flex-col group relative overflow-hidden hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+            <Card key={d.id} className="p-6 flex flex-col group relative overflow-hidden hover:border-[#2B5E44]/30 dark:hover:border-[#2B5E44]/50 transition-colors">
               <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600">
+                <div className="p-3 bg-[#2B5E44]/10 dark:bg-[#2B5E44]/20 rounded-lg text-[#2B5E44]">
                   <FileSpreadsheet size={24} />
                 </div>
                 <button onClick={() => handleDelete(d.id)} className="text-slate-300 hover:text-red-500">

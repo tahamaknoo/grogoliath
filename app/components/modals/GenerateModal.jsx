@@ -5,7 +5,19 @@ import { X } from "lucide-react";
 import PRESET_TEMPLATES from "../../constants/presetTemplates";
 import { supabase } from "../../../lib/supabaseClient";
 
-const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess, profile, session, setProfile, initialTemplateId }) => {
+const GenerateModal = ({
+  isOpen,
+  onClose,
+  project,
+  onUpdateSuccess,
+  profile,
+  session,
+  setProfile,
+  initialTemplateId,
+  autoStartFirstDraft = false,
+  onStatusChange,
+  expandSignal
+}) => {
   const [prompt, setPrompt] = useState("");
   const [targetColumn, setTargetColumn] = useState("AI_Output");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -17,7 +29,11 @@ const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess, profile, ses
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
   const [pendingIndexes, setPendingIndexes] = useState([]);
   const [blockSettings, setBlockSettings] = useState([]);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [startedAt, setStartedAt] = useState(null);
+  const [clockNow, setClockNow] = useState(Date.now());
   const abortControllerRef = useRef(null);
+  const autoStartRef = useRef(false);
 
   // ---------- Premium responsive style kit (inject if missing) ----------
   const STYLE_KIT = `
@@ -119,28 +135,41 @@ const GenerateModal = ({ isOpen, onClose, project, onUpdateSuccess, profile, ses
       type: b.type,
       label: b.type.replace("_", " "),
       mode: manualTypes.has(b.type) ? "manual" : aiTypes.has(b.type) ? "ai" : "manual",
-      words: 200
+      words: 200,
+      notes: ""
     };
   };
 
-  const applyTemplateById = (id, templatesList) => {
-    if (!id) return;
-    const template = templatesList.find((t) => t.id.toString() === id.toString());
-    if (template) {
-      const settings = template.structure.map((b) => getDefaultBlockSetting(b));
-      setBlockSettings(settings);
-      const structurePrompt = template.structure
-        .map((b) => {
-          const s = settings.find((x) => x.id === b.id) || getDefaultBlockSetting(b);
-          if (s.mode === "manual") {
-            return `[BLOCK: ${b.type}] Instructions: Use this placeholder verbatim: ${b.content}`;
-          }
-          return `[BLOCK: ${b.type}] Instructions: ${b.content} Target length: ~${s.words} words.`;
-        })
-        .join("\n\n");
-      setSelectedTemplateId(id.toString());
-      setPrompt(
-        `Generate a full HTML page based on this structure.
+  const mergeBlockSettings = (template, incomingSettings = []) => {
+    const incomingMap = new Map((incomingSettings || []).map((s) => [String(s.id), s]));
+    return template.structure.map((b) => {
+      const base = getDefaultBlockSetting(b);
+      const incoming = incomingMap.get(String(b.id));
+      if (!incoming) return base;
+      return {
+        ...base,
+        ...incoming,
+        id: b.id,
+        notes: String(incoming.notes || "")
+      };
+    });
+  };
+
+  const buildStructurePrompt = (template, settings) =>
+    template.structure
+      .map((b) => {
+        const s = settings.find((x) => String(x.id) === String(b.id)) || getDefaultBlockSetting(b);
+        const note = String(s.notes || "").trim();
+        if (s.mode === "manual") {
+          return `[BLOCK: ${b.type}] Instructions: Use this placeholder verbatim: ${b.content}${note ? ` Editor note: ${note}` : ""}`;
+        }
+        return `[BLOCK: ${b.type}] Instructions: ${b.content} Target length: ~${s.words} words.${note ? ` Editor note: ${note}` : ""}`;
+      })
+      .join("\n\n");
+
+  const buildPromptFromTemplate = (template, settings) => {
+    const structurePrompt = buildStructurePrompt(template, settings);
+    return `Generate a full HTML page based on this structure.
 
 ABSOLUTE RULES:
 - Return ONLY raw HTML in html_body (no markdown fences).
@@ -150,8 +179,24 @@ ABSOLUTE RULES:
 - Include a <style> block (premium responsive design system). If unsure, include modern, clean styles.
 
 STRUCTURE:
-${structurePrompt}`
-      );
+${structurePrompt}`;
+  };
+
+  const rebuildPromptFromSettings = (settings, templateId = selectedTemplateId) => {
+    if (!templateId) return;
+    const template = [...PRESET_TEMPLATES, ...userTemplates].find((t) => t.id.toString() === templateId.toString());
+    if (!template) return;
+    setPrompt(buildPromptFromTemplate(template, settings));
+  };
+
+  const applyTemplateById = (id, templatesList, incomingSettings = []) => {
+    if (!id) return;
+    const template = templatesList.find((t) => t.id.toString() === id.toString());
+    if (template) {
+      const settings = mergeBlockSettings(template, incomingSettings);
+      setBlockSettings(settings);
+      setSelectedTemplateId(id.toString());
+      setPrompt(buildPromptFromTemplate(template, settings));
     }
   };
 
@@ -162,6 +207,9 @@ ${structurePrompt}`
       setTargetColumn("AI_Output");
       setAwaitingConfirm(false);
       setPendingIndexes([]);
+      setIsMinimized(false);
+      setStartedAt(null);
+      autoStartRef.current = false;
 
       const fetchTemplates = async () => {
         const {
@@ -178,10 +226,14 @@ ${structurePrompt}`
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !initialTemplateId) return;
+    if (!isOpen) return;
+    const templateId = initialTemplateId || project?.data?.details?.TemplateId;
+    if (!templateId) return;
     const all = [...PRESET_TEMPLATES, ...userTemplates];
-    applyTemplateById(initialTemplateId, all);
-  }, [isOpen, initialTemplateId, userTemplates]);
+    if (all.length === 0) return;
+    const savedSettings = Array.isArray(project?.data?.details?.BlockSettings) ? project.data.details.BlockSettings : [];
+    applyTemplateById(templateId, all, savedSettings);
+  }, [isOpen, initialTemplateId, project, userTemplates]);
 
   const handleTemplateSelect = (e) => {
     const id = e.target.value;
@@ -201,7 +253,7 @@ ${structurePrompt}`
 
   const addLog = (message) => setLogs((prev) => [...prev, message]);
 
-  // ✅ helper: extract JSON even if model adds extra text/fences
+  // helper: extract JSON even if model adds extra text/fences
   const extractJson = (txt) => {
     if (typeof txt !== "string") throw new Error("No content returned");
     const start = txt.indexOf("{");
@@ -210,7 +262,7 @@ ${structurePrompt}`
     return txt.slice(start, end + 1);
   };
 
-  // ✅ QA helpers
+  // QA helpers
   const stripMarkdownFences = (s) => {
     if (!s || typeof s !== "string") return "";
     // remove common fenced code blocks
@@ -369,11 +421,12 @@ ${prompt}
     }
 
     setIsGenerating(true);
+    if (!startedAt) setStartedAt(Date.now());
     abortControllerRef.current = new AbortController();
 
     const newRows = [...rows];
 
-    // ✅ generate only rows missing output (prefer targetColumn, fallback to html_body)
+    // generate only rows missing output (prefer targetColumn, fallback to html_body)
     const needsGen = (r) => {
       const tc = r?.[targetColumn];
       const hb = r?.html_body;
@@ -425,7 +478,7 @@ ${prompt}
           attempt += 1;
 
           const attemptLabel = attempt === 1 ? "try 1/3" : `retry ${attempt}/3`;
-          addLog(`⏳ Row ${i + 1}: generating (${attemptLabel})...`);
+          addLog(`Row ${i + 1}: generating (${attemptLabel})...`);
 
           const callPrompt =
             attempt === 1
@@ -514,20 +567,20 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
               };
 
               successCount += 1;
-              addLog(`✅ Row ${i + 1} (batch ${step + 1}/${total}): Success`);
+              addLog(`Row ${i + 1} (batch ${step + 1}/${total}): Success`);
               break;
             } else {
-              addLog(`⚠️ Row ${i + 1}: QA failed (${finalErrors.join(", ")})`);
+              addLog(`Row ${i + 1}: QA failed (${finalErrors.join(", ")})`);
             }
           } catch (err) {
             if (err?.name === "AbortError") break;
-            addLog(`❌ Row ${i + 1}: error (${String(err?.message || err)})`);
+            addLog(`Row ${i + 1}: error (${String(err?.message || err)})`);
             // keep looping for retry unless aborted
           }
         }
 
         if (finalErrors.length > 0 && !newRows[i]?.[targetColumn]) {
-          addLog(`❌ Row ${i + 1} (batch ${step + 1}/${total}): Failed after retries`);
+          addLog(`Row ${i + 1} (batch ${step + 1}/${total}): Failed after retries`);
         }
 
         setProgress({ current: step + 1, total });
@@ -566,6 +619,7 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
       console.error(error);
     } finally {
       setIsGenerating(false);
+      setStartedAt(null);
       abortControllerRef.current = null;
     }
   };
@@ -589,7 +643,7 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
       if (abortControllerRef.current?.signal?.aborted) return;
       setAwaitingConfirm(true);
       setPendingIndexes(rest);
-      addLog("✅ First page generated. Review it, then click Generate Remaining.");
+      addLog("First page generated. Review it, then click Generate Remaining.");
       return;
     }
 
@@ -605,14 +659,89 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
     setPendingIndexes([]);
   };
 
+  useEffect(() => {
+    if (!isOpen || !project || !autoStartFirstDraft) return;
+    if (autoStartRef.current || isGenerating) return;
+    autoStartRef.current = true;
+    handleGenerate();
+  }, [isOpen, project, autoStartFirstDraft]);
+
+  useEffect(() => {
+    onStatusChange?.({
+      projectId: project?.id || null,
+      projectName: project?.name || "",
+      isGenerating,
+      isMinimized,
+      awaitingConfirm,
+      progress,
+      etaSeconds: estimateRemainingSeconds()
+    });
+  }, [project, isGenerating, isMinimized, awaitingConfirm, progress, startedAt, clockNow, onStatusChange]);
+
+  useEffect(() => {
+    if (!expandSignal) return;
+    setIsMinimized(false);
+  }, [expandSignal]);
+
+  useEffect(() => {
+    if (!isGenerating) return;
+    const tick = setInterval(() => setClockNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, [isGenerating]);
+
+  const estimateRemainingSeconds = () => {
+    if (!isGenerating || !startedAt || progress.current <= 0 || progress.total <= progress.current) return null;
+    const elapsed = Math.max(1, Math.floor((clockNow - startedAt) / 1000));
+    const avgPerRow = elapsed / progress.current;
+    const remainingRows = progress.total - progress.current;
+    return Math.max(1, Math.ceil(avgPerRow * remainingRows));
+  };
+
+  const formatDuration = (totalSeconds) => {
+    if (!totalSeconds || totalSeconds < 1) return "under a minute";
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    if (mins < 1) return `${secs}s`;
+    return `${mins}m ${secs}s`;
+  };
+
+  const etaSeconds = estimateRemainingSeconds();
+
+  const handleCloseRequest = () => {
+    if (!isGenerating) {
+      onClose();
+      return;
+    }
+    const shouldStop = confirm("Generation is still running. Stop it and close?");
+    if (!shouldStop) {
+      setIsMinimized(true);
+      return;
+    }
+    abortControllerRef.current?.abort();
+    addLog("Stopped by user");
+    onClose();
+  };
+
+  if (isMinimized) return null;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-slate-800 w-full max-w-2xl h-[80vh] rounded-2xl shadow-2xl border dark:border-slate-700 flex flex-col overflow-hidden">
         <div className="p-6 border-b dark:border-slate-700 flex justify-between">
           <h3 className="font-bold dark:text-white">Generate Content: {project.name}</h3>
-          <button onClick={onClose}>
-            <X />
-          </button>
+          <div className="flex items-center gap-2">
+            {isGenerating && (
+              <button
+                onClick={() => setIsMinimized(true)}
+                className="px-2.5 py-1.5 text-xs rounded border border-[#2B5E44]/30 text-[#2B5E44] hover:bg-[#2B5E44]/10"
+              >
+                Minimize
+              </button>
+            )}
+            <button onClick={handleCloseRequest}>
+              <X />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -677,33 +806,7 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
                           x.id === b.id ? { ...x, mode: e.target.value } : x
                         );
                         setBlockSettings(next);
-                        const template = [...PRESET_TEMPLATES, ...userTemplates].find(
-                          (t) => t.id.toString() === selectedTemplateId
-                        );
-                        if (template) {
-                          const structurePrompt = template.structure
-                            .map((blk) => {
-                              const s = next.find((x) => x.id === blk.id) || getDefaultBlockSetting(blk);
-                              if (s.mode === "manual") {
-                                return `[BLOCK: ${blk.type}] Instructions: Use this placeholder verbatim: ${blk.content}`;
-                              }
-                              return `[BLOCK: ${blk.type}] Instructions: ${blk.content} Target length: ~${s.words} words.`;
-                            })
-                            .join("\n\n");
-                          setPrompt(
-                            `Generate a full HTML page based on this structure.
-
-ABSOLUTE RULES:
-- Return ONLY raw HTML in html_body (no markdown fences).
-- Wrap everything inside: <main class="gg-wrap"> ... </main>
-- Use <section class="gg-section"> for each section.
-- The final HTML MUST contain AT LEAST 15 <section> blocks.
-- Include a <style> block (premium responsive design system). If unsure, include modern, clean styles.
-
-STRUCTURE:
-${structurePrompt}`
-                          );
-                        }
+                        rebuildPromptFromSettings(next);
                       }}
                       className="p-1 border rounded dark:bg-slate-700 dark:text-white"
                     >
@@ -717,33 +820,7 @@ ${structurePrompt}`
                           x.id === b.id ? { ...x, words: Number(e.target.value) } : x
                         );
                         setBlockSettings(next);
-                        const template = [...PRESET_TEMPLATES, ...userTemplates].find(
-                          (t) => t.id.toString() === selectedTemplateId
-                        );
-                        if (template) {
-                          const structurePrompt = template.structure
-                            .map((blk) => {
-                              const s = next.find((x) => x.id === blk.id) || getDefaultBlockSetting(blk);
-                              if (s.mode === "manual") {
-                                return `[BLOCK: ${blk.type}] Instructions: Use this placeholder verbatim: ${blk.content}`;
-                              }
-                              return `[BLOCK: ${blk.type}] Instructions: ${blk.content} Target length: ~${s.words} words.`;
-                            })
-                            .join("\n\n");
-                          setPrompt(
-                            `Generate a full HTML page based on this structure.
-
-ABSOLUTE RULES:
-- Return ONLY raw HTML in html_body (no markdown fences).
-- Wrap everything inside: <main class="gg-wrap"> ... </main>
-- Use <section class="gg-section"> for each section.
-- The final HTML MUST contain AT LEAST 15 <section> blocks.
-- Include a <style> block (premium responsive design system). If unsure, include modern, clean styles.
-
-STRUCTURE:
-${structurePrompt}`
-                          );
-                        }
+                        rebuildPromptFromSettings(next);
                       }}
                       className="p-1 border rounded dark:bg-slate-700 dark:text-white"
                       disabled={b.mode !== "ai"}
@@ -754,6 +831,18 @@ ${structurePrompt}`
                         </option>
                       ))}
                     </select>
+                    <input
+                      value={b.notes || ""}
+                      onChange={(e) => {
+                        const next = blockSettings.map((x) =>
+                          x.id === b.id ? { ...x, notes: e.target.value } : x
+                        );
+                        setBlockSettings(next);
+                        rebuildPromptFromSettings(next);
+                      }}
+                      className="flex-1 min-w-[140px] p-1 border rounded dark:bg-slate-700 dark:text-white"
+                      placeholder="Section notes"
+                    />
                   </div>
                 ))}
               </div>
@@ -783,7 +872,10 @@ ${structurePrompt}`
 
           {(isGenerating || logs.length > 0) && (
             <div className="p-4 bg-slate-100 dark:bg-slate-900 rounded h-44 overflow-y-auto font-mono text-xs">
-              <div className="mb-2">Progress: {progress.current}/{progress.total}</div>
+              <div className="mb-2">
+                Progress: {progress.current}/{progress.total}
+                {etaSeconds ? ` - ETA ${formatDuration(etaSeconds)}` : ""}
+              </div>
               {logs.map((l, idx) => (
                 <div key={idx}>{l}</div>
               ))}
@@ -792,7 +884,7 @@ ${structurePrompt}`
         </div>
 
         <div className="p-6 border-t dark:border-slate-700 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 border rounded">
+          <button onClick={handleCloseRequest} className="px-4 py-2 border rounded">
             Cancel
           </button>
 
@@ -800,7 +892,7 @@ ${structurePrompt}`
             <button
               onClick={() => {
                 abortControllerRef.current?.abort();
-                addLog("⛔ Stopped by user");
+                addLog("Stopped by user");
               }}
               className="px-4 py-2 border rounded text-red-600 border-red-200 hover:bg-red-50"
             >
@@ -811,7 +903,7 @@ ${structurePrompt}`
           <button
             onClick={awaitingConfirm ? handleGenerateRemaining : handleGenerate}
             disabled={isGenerating}
-            className="px-4 py-2 bg-indigo-600 text-white rounded"
+            className="px-4 py-2 bg-[#2B5E44] text-white rounded hover:bg-[#234d37]"
           >
             {isGenerating ? "Generating..." : awaitingConfirm ? "Generate Remaining" : "Generate"}
           </button>

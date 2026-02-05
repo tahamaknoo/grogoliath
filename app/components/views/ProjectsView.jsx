@@ -55,7 +55,7 @@ const ProjectsView = ({ projects, onDelete, onView, onGenerate, onEdit }) => {
             key={tab}
             onClick={() => setActiveStatus(tab)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeStatus === tab ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"
+              activeStatus === tab ? "border-[#2B5E44] text-[#2B5E44] dark:text-emerald-300 dark:border-emerald-300" : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"
             }`}
           >
             {tab}
@@ -92,7 +92,7 @@ const ProjectsView = ({ projects, onDelete, onView, onGenerate, onEdit }) => {
                   </td>
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{p.row_count}</td>
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-400 flex items-center gap-2">
-                    {p.data?.platform === "Wordpress" ? <Monitor size={14} className="text-indigo-500" /> : <Monitor size={14} className="text-indigo-500" />} {p.data?.platform}
+                    {p.data?.platform === "Wordpress" ? <Monitor size={14} className="text-[#2B5E44]" /> : <Monitor size={14} className="text-[#2B5E44]" />} {p.data?.platform}
                   </td>
                   <td className="px-6 py-4 text-slate-500 text-xs">{new Date(p.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-4 text-right flex justify-end gap-2">
@@ -101,7 +101,7 @@ const ProjectsView = ({ projects, onDelete, onView, onGenerate, onEdit }) => {
                         e.stopPropagation();
                         onGenerate(p);
                       }}
-                      className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs"
+                      className="text-[#2B5E44] hover:text-[#234d37] dark:text-emerald-300 font-medium bg-[#2B5E44]/10 dark:bg-[#2B5E44]/25 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs"
                     >
                       <Sparkles size={14} /> Generate
                     </button>
@@ -110,7 +110,7 @@ const ProjectsView = ({ projects, onDelete, onView, onGenerate, onEdit }) => {
                         e.stopPropagation();
                         onEdit(p);
                       }}
-                      className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 transition-colors"
+                      className="text-slate-400 hover:text-[#2B5E44] dark:hover:text-emerald-300 p-2 transition-colors"
                       title="Edit Project"
                     >
                       <Edit3 size={18} />
@@ -120,7 +120,7 @@ const ProjectsView = ({ projects, onDelete, onView, onGenerate, onEdit }) => {
                         e.stopPropagation();
                         onView(p);
                       }}
-                      className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 transition-colors"
+                      className="text-slate-400 hover:text-[#2B5E44] dark:hover:text-emerald-300 p-2 transition-colors"
                       title="View Data"
                     >
                       <Eye size={18} />
