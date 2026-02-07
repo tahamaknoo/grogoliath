@@ -263,11 +263,13 @@ ${structurePrompt}`;
     applyTemplateById(id, [...PRESET_TEMPLATES, ...userTemplates]);
   };
 
-  if (!isOpen || !project) return null;
-
-  const rows = Array.isArray(project.data) ? project.data : project.data?.rows || [];
+  const rows = Array.isArray(project?.data) ? project.data : project?.data?.rows || [];
   const headers =
-    project.data?.headers && project.data.headers.length > 0 ? project.data.headers : rows.length > 0 ? Object.keys(rows[0]) : [];
+    project?.data?.headers && project.data.headers.length > 0
+      ? project.data.headers
+      : rows.length > 0
+      ? Object.keys(rows[0])
+      : [];
 
   const addLog = (message) => setLogs((prev) => [...prev, message]);
 
@@ -740,6 +742,7 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
     onClose();
   };
 
+  if (!isOpen || !project) return null;
   if (isMinimized) return null;
 
   return (

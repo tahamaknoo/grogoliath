@@ -34,11 +34,15 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
   const [internalLinks, setInternalLinks] = useState("");
   const [additionalAiContext, setAdditionalAiContext] = useState("");
   const [keywordsList, setKeywordsList] = useState("");
+  const [heroTitle, setHeroTitle] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
   const [editingPreviewBlock, setEditingPreviewBlock] = useState(null);
   const [aiPreviewBlocks, setAiPreviewBlocks] = useState([]);
   const [aiPreviewLoading, setAiPreviewLoading] = useState(false);
   const [aiPreviewError, setAiPreviewError] = useState("");
   const [previewAutoRun, setPreviewAutoRun] = useState(false);
+  const [rewriteLoadingId, setRewriteLoadingId] = useState(null);
   const remainingPages =
     profile && typeof profile.page_limit !== "undefined"
       ? Math.max(0, Number(profile.page_limit || 0) - Number(profile.pages_used || 0))
@@ -53,6 +57,27 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
   const overPlanLimit = remainingPages !== null && desiredPages > remainingPages;
   const cappedDesired = remainingPages !== null ? Math.min(desiredPages, remainingPages) : desiredPages;
   const pageCount = plannedKeywords.length > 0 ? Math.min(plannedKeywords.length, cappedDesired) : 0;
+  const aiInputsChecklist = [
+    brandName,
+    service,
+    city,
+    primaryKeyword,
+    valueProp,
+    audience,
+    cta,
+    services,
+    pricingRange,
+    tone,
+    pageGoal,
+    language,
+    internalLinks,
+    additionalAiContext
+  ];
+  const aiInputsFilled = aiInputsChecklist.filter((item) => String(item || "").trim().length > 0).length;
+  const aiInputsTotal = aiInputsChecklist.length;
+  const aiInputsPercent = Math.round((aiInputsFilled / aiInputsTotal) * 100);
+  const aiInputsStatus =
+    aiInputsPercent >= 80 ? "Excellent" : aiInputsPercent >= 55 ? "Good" : aiInputsPercent >= 30 ? "Fair" : "Barebones";
   const canSubmit =
     step === lastStep &&
     !!getTemplateById(selectedTemplateId) &&
@@ -65,6 +90,27 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
     Number(desiredPageCount) > 0 &&
     !overPlanLimit &&
     (remainingPages === null || remainingPages > 0);
+
+  useEffect(() => {
+    if (!heroTitle && (service || city)) {
+      setHeroTitle(`${service || "Service"}${city ? ` in ${city}` : ""}`.trim());
+    }
+  }, [service, city, heroTitle]);
+
+  useEffect(() => {
+    if (!metaTitle && (brandName || service || city)) {
+      const base = `${service || "Service"}${city ? ` in ${city}` : ""}`.trim();
+      const brand = brandName ? ` | ${brandName}` : "";
+      setMetaTitle(`${base}${brand}`.trim());
+    }
+  }, [brandName, service, city, metaTitle]);
+
+  useEffect(() => {
+    if (!metaDescription && (valueProp || service || city)) {
+      const core = valueProp || `${service || "Local services"}${city ? ` in ${city}` : ""}.`;
+      setMetaDescription(`${core} Get fast response times, transparent pricing, and trusted experts.`.trim());
+    }
+  }, [valueProp, service, city, metaDescription]);
 
   useEffect(() => {
     if (isOpen) {
@@ -108,6 +154,9 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
         setLanguage(details.Language || "English");
         setInternalLinks(details.InternalLinks || "");
         setAdditionalAiContext(details.AdditionalAiContext || "");
+        setHeroTitle(details.HeroTitle || "");
+        setMetaTitle(details.MetaTitle || "");
+        setMetaDescription(details.MetaDescription || "");
         const existingRows = Array.isArray(initialData.data?.rows) ? initialData.data.rows : [];
         const existingKeywords = existingRows.map((r) => r.Keyword).filter(Boolean);
         setKeywordsList(existingKeywords.join("\n"));
@@ -135,6 +184,9 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
         setLanguage("English");
         setInternalLinks("");
         setAdditionalAiContext("");
+        setHeroTitle("");
+        setMetaTitle("");
+        setMetaDescription("");
         setKeywordsList("");
         setSelectedTemplateId(initialTemplateId || "");
         setBlockSettings([]);
@@ -227,6 +279,9 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
       `Tone: ${tone || "N/A"}`,
       `Language: ${language || "N/A"}`,
       `Internal links: ${internalLinks || "N/A"}`,
+      `Confirmed hero title: ${heroTitle || "AI choose"}`,
+      `Confirmed meta title: ${metaTitle || "AI choose"}`,
+      `Confirmed meta description: ${metaDescription || "AI choose"}`,
       `Additional notes: ${additionalAiContext || "N/A"}`
     ].join("\n");
 
@@ -254,9 +309,59 @@ ${context}
 STRUCTURE (keep order):
 ${blockLines}
 
+Use confirmed hero/meta values verbatim where relevant. If they are "AI choose", generate strong options.
+
 Return ONLY a JSON array in the exact same order as the structure.
 Each item must be: {"id": number, "type": string, "content": string}
 Do not include markdown fences or extra text.
+`.trim();
+  };
+
+  const buildSingleBlockPrompt = (block, settings, currentContent) => {
+    const context = [
+      `Brand: ${brandName || "N/A"}`,
+      `Service: ${service || "N/A"}`,
+      `City/Location: ${city || "N/A"}`,
+      `Primary keyword: ${primaryKeyword || service || "N/A"}`,
+      `Secondary keywords: ${secondaryKeywords || "N/A"}`,
+      `Business summary: ${businessDescription || "N/A"}`,
+      `Audience: ${audience || "N/A"}`,
+      `Value proposition: ${valueProp || "N/A"}`,
+      `CTA: ${cta || "N/A"}`,
+      `Core services: ${services || "N/A"}`,
+      `Pricing range: ${pricingRange || "N/A"}`,
+      `Goal: ${pageGoal || "N/A"}`,
+      `Tone: ${tone || "N/A"}`,
+      `Language: ${language || "N/A"}`,
+      `Internal links: ${internalLinks || "N/A"}`,
+      `Confirmed hero title: ${heroTitle || "AI choose"}`,
+      `Confirmed meta title: ${metaTitle || "AI choose"}`,
+      `Confirmed meta description: ${metaDescription || "AI choose"}`,
+      `Additional notes: ${additionalAiContext || "N/A"}`
+    ].join("\n");
+
+    const s = settings.find((x) => String(x.id) === String(block.id)) || getDefaultBlockSetting(block);
+    const note = String(s.notes || "").trim();
+
+    return `
+You are rewriting a single section of a programmatic SEO service page.
+
+CONTEXT:
+${context}
+
+SECTION:
+Type: ${block.type}
+Target length: ~${s.words} words
+Editor note: ${note || "None"}
+
+CURRENT DRAFT:
+${currentContent || block.content || "N/A"}
+
+Rules:
+- Keep this a ${block.type} section.
+- Use confirmed hero/meta values verbatim when relevant.
+- Improve clarity, conversion, and SEO without keyword stuffing.
+- Return ONLY the rewritten section text (no JSON, no markdown).
 `.trim();
   };
 
@@ -315,6 +420,54 @@ Do not include markdown fences or extra text.
       setAiPreviewError(err?.message || "Preview generation failed.");
     } finally {
       setAiPreviewLoading(false);
+    }
+  };
+
+  const handleRewriteBlock = async (blockId) => {
+    if (aiPreviewBlocks.length === 0) {
+      setAiPreviewError("Generate a full AI preview before rewriting a single section.");
+      return;
+    }
+
+    const template = getTemplateById(selectedTemplateId);
+    if (!template) {
+      setAiPreviewError("Select a template to rewrite a section.");
+      return;
+    }
+
+    const block = template.structure.find((b) => String(b.id) === String(blockId));
+    if (!block) return;
+
+    const cfg = blockSettings.find((b) => String(b.id) === String(blockId)) || getDefaultBlockSetting(block);
+    if (cfg.mode !== "ai") {
+      setAiPreviewError("This section is set to manual. Switch to AI to rewrite.");
+      return;
+    }
+
+    const currentContent = aiPreviewBlocks.find((b) => String(b.id) === String(blockId))?.content || block.content || "";
+
+    setRewriteLoadingId(blockId);
+    setAiPreviewError("");
+
+    try {
+      const prompt = buildSingleBlockPrompt(block, blockSettings, currentContent);
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+      });
+      const data = await response.json();
+      if (!response.ok || data?.error) throw new Error(data?.error || "Section rewrite failed.");
+      const nextContent = String(data?.content || "").replace(/```/g, "").trim();
+      if (!nextContent) throw new Error("Section rewrite returned empty content.");
+
+      setAiPreviewBlocks((prev) =>
+        prev.map((item) => (String(item.id) === String(blockId) ? { ...item, content: nextContent } : item))
+      );
+    } catch (err) {
+      setAiPreviewError(err?.message || "Section rewrite failed.");
+    } finally {
+      setRewriteLoadingId(null);
     }
   };
 
@@ -384,6 +537,9 @@ Do not include markdown fences or extra text.
         Language: language,
         InternalLinks: internalLinks,
         AdditionalAiContext: additionalAiContext,
+        HeroTitle: heroTitle,
+        MetaTitle: metaTitle,
+        MetaDescription: metaDescription,
         TemplateId: templateId,
         BlockSettings: blockSettings
       };
@@ -671,104 +827,136 @@ Do not include markdown fences or extra text.
 
                 {step === 2 && (
                   <div className="space-y-6">
-                    <p className="text-sm text-slate-500">
-                      This step shapes your content quality. Fill what you know now; you can still refine section-by-section in the preview step.
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      AI vs manual writing is configured in the next step when you review the page preview.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-900/40">
-                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200">1) SEO Context</p>
-                        <p className="text-xs text-slate-500 mt-1">Keywords + location scope guide on-page relevance.</p>
-                      </div>
-                      <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-900/40">
-                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200">2) Messaging</p>
-                        <p className="text-xs text-slate-500 mt-1">Value prop, audience, tone, and CTA shape conversion quality.</p>
-                      </div>
-                      <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-900/40">
-                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200">3) Scale Inputs</p>
-                        <p className="text-xs text-slate-500 mt-1">Keywords/locations list controls how many final pages are generated.</p>
+                    <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#2B5E44]/10 via-[#5aa681]/20 to-transparent animate-pulse"></div>
+                      <div className="relative z-10 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">AI Input Studio</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-300">
+                              Give the AI a strong brief once — it powers every section and every page.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500">
+                              <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping"></span>
+                            </span>
+                            Signal: {aiInputsStatus}
+                          </div>
+                        </div>
+                        <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#2B5E44] via-[#3d7a5b] to-[#5aa681] transition-all duration-500"
+                            style={{ width: `${aiInputsPercent}%` }}
+                          />
+                        </div>
+                        <div className="text-[11px] text-slate-500">
+                          Completion: {aiInputsPercent}% · More context = stronger first drafts.
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {["Be specific", "Use local intent", "Keep it punchy"].map((tip) => (
+                            <span
+                              key={tip}
+                              className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-50 text-slate-600 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                            >
+                              {tip}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Primary keyword</label>
+                        <p className="text-[11px] text-slate-500">
+                          Use the exact phrase you want the page to rank for. This anchors the hero and meta.
+                        </p>
                         <input
                           value={primaryKeyword}
                           onChange={(e) => setPrimaryKeyword(e.target.value)}
                           placeholder="plumber in austin"
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                         />
                       </div>
+
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Secondary keywords</label>
+                        <p className="text-[11px] text-slate-500">
+                          Optional variations or related services. Separate with commas.
+                        </p>
                         <input
                           value={secondaryKeywords}
                           onChange={(e) => setSecondaryKeywords(e.target.value)}
                           placeholder="emergency plumber austin, water heater repair"
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                         />
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Value proposition</label>
-                      <textarea
-                        value={valueProp}
-                        onChange={(e) => setValueProp(e.target.value)}
-                        placeholder="Why should people choose your brand?"
-                        className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                      />
-                    </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Value proposition</label>
+                        <p className="text-[11px] text-slate-500">
+                          One sentence on why you win. Think speed, trust, price, or results.
+                        </p>
+                        <textarea
+                          value={valueProp}
+                          onChange={(e) => setValueProp(e.target.value)}
+                          placeholder="Same-day repairs, transparent pricing, and 1,200+ 5-star reviews."
+                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white min-h-[90px]"
+                        />
+                      </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Audience</label>
+                        <p className="text-[11px] text-slate-500">Who are we persuading? Be specific.</p>
                         <input
                           value={audience}
                           onChange={(e) => setAudience(e.target.value)}
-                          placeholder="Homeowners in Austin"
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          placeholder="Homeowners and property managers in Austin"
+                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                         />
                       </div>
+
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Primary CTA</label>
+                        <p className="text-[11px] text-slate-500">What action should they take right away?</p>
                         <input
                           value={cta}
                           onChange={(e) => setCta(e.target.value)}
                           placeholder="Book a same-day call"
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                         />
                       </div>
+
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Core services / offers</label>
+                        <p className="text-[11px] text-slate-500">Comma-separated. These become feature bullets and section headers.</p>
                         <input
                           value={services}
                           onChange={(e) => setServices(e.target.value)}
                           placeholder="Emergency repair, drain cleaning, leak detection"
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                         />
                       </div>
+
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Pricing range (optional)</label>
+                        <p className="text-[11px] text-slate-500">If you have a range, it boosts trust.</p>
                         <input
                           value={pricingRange}
                           onChange={(e) => setPricingRange(e.target.value)}
                           placeholder="$99-$499"
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                         />
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Tone</label>
+                        <p className="text-[11px] text-slate-500">Choose the voice that matches your brand.</p>
                         <select
                           value={tone}
                           onChange={(e) => setTone(e.target.value)}
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                         >
                           {["Professional", "Friendly", "Luxury", "Minimal", "Bold"].map((t) => (
                             <option key={t} value={t}>
@@ -777,12 +965,14 @@ Do not include markdown fences or extra text.
                           ))}
                         </select>
                       </div>
+
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Language</label>
+                        <p className="text-[11px] text-slate-500">We’ll draft content in this language.</p>
                         <select
                           value={language}
                           onChange={(e) => setLanguage(e.target.value)}
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                         >
                           {["English", "Spanish", "French", "German", "Portuguese", "Italian", "Dutch"].map((l) => (
                             <option key={l} value={l}>
@@ -791,50 +981,55 @@ Do not include markdown fences or extra text.
                           ))}
                         </select>
                       </div>
+
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Internal links (optional)</label>
+                        <p className="text-[11px] text-slate-500">Add URLs you want referenced, separated by commas.</p>
                         <input
                           value={internalLinks}
                           onChange={(e) => setInternalLinks(e.target.value)}
                           placeholder="/services, /about, /contact"
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                         />
                       </div>
-                    </div>
 
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        Extra AI instructions (optional)
-                      </label>
-                      <textarea
-                        value={additionalAiContext}
-                        onChange={(e) => setAdditionalAiContext(e.target.value)}
-                        placeholder="Anything else the AI should know about your business, tone, or constraints."
-                        className="w-full min-h-[120px] p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                      />
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          "Mention certifications/licensing and years in business.",
-                          "Prioritize fast response time and 24/7 availability.",
-                          "Keep paragraphs short; use bullets where possible.",
-                          "Avoid competitor names and negative comparisons.",
-                          "Focus on trust, warranties, and guarantees."
-                        ].map((hint) => (
-                          <button
-                            key={hint}
-                            type="button"
-                            onClick={() =>
-                              setAdditionalAiContext((prev) => (prev ? `${prev}\n${hint}` : hint))
-                            }
-                            className="px-2.5 py-1 text-[11px] font-semibold rounded-full border border-slate-200 text-slate-600 bg-slate-50 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                          >
-                            + {hint}
-                          </button>
-                        ))}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                          Extra AI instructions (optional)
+                        </label>
+                        <p className="text-[11px] text-slate-500">
+                          Give the AI guardrails: what to highlight, avoid, or emphasize.
+                        </p>
+                        <textarea
+                          value={additionalAiContext}
+                          onChange={(e) => setAdditionalAiContext(e.target.value)}
+                          placeholder="Mention certifications/licensing, include warranties, avoid competitor mentions."
+                          className="w-full min-h-[120px] p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            "Mention certifications/licensing and years in business.",
+                            "Prioritize fast response time and 24/7 availability.",
+                            "Keep paragraphs short; use bullets where possible.",
+                            "Avoid competitor names and negative comparisons.",
+                            "Focus on trust, warranties, and guarantees."
+                          ].map((hint) => (
+                            <button
+                              key={hint}
+                              type="button"
+                              onClick={() =>
+                                setAdditionalAiContext((prev) => (prev ? `${prev}\n${hint}` : hint))
+                              }
+                              className="px-2.5 py-1 text-[11px] font-semibold rounded-full border border-slate-200 text-slate-600 bg-slate-50 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                            >
+                              + {hint}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          AI writes all sections by default. You can still rewrite any specific section in the preview.
+                        </p>
                       </div>
-                      <p className="text-xs text-slate-500">
-                        These notes guide AI writing across all sections. You can still fine-tune each block in the preview.
-                      </p>
                     </div>
                   </div>
                 )}
@@ -844,6 +1039,43 @@ Do not include markdown fences or extra text.
                     <p className="text-sm text-slate-500">
                       Finalize the page structure before you add keywords and launch generation. This preview shows the layout your first draft will use.
                     </p>
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Confirm key SEO fields</h4>
+                        <p className="text-xs text-slate-500">
+                          We lock these into the AI draft. Leave blank to let the AI choose.
+                        </p>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Hero title</label>
+                          <input
+                            value={heroTitle}
+                            onChange={(e) => setHeroTitle(e.target.value)}
+                            placeholder={`${service || "Your Service"} in ${city || "Your City"}`}
+                            className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Meta title</label>
+                          <input
+                            value={metaTitle}
+                            onChange={(e) => setMetaTitle(e.target.value)}
+                            placeholder={`${service || "Service"} in ${city || "City"} | ${brandName || "Your Brand"}`}
+                            className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Meta description</label>
+                          <textarea
+                            value={metaDescription}
+                            onChange={(e) => setMetaDescription(e.target.value)}
+                            placeholder="Short summary used for search snippets and previews."
+                            className="w-full min-h-[90px] p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
                     <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
                       <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">Review</h4>
                       <div className="text-sm text-slate-600 dark:text-slate-300 space-y-1">
@@ -872,7 +1104,9 @@ Do not include markdown fences or extra text.
                         <div className="p-5 bg-gradient-to-b from-[#f4faf6] via-white to-[#f8fcf9]">
                           <div className="rounded-2xl p-6 bg-[#2B5E44] text-white shadow-lg">
                             <p className="text-xs uppercase tracking-[0.2em] text-white/70">Preview Hero</p>
-                            <h6 className="mt-2 text-2xl font-bold leading-tight">{service || "Your Service"} in {city || "Your City"}</h6>
+                            <h6 className="mt-2 text-2xl font-bold leading-tight">
+                              {heroTitle || `${service || "Your Service"} in ${city || "Your City"}`}
+                            </h6>
                             <p className="mt-2 text-sm text-white/85">
                               {valueProp || "A modern, high-converting landing page preview with SEO-ready structure."}
                             </p>
@@ -993,14 +1227,36 @@ Do not include markdown fences or extra text.
                                     placeholder="Optional note for AI (add/remove points, constraints, style)"
                                   />
                                 </div>
-                                <div className="mt-4 flex justify-end gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingPreviewBlock(null)}
-                                    className="px-3 py-2 text-sm text-slate-600"
-                                  >
-                                    Close
-                                  </button>
+                                <div className="mt-4 flex items-center justify-between gap-3">
+                                  <div className="text-[11px] text-slate-500">
+                                    {aiPreviewBlocks.length === 0
+                                      ? "Generate the full preview to rewrite a single section."
+                                      : cfg.mode === "ai"
+                                      ? "Rewrite just this section with AI."
+                                      : "Switch to AI mode to rewrite this section."}
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRewriteBlock(block.id)}
+                                      disabled={
+                                        aiPreviewBlocks.length === 0 ||
+                                        cfg.mode !== "ai" ||
+                                        rewriteLoadingId === block.id ||
+                                        aiPreviewLoading
+                                      }
+                                      className="px-3 py-2 text-sm font-semibold rounded-lg bg-[#2B5E44] text-white hover:bg-[#234d37] disabled:opacity-60"
+                                    >
+                                      {rewriteLoadingId === block.id ? "Rewriting..." : "Rewrite Section"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingPreviewBlock(null)}
+                                      className="px-3 py-2 text-sm text-slate-600"
+                                    >
+                                      Close
+                                    </button>
+                                  </div>
                                 </div>
                               </>
                             );
@@ -1009,7 +1265,7 @@ Do not include markdown fences or extra text.
                       </div>
                     )}
                     <p className="text-xs text-slate-500">
-                      You can fine-tune any section with the pencil icon, then create the project and review the first AI draft before full generation.
+                      AI drafts everything by default. Use the pencil icon to refine or rewrite a single section before you generate pages.
                     </p>
                   </div>
                 )}
@@ -1143,18 +1399,23 @@ Do not include markdown fences or extra text.
             );
           })()}
         </div>
-        <div className="p-6 border-t dark:border-slate-700 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-slate-500">
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={uploading || !canSubmit}
-            className="px-4 py-2 bg-[#2B5E44] text-white rounded hover:bg-[#234d37] font-medium disabled:opacity-60"
-            title={!canSubmit ? "Finish the steps to create the project" : ""}
-          >
-            {uploading ? <Loader2 className="animate-spin" /> : initialData ? "Save Changes" : "Create Project"}
-          </button>
+        <div className="p-6 border-t dark:border-slate-700 flex items-center justify-between gap-3">
+          <p className="text-[11px] text-slate-400">
+            Create Project saves your draft, builds the page list, and opens the generator for the first AI draft.
+          </p>
+          <div className="flex items-center gap-2">
+            <button onClick={onClose} className="px-4 py-2 text-slate-500">
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={uploading || !canSubmit}
+              className="px-4 py-2 bg-[#2B5E44] text-white rounded hover:bg-[#234d37] font-medium disabled:opacity-60"
+              title={!canSubmit ? "Finish the steps to create the project" : ""}
+            >
+              {uploading ? <Loader2 className="animate-spin" /> : initialData ? "Save Changes" : "Create Project"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
