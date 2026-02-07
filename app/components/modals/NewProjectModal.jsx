@@ -197,10 +197,10 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
     };
   };
 
-  const getTemplateById = (id) => {
+  function getTemplateById(id) {
     if (!id) return null;
     return userTemplates.find((t) => t.id.toString() === id.toString()) || null;
-  };
+  }
 
   const updateBlockSettingById = (id, patch) => {
     setBlockSettings((prev) => {

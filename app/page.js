@@ -160,7 +160,9 @@ export default function App() {
     initAuth();
 
     return () => {
-      if (unsubscribe) unsubscribe();
+      if (unsubscribe?.unsubscribe) {
+        unsubscribe.unsubscribe();
+      }
     };
   }, []);
 
