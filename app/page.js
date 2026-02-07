@@ -229,6 +229,7 @@ export default function App() {
           }}
           initialData={editProjectData}
           initialTemplateId={initialTemplateId}
+          profile={profile}
         />
 
         <ViewModal
@@ -365,7 +366,9 @@ export default function App() {
               />
             )}
 
-            {activeTab === "settings" && <SettingsView email={session.user.email} onLogout={handleLogout} />}
+            {activeTab === "settings" && (
+              <SettingsView email={session.user.email} onLogout={handleLogout} profile={profile} />
+            )}
           </div>
         </main>
       </div>

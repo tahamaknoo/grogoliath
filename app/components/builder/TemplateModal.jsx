@@ -52,43 +52,86 @@ const TemplateModal = ({
 
   const isReadOnly = currentMode.startsWith("preview");
 
-  // ✅ FIX: category is now passed in and stored correctly
+  // FIX: category is now passed in and stored correctly
   const addBlock = (type, category = "basic") => {
     if (isReadOnly) return;
 
     let content = "Content...";
     switch (type) {
-      case "header": content = "H2: Guide to {{Keyword}}"; break;
-      case "text": content = "Write 2 short paragraphs about {{Keyword}}. Keep it crisp and clear."; break;
+      case "header": content = "H2: Guide to {{Keyword}} Style: editorial header with kicker label and accent rule."; break;
+      case "text": content = "Write 2 short paragraphs about {{Keyword}}. Keep it crisp and clear. Style: tight paragraphs with callout bullets and subtle highlights."; break;
       case "service_keyword": content = "{{Keyword}}"; break;
-      case "image": content = "Image Description: {{Keyword}}"; break;
+      case "image":
+        content = `<div class="gg-container">
+  <div class="gg-card gg-card-strong">
+    <div style="height:260px;border-radius:16px;background:linear-gradient(135deg, rgba(79,70,229,.12), rgba(16,185,129,.12));border:1px solid rgba(15,23,42,.08)"></div>
+    <div class="gg-muted" style="margin-top:10px">Image: {{Keyword}} hero visual</div>
+  </div>
+</div>`;
+        break;
       case "html": content = '<div class="custom-block">...</div>'; break;
-      case "columns_2": content = "Column 1 title: {{Keyword}} benefits || Column 2 title: Pricing & proof"; break;
-      case "grid_2x2": content = "Row 1: Feature A || Feature B\nRow 2: Feature C || Feature D"; break;
-      case "pain_point": content = "Identify 3 pain points for {{Keyword}}."; break;
-      case "solution": content = "Explain how we solve {{Keyword}} issues."; break;
-      case "usp": content = "List 5 USPs for {{Keyword}}."; break;
-      case "pricing": content = "Create a 3-column HTML Pricing Table."; break;
-      case "cta": content = "Sign up now for {{Keyword}} solutions."; break;
+      case "columns_2": content = "Column 1: {{Keyword}} benefits || Column 2: Pricing and proof. Style: split layout with icon chips and mini CTA buttons."; break;
+      case "grid_2x2": content = "Feature A || Feature B\nFeature C || Feature D Style: tile grid with icons and soft gradient borders."; break;
+      case "pain_point": content = "Identify 3 pain points for {{Keyword}}. Style: card grid with icons and hover lift."; break;
+      case "solution": content = "Explain how we solve {{Keyword}} issues. Style: outcome cards with mini checkmarks and proof lines."; break;
+      case "usp": content = "List 4 USPs for {{Keyword}}. Style: icon chips with bold headings."; break;
+      case "pricing": content = "3-tier pricing cards with a monthly/annual toggle and highlighted plan. Style: premium cards with feature list."; break;
+      case "cta": content = "CTA band with 2 buttons and a short trust line. Style: bold gradient band with a secondary link."; break;
       case "schema_service": content = '{"@type": "Service", "name": "{{Keyword}}"}'; break;
       case "schema_blog": content = '{"@type": "BlogPosting", "headline": "Guide to {{Keyword}}"}'; break;
-      case "faq_auto": content = "Generate 5 FAQs about {{Keyword}}."; break;
-      case "stats": content = "Find 3 stats about {{Keyword}}."; break;
-      case "hero": content = "Hero Title: Best {{Keyword}} Service"; break;
-      case "comparison": content = "Compare Us vs Competitors for {{Keyword}}."; break;
-      case "pros_cons": content = "List Pros and Cons for {{Keyword}}."; break;
-      case "social_proof": content = "Generate a testimonial for {{Keyword}}."; break;
-      case "process": content = "Create a 3-step process for {{Keyword}}."; break;
-      case "case_study": content = "Write a mini case study for {{Keyword}}."; break;
-      case "contact_form": content = "<!-- Contact Form Placeholder -->"; break;
-      case "trust_badges": content = "[Trust Badges: Secure, Verified, Top Rated]"; break;
+      case "faq_auto": content = "Generate 5 FAQs about {{Keyword}}. Style: accordion layout with icons and short answers."; break;
+      case "stats": content = "3 stats about {{Keyword}}. Style: metric cards with labels and count-up effect."; break;
+      case "hero": content = "Hero for {{Keyword}} with outcome-driven headline, proof line, and 2 CTAs. Style: cinematic split hero with gradient mesh and floating badges."; break;
+      case "comparison": content = "Compare us vs alternatives for {{Keyword}}. Style: clean table with highlighted column and checkmarks."; break;
+      case "pros_cons": content = "List pros and cons for {{Keyword}}. Style: two-column layout with green/red accents."; break;
+      case "social_proof": content = "3 testimonial quotes with role and company. Style: slider-like testimonial cards."; break;
+      case "process": content = "Create a 3-step process for {{Keyword}}. Style: timeline with numbered steps and connectors."; break;
+      case "case_study": content = "Mini case study for {{Keyword}} with outcome metrics. Style: story card with metric strip."; break;
+      case "contact_form":
+        content = `<div class="gg-container">
+  <div class="gg-grid gg-grid-2">
+    <div class="gg-card gg-card-strong">
+      <div class="gg-pill">Talk to us</div>
+      <h3 class="gg-h2">Book a demo for {{Company}}</h3>
+      <p class="gg-lead">Share your goals and we will respond within 24 hours.</p>
+      <div class="gg-badges">
+        <span class="gg-badge">Strategy call</span>
+        <span class="gg-badge">SEO roadmap</span>
+        <span class="gg-badge">Dedicated onboarding</span>
+      </div>
+    </div>
+    <div class="gg-card gg-card-strong">
+      <form class="gg-form">
+        <input class="gg-input" placeholder="Full name" />
+        <input class="gg-input" placeholder="Work email" />
+        <input class="gg-input" placeholder="Company" />
+        <textarea class="gg-input" rows="4" placeholder="What are you trying to build?"></textarea>
+        <button class="gg-btn" type="button">Send request</button>
+      </form>
+    </div>
+  </div>
+</div>`;
+        break;
+      case "trust_badges":
+        content = `<div class="gg-container">
+  <div class="gg-row">
+    <span class="gg-pill">Trusted by</span>
+  </div>
+  <div class="gg-badges" style="margin-top:12px">
+    <span class="gg-badge">SOC 2</span>
+    <span class="gg-badge">ISO 27001</span>
+    <span class="gg-badge">99.9% uptime</span>
+    <span class="gg-badge">24/7 support</span>
+  </div>
+</div>`;
+        break;
       default: break;
     }
 
     const newBlock = {
       id: Date.now() + Math.random(),
       type,
-      category, // ✅ now correct
+      category, // now correct
       content
     };
 

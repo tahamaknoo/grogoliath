@@ -96,6 +96,15 @@ const GenerateModal = ({
   .gg-faq{display:grid;gap:10px}
   .gg-faq details{border:1px solid rgba(15,23,42,.12);background:#fff;border-radius:16px;padding:12px 14px;box-shadow:var(--shadow)}
   .gg-faq summary{cursor:pointer;font-weight:900}
+  .gg-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.32em;color:#94a3b8;font-weight:800}
+  .gg-subhead{font-size:14px;color:#64748b;line-height:1.6}
+  .gg-section-alt{background:linear-gradient(180deg,#f8fafc 0%, #ffffff 100%)}
+  .gg-feature-grid{display:grid;gap:16px}
+  .gg-feature{border:1px solid rgba(15,23,42,.10);border-radius:16px;padding:16px;background:#fff;box-shadow:var(--shadow)}
+  .gg-logo-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .gg-logo-pill{padding:8px 12px;border-radius:999px;border:1px solid rgba(15,23,42,.12);background:#fff;font-weight:700;font-size:12px;color:#64748b}
+  .gg-cta-band{border-radius:28px;padding:28px;background:linear-gradient(135deg, rgba(79,70,229,.16), rgba(16,185,129,.14));border:1px solid rgba(79,70,229,.18);box-shadow:var(--shadow2)}
+  .gg-cta-inner{display:grid;gap:16px;align-items:center}
   @media (max-width: 960px){
     .gg-hero-wrap{grid-template-columns:1fr}
     .gg-grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -160,8 +169,13 @@ const GenerateModal = ({
       .map((b) => {
         const s = settings.find((x) => String(x.id) === String(b.id)) || getDefaultBlockSetting(b);
         const note = String(s.notes || "").trim();
+        const heroGuidance =
+          "Include: kicker label, bold headline, concise subheadline, proof row (logos or stats), primary CTA, secondary CTA, and a conversion card or form. Keep it service-page focused.";
         if (s.mode === "manual") {
           return `[BLOCK: ${b.type}] Instructions: Use this placeholder verbatim: ${b.content}${note ? ` Editor note: ${note}` : ""}`;
+        }
+        if (b.type === "hero") {
+          return `[BLOCK: ${b.type}] Instructions: ${b.content} ${heroGuidance} Target length: ~${s.words} words.${note ? ` Editor note: ${note}` : ""}`;
         }
         return `[BLOCK: ${b.type}] Instructions: ${b.content} Target length: ~${s.words} words.${note ? ` Editor note: ${note}` : ""}`;
       })
@@ -177,6 +191,10 @@ ABSOLUTE RULES:
 - Use <section class="gg-section"> for each section.
 - The final HTML MUST contain AT LEAST 15 <section> blocks.
 - Include a <style> block (premium responsive design system). If unsure, include modern, clean styles.
+- Prefer using the gg- classes from the style kit (gg-container, gg-grid, gg-card, gg-btn, gg-badges, gg-form, gg-input).
+- Make inner sections visually rich with cards, gradients, and clear hierarchy.
+- Visual style: polished service landing page inspired by top marketing sites (HubSpot / Neil Patel style). Use a bold hero, proof/metrics, feature grids, testimonials, and a strong CTA band.
+- Use alternating section backgrounds, generous whitespace, and prominent headings.
 
 STRUCTURE:
 ${structurePrompt}`;
