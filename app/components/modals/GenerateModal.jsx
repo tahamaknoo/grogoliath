@@ -34,6 +34,11 @@ const GenerateModal = ({
   const [clockNow, setClockNow] = useState(Date.now());
   const abortControllerRef = useRef(null);
   const autoStartRef = useRef(false);
+  const statusChangeRef = useRef(onStatusChange);
+
+  useEffect(() => {
+    statusChangeRef.current = onStatusChange;
+  }, [onStatusChange]);
 
   // ---------- Premium responsive style kit (inject if missing) ----------
   const STYLE_KIT = `
@@ -135,6 +140,7 @@ const GenerateModal = ({
       "process",
       "case_study",
       "columns_2",
+      "columns_n",
       "grid_2x2",
       "header"
     ]);
@@ -171,13 +177,16 @@ const GenerateModal = ({
         const note = String(s.notes || "").trim();
         const heroGuidance =
           "Include: kicker label, bold headline, concise subheadline, proof row (logos or stats), primary CTA, secondary CTA, and a conversion card or form. Keep it service-page focused.";
+        const imageGuidance = b.type === "image"
+          ? ` Image URL: ${b.imageUrl || "none"}. Caption: ${b.imageCaption || "none"}. If the URL contains a {{Variable}}, replace it from row data. If no URL is provided, use a visual placeholder.`
+          : "";
         if (s.mode === "manual") {
-          return `[BLOCK: ${b.type}] Instructions: Use this placeholder verbatim: ${b.content}${note ? ` Editor note: ${note}` : ""}`;
+          return `[BLOCK: ${b.type}] Instructions: Use this placeholder verbatim: ${b.content}${imageGuidance}${note ? ` Editor note: ${note}` : ""}`;
         }
         if (b.type === "hero") {
-          return `[BLOCK: ${b.type}] Instructions: ${b.content} ${heroGuidance} Target length: ~${s.words} words.${note ? ` Editor note: ${note}` : ""}`;
+          return `[BLOCK: ${b.type}] Instructions: ${b.content} ${heroGuidance}${imageGuidance} Target length: ~${s.words} words.${note ? ` Editor note: ${note}` : ""}`;
         }
-        return `[BLOCK: ${b.type}] Instructions: ${b.content} Target length: ~${s.words} words.${note ? ` Editor note: ${note}` : ""}`;
+        return `[BLOCK: ${b.type}] Instructions: ${b.content}${imageGuidance} Target length: ~${s.words} words.${note ? ` Editor note: ${note}` : ""}`;
       })
       .join("\n\n");
 
@@ -687,7 +696,10 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
   }, [isOpen, project, autoStartFirstDraft]);
 
   useEffect(() => {
-    onStatusChange?.({
+    if (!isOpen) return;
+    const handler = statusChangeRef.current;
+    if (!handler) return;
+    handler({
       projectId: project?.id || null,
       projectName: project?.name || "",
       isGenerating,
@@ -696,7 +708,7 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
       progress,
       etaSeconds: estimateRemainingSeconds()
     });
-  }, [project, isGenerating, isMinimized, awaitingConfirm, progress, startedAt, clockNow, onStatusChange]);
+  }, [isOpen, project?.id, project?.name, isGenerating, isMinimized, awaitingConfirm, progress, startedAt, clockNow]);
 
   useEffect(() => {
     if (!expandSignal) return;

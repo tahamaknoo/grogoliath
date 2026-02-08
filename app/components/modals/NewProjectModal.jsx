@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Edit3, Loader2, X } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import LivePreview from "../builder/LivePreview";
@@ -34,15 +34,14 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
   const [internalLinks, setInternalLinks] = useState("");
   const [additionalAiContext, setAdditionalAiContext] = useState("");
   const [keywordsList, setKeywordsList] = useState("");
-  const [heroTitle, setHeroTitle] = useState("");
-  const [metaTitle, setMetaTitle] = useState("");
-  const [metaDescription, setMetaDescription] = useState("");
   const [editingPreviewBlock, setEditingPreviewBlock] = useState(null);
   const [aiPreviewBlocks, setAiPreviewBlocks] = useState([]);
   const [aiPreviewLoading, setAiPreviewLoading] = useState(false);
   const [aiPreviewError, setAiPreviewError] = useState("");
   const [previewAutoRun, setPreviewAutoRun] = useState(false);
   const [rewriteLoadingId, setRewriteLoadingId] = useState(null);
+  const [progressPercent, setProgressPercent] = useState(0);
+  const contentRef = useRef(null);
   const remainingPages =
     profile && typeof profile.page_limit !== "undefined"
       ? Math.max(0, Number(profile.page_limit || 0) - Number(profile.pages_used || 0))
@@ -78,6 +77,13 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
   const aiInputsPercent = Math.round((aiInputsFilled / aiInputsTotal) * 100);
   const aiInputsStatus =
     aiInputsPercent >= 80 ? "Excellent" : aiInputsPercent >= 55 ? "Good" : aiInputsPercent >= 30 ? "Fair" : "Barebones";
+  const labelClass = "text-[11px] uppercase tracking-[0.2em] font-semibold text-slate-500 dark:text-slate-300";
+  const progressSteps = [
+    { label: "Validating inputs", at: 10 },
+    { label: "Building page list", at: 40 },
+    { label: "Saving project", at: 70 },
+    { label: "Finalizing", at: 100 }
+  ];
   const canSubmit =
     step === lastStep &&
     !!getTemplateById(selectedTemplateId) &&
@@ -92,28 +98,16 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
     (remainingPages === null || remainingPages > 0);
 
   useEffect(() => {
-    if (!heroTitle && (service || city)) {
-      setHeroTitle(`${service || "Service"}${city ? ` in ${city}` : ""}`.trim());
-    }
-  }, [service, city, heroTitle]);
-
-  useEffect(() => {
-    if (!metaTitle && (brandName || service || city)) {
-      const base = `${service || "Service"}${city ? ` in ${city}` : ""}`.trim();
-      const brand = brandName ? ` | ${brandName}` : "";
-      setMetaTitle(`${base}${brand}`.trim());
-    }
-  }, [brandName, service, city, metaTitle]);
-
-  useEffect(() => {
-    if (!metaDescription && (valueProp || service || city)) {
-      const core = valueProp || `${service || "Local services"}${city ? ` in ${city}` : ""}.`;
-      setMetaDescription(`${core} Get fast response times, transparent pricing, and trusted experts.`.trim());
-    }
-  }, [valueProp, service, city, metaDescription]);
+    if (!isOpen) return;
+    if (!contentRef.current) return;
+    requestAnimationFrame(() => {
+      contentRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
+  }, [step, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
+      setProgressPercent(0);
       setAiPreviewBlocks([]);
       setAiPreviewError("");
       setPreviewAutoRun(false);
@@ -154,9 +148,6 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
         setLanguage(details.Language || "English");
         setInternalLinks(details.InternalLinks || "");
         setAdditionalAiContext(details.AdditionalAiContext || "");
-        setHeroTitle(details.HeroTitle || "");
-        setMetaTitle(details.MetaTitle || "");
-        setMetaDescription(details.MetaDescription || "");
         const existingRows = Array.isArray(initialData.data?.rows) ? initialData.data.rows : [];
         const existingKeywords = existingRows.map((r) => r.Keyword).filter(Boolean);
         setKeywordsList(existingKeywords.join("\n"));
@@ -184,9 +175,6 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
         setLanguage("English");
         setInternalLinks("");
         setAdditionalAiContext("");
-        setHeroTitle("");
-        setMetaTitle("");
-        setMetaDescription("");
         setKeywordsList("");
         setSelectedTemplateId(initialTemplateId || "");
         setBlockSettings([]);
@@ -213,6 +201,7 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
       process: 110,
       case_study: 220,
       columns_2: 140,
+      columns_n: 160,
       grid_2x2: 120
     };
     return suggestions[type] || 120;
@@ -235,6 +224,7 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
       "process",
       "case_study",
       "columns_2",
+      "columns_n",
       "grid_2x2",
       "header"
     ]);
@@ -279,9 +269,6 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
       `Tone: ${tone || "N/A"}`,
       `Language: ${language || "N/A"}`,
       `Internal links: ${internalLinks || "N/A"}`,
-      `Confirmed hero title: ${heroTitle || "AI choose"}`,
-      `Confirmed meta title: ${metaTitle || "AI choose"}`,
-      `Confirmed meta description: ${metaDescription || "AI choose"}`,
       `Additional notes: ${additionalAiContext || "N/A"}`
     ].join("\n");
 
@@ -289,12 +276,15 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
       .map((b, idx) => {
         const s = settings.find((x) => String(x.id) === String(b.id)) || getDefaultBlockSetting(b);
         const note = String(s.notes || "").trim();
+        const imageGuidance = b.type === "image"
+          ? ` Image URL: ${b.imageUrl || "none"}. Caption: ${b.imageCaption || "none"}. If the URL contains a {{Variable}}, replace it from row data. If no URL is provided, use a visual placeholder.`
+          : "";
         if (s.mode === "manual") {
-          return `${idx + 1}. [${b.type}] Manual. Use this placeholder verbatim: ${b.content}${
+          return `${idx + 1}. [${b.type}] Manual. Use this placeholder verbatim: ${b.content}${imageGuidance}${
             note ? ` Editor note: ${note}` : ""
           }`;
         }
-        return `${idx + 1}. [${b.type}] ${b.content} Target length: ~${s.words} words.${
+        return `${idx + 1}. [${b.type}] ${b.content}${imageGuidance} Target length: ~${s.words} words.${
           note ? ` Editor note: ${note}` : ""
         }`;
       })
@@ -308,8 +298,6 @@ ${context}
 
 STRUCTURE (keep order):
 ${blockLines}
-
-Use confirmed hero/meta values verbatim where relevant. If they are "AI choose", generate strong options.
 
 Return ONLY a JSON array in the exact same order as the structure.
 Each item must be: {"id": number, "type": string, "content": string}
@@ -334,9 +322,6 @@ Do not include markdown fences or extra text.
       `Tone: ${tone || "N/A"}`,
       `Language: ${language || "N/A"}`,
       `Internal links: ${internalLinks || "N/A"}`,
-      `Confirmed hero title: ${heroTitle || "AI choose"}`,
-      `Confirmed meta title: ${metaTitle || "AI choose"}`,
-      `Confirmed meta description: ${metaDescription || "AI choose"}`,
       `Additional notes: ${additionalAiContext || "N/A"}`
     ].join("\n");
 
@@ -359,7 +344,6 @@ ${currentContent || block.content || "N/A"}
 
 Rules:
 - Keep this a ${block.type} section.
-- Use confirmed hero/meta values verbatim when relevant.
 - Improve clarity, conversion, and SEO without keyword stuffing.
 - Return ONLY the rewritten section text (no JSON, no markdown).
 `.trim();
@@ -503,11 +487,23 @@ Rules:
   }, [isOpen, step, previewAutoRun, aiPreviewLoading, selectedTemplateId]);
 
   if (!isOpen) return null;
+  if (uploading && progressMinimized) {
+    return (
+      <button
+        type="button"
+        onClick={() => setProgressMinimized(false)}
+        className="fixed bottom-4 right-4 z-[120] bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg hover:bg-slate-800"
+      >
+        Project creation running... {progressPercent}% • tap to view
+      </button>
+    );
+  }
 
   const handleSave = async () => {
     setUploading(true);
     setProgressMinimized(false);
     setProgressMessage("Validating your project...");
+    setProgressPercent(10);
 
     try {
       const {
@@ -537,9 +533,6 @@ Rules:
         Language: language,
         InternalLinks: internalLinks,
         AdditionalAiContext: additionalAiContext,
-        HeroTitle: heroTitle,
-        MetaTitle: metaTitle,
-        MetaDescription: metaDescription,
         TemplateId: templateId,
         BlockSettings: blockSettings
       };
@@ -564,6 +557,7 @@ Rules:
       if (finalKeywords.length === 0) throw new Error("Please add at least one keyword (plan or list).");
 
       setProgressMessage("Building your pages list...");
+      setProgressPercent(40);
 
       const rows = finalKeywords.map((k) => ({
         Keyword: k,
@@ -573,6 +567,7 @@ Rules:
       const payload = { rows, headers, details };
 
       setProgressMessage(initialData ? "Updating your project..." : "Creating your project...");
+      setProgressPercent(70);
 
       if (initialData) {
         const { error } = await supabase
@@ -580,6 +575,7 @@ Rules:
           .update({ name: projectName, row_count: rows.length, data: payload })
           .eq("id", initialData.id);
         if (error) throw new Error(error.message || "Failed to update project.");
+        setProgressPercent(100);
         onUploadSuccess();
         onClose();
         return;
@@ -591,6 +587,7 @@ Rules:
         .select("*")
         .single();
       if (error) throw new Error(error.message || "Failed to create project.");
+      setProgressPercent(100);
       onUploadSuccess();
       if (data) onCreateProject?.(data, templateId);
       onClose();
@@ -599,6 +596,7 @@ Rules:
     } finally {
       setUploading(false);
       setProgressMessage("");
+      setProgressPercent(0);
     }
   };
 
@@ -619,21 +617,34 @@ Rules:
                 </button>
               </div>
               <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
-                <div className="h-full w-2/3 bg-[#2B5E44] animate-pulse"></div>
+                <div
+                  className="h-full bg-[#2B5E44] transition-all duration-300"
+                  style={{ width: `${Math.max(2, progressPercent)}%` }}
+                />
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-300">{progressMessage || "Working..."}</p>
+              <div className="text-xs text-slate-500 mb-2">{progressPercent}% complete</div>
+              <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                {progressSteps.map((stepItem) => (
+                  <div key={stepItem.label} className="flex items-center gap-2">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        progressPercent >= stepItem.at ? "bg-emerald-500" : "bg-slate-300"
+                      }`}
+                    />
+                    <span className={progressPercent >= stepItem.at ? "font-semibold" : ""}>{stepItem.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3 text-xs text-slate-600 dark:text-slate-300">
+                <div className="font-semibold text-slate-700 dark:text-slate-200">Status feed</div>
+                <div className="mt-1">{progressMessage || "Working..."}</div>
+                <div className="mt-1 text-[11px] text-slate-400">
+                  Project: {projectName || "Untitled"} · Planned pages: {Math.max(1, Number(desiredPageCount) || 1)}
+                </div>
+              </div>
               <p className="text-xs text-slate-400 mt-2">You can keep working while we finish this.</p>
             </div>
           </div>
-        )}
-        {uploading && progressMinimized && (
-          <button
-            type="button"
-            onClick={() => setProgressMinimized(false)}
-            className="fixed bottom-4 right-4 z-30 bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg hover:bg-slate-800"
-          >
-            Project creation running... tap to view
-          </button>
         )}
         <div className="p-6 border-b dark:border-slate-700 flex justify-between items-center">
           <h3 className="text-lg font-bold dark:text-white">{initialData ? "Edit Project" : "New Project"}</h3>
@@ -642,7 +653,7 @@ Rules:
           </button>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+        <div ref={contentRef} className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
           {(() => {
             const canContinue =
               step === 0
@@ -763,7 +774,7 @@ Rules:
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Project name</label>
+                        <label className={labelClass}>Project name</label>
                         <input
                           value={projectName}
                           onChange={(e) => setProjectName(e.target.value)}
@@ -772,7 +783,7 @@ Rules:
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Brand name</label>
+                        <label className={labelClass}>Brand name</label>
                         <input
                           value={brandName}
                           onChange={(e) => setBrandName(e.target.value)}
@@ -781,7 +792,7 @@ Rules:
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Primary service</label>
+                        <label className={labelClass}>Primary service</label>
                         <input
                           value={service}
                           onChange={(e) => setService(e.target.value)}
@@ -790,7 +801,7 @@ Rules:
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Target city / location</label>
+                        <label className={labelClass}>Target city / location</label>
                         <input
                           value={city}
                           onChange={(e) => setCity(e.target.value)}
@@ -799,7 +810,7 @@ Rules:
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Primary goal</label>
+                        <label className={labelClass}>Primary goal</label>
                         <select
                           value={pageGoal}
                           onChange={(e) => setPageGoal(e.target.value)}
@@ -814,7 +825,7 @@ Rules:
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Business summary (optional)</label>
+                      <label className={labelClass}>Business summary (optional)</label>
                       <textarea
                         value={businessDescription}
                         onChange={(e) => setBusinessDescription(e.target.value)}
@@ -868,7 +879,7 @@ Rules:
 
                     <div className="space-y-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Primary keyword</label>
+                        <label className={labelClass}>Primary keyword</label>
                         <p className="text-[11px] text-slate-500">
                           Use the exact phrase you want the page to rank for. This anchors the hero and meta.
                         </p>
@@ -881,7 +892,7 @@ Rules:
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Secondary keywords</label>
+                        <label className={labelClass}>Secondary keywords</label>
                         <p className="text-[11px] text-slate-500">
                           Optional variations or related services. Separate with commas.
                         </p>
@@ -894,7 +905,7 @@ Rules:
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Value proposition</label>
+                        <label className={labelClass}>Value proposition</label>
                         <p className="text-[11px] text-slate-500">
                           One sentence on why you win. Think speed, trust, price, or results.
                         </p>
@@ -907,7 +918,7 @@ Rules:
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Audience</label>
+                        <label className={labelClass}>Audience</label>
                         <p className="text-[11px] text-slate-500">Who are we persuading? Be specific.</p>
                         <input
                           value={audience}
@@ -918,7 +929,7 @@ Rules:
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Primary CTA</label>
+                        <label className={labelClass}>Primary CTA</label>
                         <p className="text-[11px] text-slate-500">What action should they take right away?</p>
                         <input
                           value={cta}
@@ -929,7 +940,7 @@ Rules:
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Core services / offers</label>
+                        <label className={labelClass}>Core services / offers</label>
                         <p className="text-[11px] text-slate-500">Comma-separated. These become feature bullets and section headers.</p>
                         <input
                           value={services}
@@ -940,7 +951,7 @@ Rules:
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Pricing range (optional)</label>
+                        <label className={labelClass}>Pricing range (optional)</label>
                         <p className="text-[11px] text-slate-500">If you have a range, it boosts trust.</p>
                         <input
                           value={pricingRange}
@@ -951,7 +962,7 @@ Rules:
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Tone</label>
+                        <label className={labelClass}>Tone</label>
                         <p className="text-[11px] text-slate-500">Choose the voice that matches your brand.</p>
                         <select
                           value={tone}
@@ -967,7 +978,7 @@ Rules:
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Language</label>
+                        <label className={labelClass}>Language</label>
                         <p className="text-[11px] text-slate-500">We’ll draft content in this language.</p>
                         <select
                           value={language}
@@ -983,7 +994,7 @@ Rules:
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Internal links (optional)</label>
+                        <label className={labelClass}>Internal links (optional)</label>
                         <p className="text-[11px] text-slate-500">Add URLs you want referenced, separated by commas.</p>
                         <input
                           value={internalLinks}
@@ -994,7 +1005,7 @@ Rules:
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        <label className={labelClass}>
                           Extra AI instructions (optional)
                         </label>
                         <p className="text-[11px] text-slate-500">
@@ -1039,43 +1050,6 @@ Rules:
                     <p className="text-sm text-slate-500">
                       Finalize the page structure before you add keywords and launch generation. This preview shows the layout your first draft will use.
                     </p>
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3">
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Confirm key SEO fields</h4>
-                        <p className="text-xs text-slate-500">
-                          We lock these into the AI draft. Leave blank to let the AI choose.
-                        </p>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Hero title</label>
-                          <input
-                            value={heroTitle}
-                            onChange={(e) => setHeroTitle(e.target.value)}
-                            placeholder={`${service || "Your Service"} in ${city || "Your City"}`}
-                            className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Meta title</label>
-                          <input
-                            value={metaTitle}
-                            onChange={(e) => setMetaTitle(e.target.value)}
-                            placeholder={`${service || "Service"} in ${city || "City"} | ${brandName || "Your Brand"}`}
-                            className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Meta description</label>
-                          <textarea
-                            value={metaDescription}
-                            onChange={(e) => setMetaDescription(e.target.value)}
-                            placeholder="Short summary used for search snippets and previews."
-                            className="w-full min-h-[90px] p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                          />
-                        </div>
-                      </div>
-                    </div>
                     <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
                       <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">Review</h4>
                       <div className="text-sm text-slate-600 dark:text-slate-300 space-y-1">
@@ -1105,7 +1079,7 @@ Rules:
                           <div className="rounded-2xl p-6 bg-[#2B5E44] text-white shadow-lg">
                             <p className="text-xs uppercase tracking-[0.2em] text-white/70">Preview Hero</p>
                             <h6 className="mt-2 text-2xl font-bold leading-tight">
-                              {heroTitle || `${service || "Your Service"} in ${city || "Your City"}`}
+                              {service || "Your Service"} in {city || "Your City"}
                             </h6>
                             <p className="mt-2 text-sm text-white/85">
                               {valueProp || "A modern, high-converting landing page preview with SEO-ready structure."}
@@ -1292,7 +1266,7 @@ Rules:
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">How many pages?</label>
+                        <label className={labelClass}>How many pages?</label>
                         <input
                           type="number"
                           min={1}
@@ -1308,7 +1282,7 @@ Rules:
                         )}
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Planned output</label>
+                        <label className={labelClass}>Planned output</label>
                         <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 text-sm text-slate-600 dark:text-slate-300">
                           <div>Keywords/locations: {plannedKeywords.length}</div>
                           <div>Planned pages: {pageCount}</div>
@@ -1322,7 +1296,7 @@ Rules:
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      <label className={labelClass}>
                         Keywords / locations for bulk generation
                       </label>
                       <textarea

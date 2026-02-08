@@ -194,64 +194,61 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
         </nav>
 
         <div className="flex-1 overflow-y-auto bg-transparent dark:bg-transparent">
-          {safeBlocks.map((block) => {
-            if (!block || !block.type) return null;
+          {(() => {
+            const rendered = [];
+            for (let i = 0; i < safeBlocks.length; i += 1) {
+              const block = safeBlocks[i];
+              if (!block || !block.type) continue;
 
-            const content = prettifyForPreview(block.content);
-            const heroHeadline = block.type === "hero" ? formatHeroHeadline(block.content) : content;
-            const heroSubhead = block.type === "hero" ? formatHeroSubhead(block.content) : "";
+              const content = prettifyForPreview(block.content);
+              const heroHeadline = block.type === "hero" ? formatHeroHeadline(block.content) : content;
+              const heroSubhead = block.type === "hero" ? formatHeroSubhead(block.content) : "";
 
-            switch (block.type) {
-              case "header":
-                return (
-                  <section key={block.id} className={`py-6 ${sectionPad}`}>
-                    <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold">
-                      <span>Service overview</span>
-                      <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></span>
-                    </div>
-                    <div className={`mt-4 grid gap-4 ${grid2} items-stretch`}>
-                      <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-white to-emerald-50 p-6 shadow-sm relative overflow-hidden dark:bg-slate-950 dark:from-slate-950 dark:to-slate-900 dark:border-slate-800">
-                        <div className="absolute -right-10 -top-10 w-28 h-28 rounded-full bg-emerald-100/60 dark:bg-emerald-500/10"></div>
-                        <div className="absolute -left-10 -bottom-10 w-24 h-24 rounded-full bg-indigo-100/60 dark:bg-indigo-500/10"></div>
-                        <div className="relative">
-                          <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">
-                            Section highlight
-                          </div>
-                          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 leading-tight dark:text-white">
-                            {content}
-                          </h2>
-                          <p className="text-sm text-slate-500 mt-2 dark:text-slate-300">
-                            Clear, outcome-driven headline with a short supporting line.
-                          </p>
-                          <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
-                            {["Problem aware", "Solution focused", "Actionable"].map((item) => (
-                              <span key={item} className="px-3 py-1.5 rounded-full bg-white/70 border border-slate-200 dark:bg-slate-900/70 dark:border-slate-800">
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
+              const next = safeBlocks[i + 1];
+              const isHeader = block.type === "header";
+              const isNextText = next && next.type === "text";
+
+              if (isHeader && isNextText) {
+                const nextContent = prettifyForPreview(next.content);
+                rendered.push(
+                  <section key={`${block.id}-grouped`} className={`py-6 ${sectionPad}`}>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:bg-slate-950 dark:border-slate-800">
+                      <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold mb-3">
+                        <span>Section</span>
+                        <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></span>
                       </div>
-                      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:bg-slate-950 dark:border-slate-800">
-                        <div className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-3">Quick takeaway</div>
-                        <p className="text-sm text-slate-600 leading-relaxed dark:text-slate-300">
-                          Use this space to summarize the service value in a sentence or two and add a short proof point.
-                        </p>
-                        <div className="mt-4 space-y-2 text-xs text-slate-500">
-                          {["Response time under 24 hours", "Clear next steps", "Transparent pricing"].map((item) => (
-                            <div key={item} className="flex items-center gap-2">
-                              <Check size={12} className="text-emerald-500" />
-                              <span>{item}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 leading-tight dark:text-white">
+                        {content}
+                      </h2>
+                      <p className="mt-3 text-sm sm:text-base text-slate-700 leading-relaxed dark:text-slate-200">
+                        {nextContent}
+                      </p>
                     </div>
                   </section>
                 );
+                i += 1;
+                continue;
+              }
+
+              switch (block.type) {
+              case "header":
+                rendered.push(
+                  <section key={block.id} className={`py-6 ${sectionPad}`}>
+                    <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold">
+                      <span>Section</span>
+                      <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></span>
+                    </div>
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:bg-slate-950 dark:border-slate-800">
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 leading-tight dark:text-white">
+                        {content}
+                      </h2>
+                    </div>
+                  </section>
+                );
+                break;
 
               case "hero":
-                return (
+                rendered.push(
                   <section
                     key={block.id}
                     className={`relative overflow-hidden py-14 sm:py-20 bg-gradient-to-br from-slate-50 via-white to-emerald-50 border-b border-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 dark:border-slate-800 ${sectionPad}`}
@@ -335,56 +332,71 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                     </div>
                   </section>
                 );
+                break;
 
               case "text":
-                return (
+                rendered.push(
                   <section key={block.id} className={`py-6 ${sectionPad}`}>
-                    <div className={`grid gap-6 ${grid2}`}>
-                      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:bg-slate-950 dark:border-slate-800">
-                        <div className="flex items-center gap-3 mb-3">
-                          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Insight</span>
-                          <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></span>
-                        </div>
-                        <p
-                          className="text-sm sm:text-base text-slate-700 leading-relaxed dark:text-slate-200"
-                          style={{
-                            display: "-webkit-box",
-                            WebkitLineClamp: 4,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden"
-                          }}
-                        >
-                          {content}
-                        </p>
-                        <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
-                          {["Outcome focused", "Clear structure", "SEO aligned"].map((item) => (
-                            <div key={item} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 dark:bg-slate-900/40 dark:border-slate-800">
-                              {item}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-white to-indigo-50 p-6 shadow-sm dark:bg-slate-950 dark:from-slate-950 dark:to-slate-900 dark:border-slate-800">
-                        <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Service outcomes</div>
-                        <div className="mt-3 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                          {["Clear next steps", "Proof-backed approach", "Fast turnaround"].map((item) => (
-                            <div key={item} className="flex items-center gap-2">
-                              <CheckCircle2 size={14} className="text-emerald-500" />
-                              <span>{item}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 dark:bg-slate-900/40 dark:border-slate-800">
-                          <span className="font-semibold text-slate-700 dark:text-slate-200">Pro tip:</span> Add a short proof line or mini case study here.
-                        </div>
-                      </div>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:bg-slate-950 dark:border-slate-800">
+                      <p className="text-sm sm:text-base text-slate-700 leading-relaxed dark:text-slate-200">
+                        {content}
+                      </p>
                     </div>
                   </section>
                 );
+                break;
+
+              case "columns_n": {
+                const count = Math.min(6, Math.max(2, parseInt(block.columns || 3, 10)));
+                const cols = parseColumns(content, count);
+                const gridClass =
+                  viewMode === "mobile"
+                    ? "grid-cols-1"
+                    : {
+                        2: "md:grid-cols-2",
+                        3: "md:grid-cols-3",
+                        4: "md:grid-cols-4",
+                        5: "md:grid-cols-5",
+                        6: "md:grid-cols-6"
+                      }[count] || "md:grid-cols-3";
+                rendered.push(
+                  <section key={block.id} className={`py-6 ${sectionPad}`}>
+                    <div className={`grid gap-4 ${gridClass}`}>
+                      {cols.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm overflow-hidden dark:bg-slate-950 dark:border-slate-800"
+                        >
+                          <div className="absolute -right-10 -top-10 w-24 h-24 rounded-full bg-indigo-100/60 dark:bg-indigo-500/10"></div>
+                          <div className="relative">
+                            <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">
+                              <span className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px]">
+                                {idx + 1}
+                              </span>
+                              Column {idx + 1}
+                            </div>
+                            <p className="text-sm sm:text-base text-slate-700 leading-relaxed dark:text-slate-200">
+                              {item}
+                            </p>
+                            <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
+                              {["Outcome", "Proof", "CTA"].map((label) => (
+                                <span key={label} className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-900/40">
+                                  {label}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                );
+                break;
+              }
 
               case "columns_2": {
                 const cols = parseColumns(content, 2);
-                return (
+                rendered.push(
                   <section key={block.id} className={`py-6 ${sectionPad}`}>
                     <div className={`grid gap-4 ${grid2}`}>
                       {cols.map((item, idx) => (
@@ -416,11 +428,12 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                     </div>
                   </section>
                 );
+                break;
               }
 
               case "grid_2x2": {
                 const cells = parseGrid(content, 4);
-                return (
+                rendered.push(
                   <section key={block.id} className={`py-6 ${sectionPad}`}>
                     <div className={`grid gap-4 ${isMobile ? "grid-cols-1" : "sm:grid-cols-2"}`}>
                       {cells.map((item, idx) => (
@@ -441,28 +454,44 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                     </div>
                   </section>
                 );
+                break;
               }
 
-              case "image":
-                return (() => {
-                  const label = content.includes("<") ? "Image placeholder" : content;
-                  return (
+              case "image": {
+                const label = content.includes("<") ? "Image placeholder" : content;
+                const rawImageUrl = typeof block.imageUrl === "string" ? block.imageUrl.trim() : "";
+                const hasToken = /\{\{[^}]+\}\}/.test(rawImageUrl);
+                const imageUrl = hasToken ? "" : rawImageUrl;
+                const imageCaption =
+                  typeof block.imageCaption === "string" && block.imageCaption.trim()
+                    ? block.imageCaption.trim()
+                    : label || "Image placeholder";
+                rendered.push(
                   <section key={block.id} className={`py-6 ${sectionPad}`}>
                     <div className="w-full h-48 sm:h-64 md:h-[360px] rounded-3xl border border-slate-200 overflow-hidden relative group bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 dark:border-slate-800">
-                      <div className="absolute inset-0 flex items-center justify-center text-slate-300">
-                        <ImageIcon size={36} />
-                      </div>
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={imageCaption}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-slate-300">
+                          <ImageIcon size={36} />
+                        </div>
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-70"></div>
                       <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/90 border border-slate-200 p-4 shadow-lg dark:bg-slate-950/80 dark:border-slate-800">
                         <div className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Visual</div>
                         <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                          {label || "Image placeholder"}
+                          {hasToken ? `Dynamic image: ${rawImageUrl}` : imageCaption}
                         </div>
                       </div>
                     </div>
                   </section>
-                  );
-                })();
+                );
+                break;
+              }
 
               case "pain_point":
                 return (
@@ -822,7 +851,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                 );
 
               case "pros_cons":
-                return (
+                rendered.push(
                   <section key={block.id} className={`py-6 ${sectionPad}`}>
                     {(() => {
                       const items = parseList(content, 4);
@@ -861,9 +890,10 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                     })()}
                   </section>
                 );
+                break;
 
               case "process":
-                return (
+                rendered.push(
                   <section key={block.id} className={`py-10 ${sectionPad}`}>
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-xl font-bold text-slate-900 dark:text-white">How it works</h3>
@@ -889,9 +919,10 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                     </div>
                   </section>
                 );
+                break;
 
               case "social_proof":
-                return (
+                rendered.push(
                   <section key={block.id} className={`py-10 bg-slate-50 dark:bg-slate-900/30 ${sectionPad}`}>
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-xl font-bold text-slate-900 dark:text-white">What customers say</h3>
@@ -920,9 +951,10 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                     </div>
                   </section>
                 );
+                break;
 
               case "case_study":
-                return (
+                rendered.push(
                   <section key={block.id} className={`py-10 ${sectionPad}`}>
                     <div className={`grid gap-6 ${grid2} items-center rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:bg-slate-950 dark:border-slate-800`}>
                       <div>
@@ -957,20 +989,22 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                     </div>
                   </section>
                 );
+                break;
 
               // schema blocks
               case "schema_service":
               case "schema_blog":
-                return (
+                rendered.push(
                   <div key={block.id} className={`${sectionPad} py-4`}>
                     <div className="p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800 font-mono dark:bg-amber-900/10 dark:border-amber-900/30 dark:text-amber-200">
                       Hidden Schema: {block.type}
                     </div>
                   </div>
                 );
+                break;
 
               default:
-                return (
+                rendered.push(
                   <div
                     key={block.id}
                     className="p-6 text-center border-b border-slate-100 dark:border-slate-800"
@@ -980,8 +1014,11 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                     </p>
                   </div>
                 );
+                break;
             }
-          })}
+          }
+          return rendered;
+        })()}
 
           <footer className={`bg-slate-900 text-slate-500 py-8 text-center text-xs mt-auto dark:bg-black ${sectionPad}`}>
             <p>(c) 2026 GroGoliath. All rights reserved.</p>
