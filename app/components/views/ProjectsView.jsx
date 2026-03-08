@@ -4,10 +4,12 @@ import React, { useState } from "react";
 import { Download, Edit3, Eye, Monitor, Search, Sparkles, Trash2 } from "lucide-react";
 import Badge from "../ui/Badge";
 import Card from "../ui/Card";
+import SimpleGenerate from "../SimpleGenerate";
 
-const ProjectsView = ({ projects, onDelete, onView, onGenerate, onEdit }) => {
+const ProjectsView = ({ projects, onDelete, onView, onEdit, profile, session, setProfile, onUpdateSuccess }) => {
   const [search, setSearch] = useState("");
   const [activeStatus, setActiveStatus] = useState("All");
+  const [generateProject, setGenerateProject] = useState(null);
   const tabs = ["All", "Draft", "Completed"];
 
   const filtered = projects.filter((p) => {
@@ -33,6 +35,16 @@ const ProjectsView = ({ projects, onDelete, onView, onGenerate, onEdit }) => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
+      {generateProject && (
+        <SimpleGenerate
+          project={generateProject}
+          profile={profile}
+          session={session}
+          setProfile={setProfile}
+          onUpdateSuccess={() => { onUpdateSuccess?.(); setGenerateProject(null); }}
+          onClose={() => setGenerateProject(null)}
+        />
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold dark:text-white">Projects</h1>
@@ -99,7 +111,7 @@ const ProjectsView = ({ projects, onDelete, onView, onGenerate, onEdit }) => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onGenerate(p);
+                        setGenerateProject(p);
                       }}
                       className="text-[#2B5E44] hover:text-[#234d37] dark:text-emerald-300 font-medium bg-[#2B5E44]/10 dark:bg-[#2B5E44]/25 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs"
                     >

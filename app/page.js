@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import TemplateModal from "./components/builder/TemplateModal";
 import GenerateModal from "./components/modals/GenerateModal";
-import NewProjectModal from "./components/modals/NewProjectModal";
+import SimpleNewProject from "./components/modals/SimpleNewProject";
 import ViewModal from "./components/modals/ViewModal";
 import DashboardView from "./components/views/DashboardView";
 import ProjectsView from "./components/views/ProjectsView";
@@ -94,7 +94,6 @@ export default function App() {
   const [editProjectData, setEditProjectData] = useState(null);
   const [projects, setProjects] = useState([]);
   const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0);
-  const [initialTemplateId, setInitialTemplateId] = useState("");
   const [generateTemplateId, setGenerateTemplateId] = useState("");
   const [autoStartFirstDraft, setAutoStartFirstDraft] = useState(false);
   const [generationExpandSignal, setGenerationExpandSignal] = useState(0);
@@ -199,8 +198,7 @@ export default function App() {
     setIsTemplateModalOpen(true);
   };
 
-  const handleUseTemplate = (template) => {
-    setInitialTemplateId(String(template?.id || ""));
+  const handleUseTemplate = () => {
     setIsUploadModalOpen(true);
   };
 
@@ -210,28 +208,17 @@ export default function App() {
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="flex h-screen bg-gradient-to-br from-[#f4f8f5] via-white to-[#edf6f0] dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
-        <NewProjectModal
+        <SimpleNewProject
           isOpen={isUploadModalOpen || !!editProjectData}
           onClose={() => {
             setIsUploadModalOpen(false);
             setEditProjectData(null);
-            setInitialTemplateId("");
           }}
-          onUploadSuccess={fetchProjects}
-          onCreateProject={(project, templateId) => {
-            setGenerateProject(project);
-            setGenerateTemplateId(templateId || "");
-            setAutoStartFirstDraft(true);
+          session={session}
+          onSuccess={() => {
+            fetchProjects();
             setActiveTab("projects");
           }}
-          onOpenTemplateBuilder={() => {
-            setIsUploadModalOpen(false);
-            setEditProjectData(null);
-            handleNewTemplate();
-          }}
-          initialData={editProjectData}
-          initialTemplateId={initialTemplateId}
-          profile={profile}
         />
 
         <ViewModal
@@ -346,12 +333,11 @@ export default function App() {
                 projects={projects}
                 onDelete={handleDelete}
                 onView={setViewProject}
-                onGenerate={(p) => {
-                  setGenerateProject(p);
-                  setGenerateTemplateId("");
-                  setAutoStartFirstDraft(false);
-                }}
                 onEdit={(p) => setEditProjectData(p)}
+                profile={profile}
+                session={session}
+                setProfile={setProfile}
+                onUpdateSuccess={fetchProjects}
               />
             )}
 
@@ -416,6 +402,11 @@ export default function App() {
           </div>
           {generationCenter.awaitingConfirm && (
             <div className="mt-2 text-xs text-amber-600">First draft ready. Open generator and click Generate Remaining.</div>
+          )}
+          {generationCenter.isMinimized && generationCenter.isGenerating && (
+            <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+              Generating in the background. You can keep working and check Projects anytime.
+            </div>
           )}
           <div className="mt-3 flex justify-end">
             <button

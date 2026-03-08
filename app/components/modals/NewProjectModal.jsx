@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Edit3, Loader2, X } from "lucide-react";
+import { Edit3, Globe, LayoutTemplate, Loader2, Wand2, X } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import LivePreview from "../builder/LivePreview";
 
@@ -11,6 +11,12 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
   const [progressMinimized, setProgressMinimized] = useState(false);
   const [userTemplates, setUserTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [templateSource, setTemplateSource] = useState("library");
+  const [siteUrl, setSiteUrl] = useState("");
+  const [siteAnalysisLoading, setSiteAnalysisLoading] = useState(false);
+  const [siteAnalysisError, setSiteAnalysisError] = useState("");
+  const [siteAnalysisSuccess, setSiteAnalysisSuccess] = useState("");
+  const [formError, setFormError] = useState("");
   const [step, setStep] = useState(0);
   const [blockSettings, setBlockSettings] = useState([]);
   const [projectName, setProjectName] = useState("");
@@ -77,7 +83,16 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
   const aiInputsPercent = Math.round((aiInputsFilled / aiInputsTotal) * 100);
   const aiInputsStatus =
     aiInputsPercent >= 80 ? "Excellent" : aiInputsPercent >= 55 ? "Good" : aiInputsPercent >= 30 ? "Fair" : "Barebones";
-  const labelClass = "text-[11px] uppercase tracking-[0.2em] font-semibold text-slate-500 dark:text-slate-300";
+  const activeTemplate = getTemplateById(selectedTemplateId);
+  const templateStructure = activeTemplate?.structure || [];
+  const labelClass = "text-sm font-semibold text-slate-700 dark:text-slate-200";
+  const helperClass = "text-xs text-slate-500 dark:text-slate-400";
+  const inputClass =
+    "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 focus:border-emerald-400 transition dark:bg-slate-800 dark:border-slate-700 dark:text-white";
+  const textareaClass =
+    "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 focus:border-emerald-400 transition dark:bg-slate-800 dark:border-slate-700 dark:text-white";
+  const selectClass =
+    "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 focus:border-emerald-400 transition dark:bg-slate-800 dark:border-slate-700 dark:text-white";
   const progressSteps = [
     { label: "Validating inputs", at: 10 },
     { label: "Building page list", at: 40 },
@@ -100,6 +115,7 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
   useEffect(() => {
     if (!isOpen) return;
     if (!contentRef.current) return;
+    setFormError("");
     requestAnimationFrame(() => {
       contentRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
@@ -128,6 +144,12 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
 
       if (initialData) {
         const details = initialData.data?.details || {};
+        const savedUrl = details.SourceUrl || "";
+        setTemplateSource(savedUrl ? "url" : details.TemplateSource || "library");
+        setSiteUrl(savedUrl);
+        setSiteAnalysisError("");
+        setSiteAnalysisSuccess("");
+        setFormError("");
         setProjectName(initialData.name || "");
         setBusinessDescription(details.BusinessDescription || "");
         setDesiredPageCount(Number(details.DesiredPageCount) || (Array.isArray(initialData.data?.rows) ? initialData.data.rows.length : 10));
@@ -155,6 +177,11 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
         setBlockSettings(details.BlockSettings || []);
         setStep(1);
       } else {
+        setTemplateSource("library");
+        setSiteUrl("");
+        setSiteAnalysisError("");
+        setSiteAnalysisSuccess("");
+        setFormError("");
         setProjectName("");
         setBusinessDescription("");
         setDesiredPageCount(10);
@@ -243,6 +270,166 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
     if (!id) return null;
     return userTemplates.find((t) => t.id.toString() === id.toString()) || null;
   }
+
+  const normalizeSiteUrl = (value) => {
+    const trimmed = String(value || "").trim();
+    if (!trimmed) return "";
+    if (/^https-:\/\//i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+  };
+
+  const buildFallbackStructure = () => [
+    {
+      id: Date.now() + Math.random(),
+      type: "hero",
+      category: "basic",
+      content: "Hero for {{Service}} in {{City}} with a clear outcome and 2 CTAs."
+    },
+    {
+      id: Date.now() + Math.random(),
+      type: "header",
+      category: "basic",
+      content: "Why {{Service}} matters in {{City}}"
+    },
+    {
+      id: Date.now() + Math.random(),
+      type: "text",
+      category: "basic",
+      content: "Explain the core benefit and why people should care."
+    },
+    {
+      id: Date.now() + Math.random(),
+      type: "pain_point",
+      category: "marketing",
+      content: "List 3 pain points your audience faces."
+    },
+    {
+      id: Date.now() + Math.random(),
+      type: "solution",
+      category: "marketing",
+      content: "Describe how your service solves those pain points."
+    },
+    {
+      id: Date.now() + Math.random(),
+      type: "usp",
+      category: "marketing",
+      content: "List 3-5 unique selling points."
+    },
+    {
+      id: Date.now() + Math.random(),
+      type: "social_proof",
+      category: "premium",
+      content: "Add 2-3 short testimonials."
+    },
+    {
+      id: Date.now() + Math.random(),
+      type: "faq_auto",
+      category: "seo",
+      content: "Generate 5 FAQs about {{Service}} in {{City}}."
+    },
+    {
+      id: Date.now() + Math.random(),
+      type: "cta",
+      category: "marketing",
+      content: "CTA band with one clear action."
+    }
+  ];
+
+  const handleAnalyzeSite = async () => {
+    const normalizedUrl = normalizeSiteUrl(siteUrl);
+    if (!normalizedUrl) {
+      setSiteAnalysisError("Enter a valid website URL to analyze.");
+      return;
+    }
+
+    setSiteAnalysisLoading(true);
+    setSiteAnalysisError("");
+    setSiteAnalysisSuccess("");
+    setFormError("");
+
+    try {
+      const response = await fetch("/api/analyze-site", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: normalizedUrl })
+      });
+      const data = await response.json();
+      if (!response.ok || data?.error) throw new Error(data?.error || "Site analysis failed.");
+
+      let parsedBlocks = [];
+      try {
+        parsedBlocks = extractJsonArray(data?.content || "");
+      } catch {
+        parsedBlocks = [];
+      }
+
+      const sanitized = (Array.isArray(parsedBlocks) ? parsedBlocks : [])
+        .filter((b) => b?.type)
+        .map((b) => ({
+          id: Date.now() + Math.random(),
+          type: b.type,
+          category: b.category || "basic",
+          content: b.content || "",
+          ...(b.type === "columns_n" ? { columns: Math.min(6, Math.max(2, parseInt(b.columns || 3, 10))) } : {}),
+          ...(b.type === "columns_2" ? { columns: 2 } : {}),
+          ...(b.type === "image" ? { imageUrl: "", imageCaption: "" } : {})
+        }));
+
+      const finalStructure = sanitized.length > 0 ? sanitized : buildFallbackStructure();
+
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("You must be logged in to analyze a site.");
+
+      const hostname = (() => {
+        try {
+          return new URL(normalizedUrl).hostname.replace(/^www\./, "");
+        } catch {
+          return "website";
+        }
+      })();
+      const templateName = `AI: ${hostname} landing template`;
+
+      const { data: newTemplate, error } = await supabase
+        .from("templates")
+        .insert({ user_id: user.id, name: templateName, structure: finalStructure })
+        .select("*")
+        .single();
+
+      if (error) throw new Error(error.message || "Failed to save the AI template.");
+
+      setUserTemplates((prev) => [newTemplate, ...prev]);
+      setSelectedTemplateId(String(newTemplate.id));
+      setBlockSettings(finalStructure.map((b) => getDefaultBlockSetting(b)));
+      setSiteAnalysisSuccess(`Template generated from ${hostname}. You can continue.`);
+    } catch (err) {
+      setSiteAnalysisError(err?.message || "Site analysis failed.");
+    } finally {
+      setSiteAnalysisLoading(false);
+    }
+  };
+
+  const validateInputs = () => {
+    if (!projectName.trim()) return "Add a project name to keep your pages organized.";
+    if (!selectedTemplateId) return "Select a template (or analyze a website URL) first.";
+    if (!getTemplateById(selectedTemplateId)) return "Select a template from your library.";
+    if (!brandName.trim()) return "Add your brand name so we can personalize the copy.";
+    if (!service.trim()) return "Add a primary service so the AI knows what to write.";
+    if (!city.trim()) return "Add a target city/location for local intent.";
+    if (!pageGoal.trim()) return "Choose a page goal so the CTA matches.";
+    if (remainingPages !== null && remainingPages <= 0) {
+      return "You have no pages remaining on your current plan.";
+    }
+    const rawKeywords = keywordsList
+      .split(/\n|,/)
+      .map((k) => k.trim())
+      .filter(Boolean);
+    if (step === lastStep && rawKeywords.length === 0) {
+      return "Add at least one keyword/location to generate pages.";
+    }
+    return "";
+  };
 
   const updateBlockSettingById = (id, patch) => {
     setBlockSettings((prev) => {
@@ -343,9 +530,9 @@ CURRENT DRAFT:
 ${currentContent || block.content || "N/A"}
 
 Rules:
-- Keep this a ${block.type} section.
-- Improve clarity, conversion, and SEO without keyword stuffing.
-- Return ONLY the rewritten section text (no JSON, no markdown).
+? Keep this a ${block.type} section.
+? Improve clarity, conversion, and SEO without keyword stuffing.
+? Return ONLY the rewritten section text (no JSON, no markdown).
 `.trim();
   };
 
@@ -402,6 +589,11 @@ Rules:
       setAiPreviewBlocks(normalized);
     } catch (err) {
       setAiPreviewError(err?.message || "Preview generation failed.");
+      const fallback = template?.structure?.map((b) => ({
+        ...b,
+        content: String(b.content || "")
+      }));
+      if (fallback?.length) setAiPreviewBlocks(fallback);
     } finally {
       setAiPreviewLoading(false);
     }
@@ -494,15 +686,22 @@ Rules:
         onClick={() => setProgressMinimized(false)}
         className="fixed bottom-4 right-4 z-[120] bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg hover:bg-slate-800"
       >
-        Project creation running... {progressPercent}% • tap to view
+        Project creation running... {progressPercent}% - tap to view
       </button>
     );
   }
 
   const handleSave = async () => {
+    setFormError("");
+    const validationError = validateInputs();
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
+
     setUploading(true);
     setProgressMinimized(false);
-    setProgressMessage("Validating your project...");
+    setProgressMessage("Validating inputs...");
     setProgressPercent(10);
 
     try {
@@ -534,7 +733,9 @@ Rules:
         InternalLinks: internalLinks,
         AdditionalAiContext: additionalAiContext,
         TemplateId: templateId,
-        BlockSettings: blockSettings
+        BlockSettings: blockSettings,
+        TemplateSource: templateSource,
+        SourceUrl: templateSource === "url" ? normalizeSiteUrl(siteUrl) : ""
       };
 
       const rawKeywords = keywordsList
@@ -545,12 +746,6 @@ Rules:
       const allowedCount = remainingPages !== null ? Math.min(requestedCount, remainingPages) : requestedCount;
       const finalKeywords = rawKeywords.slice(0, allowedCount);
 
-      if (!projectName.trim()) throw new Error("Please enter a project name.");
-      if (!templateId) throw new Error("Please select a template first.");
-      if (!getTemplateById(templateId)) throw new Error("Please select a template from your library.");
-      if (remainingPages !== null && remainingPages <= 0) {
-        throw new Error("You have no pages remaining on your current plan. Upgrade to generate more pages.");
-      }
       if (remainingPages !== null && requestedCount > remainingPages) {
         throw new Error(`You can only create ${remainingPages} pages on your current plan. Reduce the count or upgrade.`);
       }
@@ -592,7 +787,7 @@ Rules:
       if (data) onCreateProject?.(data, templateId);
       onClose();
     } catch (err) {
-      alert(err?.message || "Something went wrong creating the project.");
+      setFormError(err?.message || "Something went wrong creating the project.");
     } finally {
       setUploading(false);
       setProgressMessage("");
@@ -639,7 +834,7 @@ Rules:
                 <div className="font-semibold text-slate-700 dark:text-slate-200">Status feed</div>
                 <div className="mt-1">{progressMessage || "Working..."}</div>
                 <div className="mt-1 text-[11px] text-slate-400">
-                  Project: {projectName || "Untitled"} · Planned pages: {Math.max(1, Number(desiredPageCount) || 1)}
+                  Project: {projectName || "Untitled"} ? Planned pages: {Math.max(1, Number(desiredPageCount) || 1)}
                 </div>
               </div>
               <p className="text-xs text-slate-400 mt-2">You can keep working while we finish this.</p>
@@ -677,13 +872,13 @@ Rules:
                       style={{ width: `${((step + 1) / stepLabels.length) * 100}%` }}
                     />
                   </div>
-                  <div className="grid grid-cols-4 gap-2 text-[11px] font-bold uppercase text-slate-400">
+                  <div className="grid grid-cols-5 gap-2 text-[11px] font-semibold text-slate-500">
                     {stepLabels.map((label, i) => (
                       <div key={label} className="flex items-center gap-2">
                         <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] transition-all duration-300 ${
+                          className={`w-10 h-10 rounded-full flex items-center justify-center text-xs transition-all duration-300 ${
                             step >= i
-                              ? "bg-[#2B5E44] text-white shadow-lg shadow-[#2B5E44]/30"
+                              ? "bg-[#2B5E44] text-white"
                               : "bg-slate-100 text-slate-400 dark:bg-slate-700"
                           }`}
                         >
@@ -694,13 +889,18 @@ Rules:
                     ))}
                   </div>
                 </div>
+                {formError && (
+                  <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    {formError}
+                  </div>
+                )}
 
                 {step === 0 && (
                   <div className="space-y-5">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-sm text-slate-500">
-                          Choose a template you have imported to define the page structure.
+                          Choose a template from your library or let AI derive one from your website.
                         </p>
                         {!getTemplateById(selectedTemplateId) && (
                           <div className="mt-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg p-3 text-sm">
@@ -717,52 +917,134 @@ Rules:
                       </button>
                     </div>
 
-                    {userTemplates.length === 0 ? (
-                      <div className="bg-amber-50 text-amber-800 border border-amber-200 rounded-lg p-4 text-sm space-y-3">
-                        <p className="font-semibold">No imported templates found.</p>
-                        <p>Create or import a template first, then come back to start your project.</p>
-                        <button
-                          type="button"
-                          onClick={() => onOpenTemplateBuilder?.()}
-                          className="px-4 py-2 text-xs font-bold rounded-lg bg-[#2B5E44] text-white hover:bg-[#244f3a]"
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => setTemplateSource("library")}
+                        className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-left transition ${
+                          templateSource === "library"
+                            ? "border-emerald-400 bg-emerald-50"
+                            : "border-slate-200 hover:border-emerald-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <span
+                          className={`mt-1 flex h-9 w-9 items-center justify-center rounded-xl ${
+                            templateSource === "library" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"
+                          }`}
                         >
-                          Create New Template
-                        </button>
+                          <LayoutTemplate size={18} />
+                        </span>
+                        <div>
+                          <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">Use a template</div>
+                          <div className={helperClass}>Pick from your saved templates.</div>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTemplateSource("url")}
+                        className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-left transition ${
+                          templateSource === "url"
+                            ? "border-emerald-400 bg-emerald-50"
+                            : "border-slate-200 hover:border-emerald-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <span
+                          className={`mt-1 flex h-9 w-9 items-center justify-center rounded-xl ${
+                            templateSource === "url" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          <Globe size={18} />
+                        </span>
+                        <div>
+                          <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">Analyze website URL</div>
+                          <div className={helperClass}>AI builds a landing template from your site.</div>
+                        </div>
+                      </button>
+                    </div>
+
+                    {templateSource === "url" && (
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 dark:bg-slate-900 dark:border-slate-700">
+                        <div className="space-y-1.5">
+                          <label className={labelClass}>Website URL</label>
+                          <p className={helperClass}>We scan the page to build the structure.</p>
+                          <input
+                            value={siteUrl}
+                            onChange={(e) => setSiteUrl(e.target.value)}
+                            placeholder="https://example.com"
+                            className={inputClass}
+                          />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleAnalyzeSite}
+                            disabled={siteAnalysisLoading}
+                            className="px-4 py-2 text-sm font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 flex items-center gap-2"
+                          >
+                            {siteAnalysisLoading ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
+                            Analyze & create template
+                          </button>
+                          <span className="text-xs text-slate-500">Usually takes 10-20 seconds.</span>
+                        </div>
+                        {siteAnalysisError && (
+                          <div className="text-xs text-rose-600">{siteAnalysisError}</div>
+                        )}
+                        {siteAnalysisSuccess && (
+                          <div className="text-xs text-emerald-700">{siteAnalysisSuccess}</div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {userTemplates.map((t) => {
-                          const isSelected = String(selectedTemplateId) === String(t.id);
-                          return (
+                    )}
+
+                    {templateSource === "library" && (
+                      <>
+                        {userTemplates.length === 0 ? (
+                          <div className="bg-amber-50 text-amber-800 border border-amber-200 rounded-lg p-4 text-sm space-y-3">
+                            <p className="font-semibold">No imported templates found.</p>
+                            <p>Create or import a template first, then come back to start your project.</p>
                             <button
-                              key={t.id}
                               type="button"
-                              onClick={() => setSelectedTemplateId(String(t.id))}
-                              className={`text-left p-4 rounded-2xl border transition-all ${
-                                isSelected
-                                  ? "border-[#2B5E44] bg-[#2B5E44]/10 shadow-lg"
-                                  : "border-slate-200 hover:border-[#2B5E44]/40 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
-                              }`}
+                              onClick={() => onOpenTemplateBuilder?.()}
+                              className="px-4 py-2 text-xs font-bold rounded-lg bg-[#2B5E44] text-white hover:bg-[#244f3a]"
                             >
-                              <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">My Template</div>
-                              <div className="text-base font-bold text-slate-900 dark:text-slate-100">{t.name}</div>
-                              <div className="text-xs text-slate-500 mt-1">{(t.structure || []).length} sections</div>
-                              <div className="mt-4 flex items-center justify-between">
-                                <span className="text-xs text-slate-400">Click to select</span>
-                                <span
-                                  className={`text-xs font-bold px-2 py-1 rounded-full ${
+                              Create New Template
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {userTemplates.map((t) => {
+                              const isSelected = String(selectedTemplateId) === String(t.id);
+                              return (
+                                <button
+                                  key={t.id}
+                                  type="button"
+                                  onClick={() => setSelectedTemplateId(String(t.id))}
+                                  className={`text-left p-4 rounded-2xl border transition-all ${
                                     isSelected
-                                      ? "bg-[#2B5E44] text-white"
-                                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                      ? "border-emerald-400 bg-emerald-50"
+                                      : "border-slate-200 hover:border-emerald-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
                                   }`}
                                 >
-                                  {isSelected ? "Selected" : "Select"}
-                                </span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                                  <div className="text-xs font-semibold text-slate-500 mb-2">Template</div>
+                                  <div className="text-base font-semibold text-slate-900 dark:text-slate-100">{t.name}</div>
+                                  <div className="text-xs text-slate-500 mt-1">{(t.structure || []).length} sections</div>
+                                  <div className="mt-4 flex items-center justify-between">
+                                    <span className="text-xs text-slate-400">Click to select</span>
+                                    <span
+                                      className={`text-xs font-bold px-2 py-1 rounded-full ${
+                                        isSelected
+                                          ? "bg-emerald-500 text-white"
+                                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                      }`}
+                                    >
+                                      {isSelected ? "Selected" : "Select"}
+                                    </span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
@@ -770,43 +1052,49 @@ Rules:
                 {step === 1 && (
                   <div className="space-y-6">
                     <p className="text-sm text-slate-500">
-                      Add only the essential business details so we can set up your project correctly.
+                      Add only the essentials. Each answer powers every page we generate.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <label className={labelClass}>Project name</label>
+                        <p className={helperClass}>Internal label to organize this batch of pages.</p>
                         <input
                           value={projectName}
                           onChange={(e) => setProjectName(e.target.value)}
                           placeholder="Austin Plumbing Local SEO"
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={inputClass}
                         />
                       </div>
                       <div className="space-y-1.5">
                         <label className={labelClass}>Brand name</label>
+                        <p className={helperClass}>
+                          Used in copy wherever {"{{Brand}}"} appears.
+                        </p>
                         <input
                           value={brandName}
                           onChange={(e) => setBrandName(e.target.value)}
                           placeholder="Your brand"
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={inputClass}
                         />
                       </div>
                       <div className="space-y-1.5">
                         <label className={labelClass}>Primary service</label>
+                        <p className={helperClass}>Defines the main offer for every page.</p>
                         <input
                           value={service}
                           onChange={(e) => setService(e.target.value)}
                           placeholder="Emergency plumbing"
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={inputClass}
                         />
                       </div>
                       <div className="space-y-1.5">
                         <label className={labelClass}>Target city / location</label>
+                        <p className={helperClass}>Powers local intent and city placeholders.</p>
                         <input
                           value={city}
                           onChange={(e) => setCity(e.target.value)}
                           placeholder="Austin, TX"
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={inputClass}
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -814,7 +1102,7 @@ Rules:
                         <select
                           value={pageGoal}
                           onChange={(e) => setPageGoal(e.target.value)}
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={selectClass}
                         >
                           {["Leads", "Sales", "Awareness", "Bookings", "Authority"].map((g) => (
                             <option key={g} value={g}>
@@ -822,15 +1110,17 @@ Rules:
                             </option>
                           ))}
                         </select>
+                        <p className={helperClass}>Guides tone and CTA selection.</p>
                       </div>
                     </div>
                     <div className="space-y-1.5">
                       <label className={labelClass}>Business summary (optional)</label>
+                      <p className={helperClass}>One or two sentences to guide the AI.</p>
                       <textarea
                         value={businessDescription}
                         onChange={(e) => setBusinessDescription(e.target.value)}
                         placeholder="What you do, who you serve, and what makes you different."
-                        className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white min-h-[90px]"
+                        className={`${textareaClass} min-h-[110px]`}
                       />
                     </div>
                   </div>
@@ -845,7 +1135,7 @@ Rules:
                           <div>
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-500">AI Input Studio</p>
                             <p className="text-sm text-slate-600 dark:text-slate-300">
-                              Give the AI a strong brief once — it powers every section and every page.
+                              Give the AI a strong brief once - it powers every section and every page.
                             </p>
                           </div>
                           <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -861,8 +1151,8 @@ Rules:
                             style={{ width: `${aiInputsPercent}%` }}
                           />
                         </div>
-                        <div className="text-[11px] text-slate-500">
-                          Completion: {aiInputsPercent}% · More context = stronger first drafts.
+                        <div className={helperClass}>
+                          Completion: {aiInputsPercent}% ? more context equals stronger first drafts.
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {["Be specific", "Use local intent", "Keep it punchy"].map((tip) => (
@@ -880,94 +1170,94 @@ Rules:
                     <div className="space-y-4">
                       <div className="space-y-1.5">
                         <label className={labelClass}>Primary keyword</label>
-                        <p className="text-[11px] text-slate-500">
+                        <p className={helperClass}>
                           Use the exact phrase you want the page to rank for. This anchors the hero and meta.
                         </p>
                         <input
                           value={primaryKeyword}
                           onChange={(e) => setPrimaryKeyword(e.target.value)}
                           placeholder="plumber in austin"
-                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={inputClass}
                         />
                       </div>
 
                       <div className="space-y-1.5">
                         <label className={labelClass}>Secondary keywords</label>
-                        <p className="text-[11px] text-slate-500">
+                        <p className={helperClass}>
                           Optional variations or related services. Separate with commas.
                         </p>
                         <input
                           value={secondaryKeywords}
                           onChange={(e) => setSecondaryKeywords(e.target.value)}
                           placeholder="emergency plumber austin, water heater repair"
-                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={inputClass}
                         />
                       </div>
 
                       <div className="space-y-1.5">
                         <label className={labelClass}>Value proposition</label>
-                        <p className="text-[11px] text-slate-500">
+                        <p className={helperClass}>
                           One sentence on why you win. Think speed, trust, price, or results.
                         </p>
                         <textarea
                           value={valueProp}
                           onChange={(e) => setValueProp(e.target.value)}
                           placeholder="Same-day repairs, transparent pricing, and 1,200+ 5-star reviews."
-                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white min-h-[90px]"
+                          className={`${textareaClass} min-h-[100px]`}
                         />
                       </div>
 
                       <div className="space-y-1.5">
                         <label className={labelClass}>Audience</label>
-                        <p className="text-[11px] text-slate-500">Who are we persuading? Be specific.</p>
+                        <p className={helperClass}>Who are we persuading- Be specific.</p>
                         <input
                           value={audience}
                           onChange={(e) => setAudience(e.target.value)}
                           placeholder="Homeowners and property managers in Austin"
-                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={inputClass}
                         />
                       </div>
 
                       <div className="space-y-1.5">
                         <label className={labelClass}>Primary CTA</label>
-                        <p className="text-[11px] text-slate-500">What action should they take right away?</p>
+                        <p className={helperClass}>What action should they take right away-</p>
                         <input
                           value={cta}
                           onChange={(e) => setCta(e.target.value)}
                           placeholder="Book a same-day call"
-                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={inputClass}
                         />
                       </div>
 
                       <div className="space-y-1.5">
                         <label className={labelClass}>Core services / offers</label>
-                        <p className="text-[11px] text-slate-500">Comma-separated. These become feature bullets and section headers.</p>
+                        <p className={helperClass}>Comma-separated. These become feature bullets and section headers.</p>
                         <input
                           value={services}
                           onChange={(e) => setServices(e.target.value)}
                           placeholder="Emergency repair, drain cleaning, leak detection"
-                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={inputClass}
                         />
                       </div>
 
                       <div className="space-y-1.5">
                         <label className={labelClass}>Pricing range (optional)</label>
-                        <p className="text-[11px] text-slate-500">If you have a range, it boosts trust.</p>
+                        <p className={helperClass}>If you have a range, it boosts trust.</p>
                         <input
                           value={pricingRange}
                           onChange={(e) => setPricingRange(e.target.value)}
                           placeholder="$99-$499"
-                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={inputClass}
                         />
                       </div>
 
                       <div className="space-y-1.5">
                         <label className={labelClass}>Tone</label>
-                        <p className="text-[11px] text-slate-500">Choose the voice that matches your brand.</p>
+                        <p className={helperClass}>Choose the voice that matches your brand.</p>
                         <select
                           value={tone}
                           onChange={(e) => setTone(e.target.value)}
-                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={selectClass}
                         >
                           {["Professional", "Friendly", "Luxury", "Minimal", "Bold"].map((t) => (
                             <option key={t} value={t}>
@@ -979,11 +1269,11 @@ Rules:
 
                       <div className="space-y-1.5">
                         <label className={labelClass}>Language</label>
-                        <p className="text-[11px] text-slate-500">We’ll draft content in this language.</p>
+                        <p className={helperClass}>We'll draft content in this language.</p>
                         <select
                           value={language}
                           onChange={(e) => setLanguage(e.target.value)}
-                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={selectClass}
                         >
                           {["English", "Spanish", "French", "German", "Portuguese", "Italian", "Dutch"].map((l) => (
                             <option key={l} value={l}>
@@ -995,12 +1285,12 @@ Rules:
 
                       <div className="space-y-1.5">
                         <label className={labelClass}>Internal links (optional)</label>
-                        <p className="text-[11px] text-slate-500">Add URLs you want referenced, separated by commas.</p>
+                        <p className={helperClass}>Add URLs you want referenced, separated by commas.</p>
                         <input
                           value={internalLinks}
                           onChange={(e) => setInternalLinks(e.target.value)}
                           placeholder="/services, /about, /contact"
-                          className="w-full p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={inputClass}
                         />
                       </div>
 
@@ -1008,14 +1298,14 @@ Rules:
                         <label className={labelClass}>
                           Extra AI instructions (optional)
                         </label>
-                        <p className="text-[11px] text-slate-500">
+                        <p className={helperClass}>
                           Give the AI guardrails: what to highlight, avoid, or emphasize.
                         </p>
                         <textarea
                           value={additionalAiContext}
                           onChange={(e) => setAdditionalAiContext(e.target.value)}
                           placeholder="Mention certifications/licensing, include warranties, avoid competitor mentions."
-                          className="w-full min-h-[120px] p-3 border rounded transition focus:ring-2 focus:ring-[#2B5E44]/25 focus:border-[#2B5E44] dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                          className={`${textareaClass} min-h-[120px]`}
                         />
                         <div className="flex flex-wrap gap-2">
                           {[
@@ -1037,8 +1327,8 @@ Rules:
                             </button>
                           ))}
                         </div>
-                        <p className="text-xs text-slate-500">
-                          AI writes all sections by default. You can still rewrite any specific section in the preview.
+                        <p className={helperClass}>
+                          AI drafts every section by default. Switch any block to manual in Preview.
                         </p>
                       </div>
                     </div>
@@ -1053,7 +1343,7 @@ Rules:
                     <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
                       <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">Review</h4>
                       <div className="text-sm text-slate-600 dark:text-slate-300 space-y-1">
-                        <div>Template: {getTemplateById(selectedTemplateId)?.name || "Not selected"}</div>
+                        <div>Template: {activeTemplate?.name || "Not selected"}</div>
                         <div>Project: {projectName || "Untitled project"}</div>
                         <div>Goal: {pageGoal}</div>
                         <div>Location: {city || "Not set"}</div>
@@ -1063,68 +1353,60 @@ Rules:
                     </div>
                     <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <h5 className="text-sm font-bold text-slate-800 dark:text-slate-100">Live Landing Page Preview</h5>
+                        <div>
+                          <h5 className="text-sm font-bold text-slate-800 dark:text-slate-100">Structure Preview</h5>
+                          <p className={helperClass}>This is the layout your pages will follow.</p>
+                        </div>
                         <span className="text-xs text-slate-500">
-                          {(getTemplateById(selectedTemplateId)?.structure || []).length} sections
+                          {templateStructure.length} sections
                         </span>
                       </div>
-                      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white">
-                        <div className="h-9 px-4 flex items-center gap-2 bg-slate-100 border-b border-slate-200">
-                          <span className="w-2.5 h-2.5 rounded-full bg-red-300"></span>
-                          <span className="w-2.5 h-2.5 rounded-full bg-amber-300"></span>
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-300"></span>
-                          <span className="text-[11px] text-slate-500 ml-2">Preview - {brandName || "Your Brand"} service page</span>
-                        </div>
-                        <div className="p-5 bg-gradient-to-b from-[#f4faf6] via-white to-[#f8fcf9]">
-                          <div className="rounded-2xl p-6 bg-[#2B5E44] text-white shadow-lg">
-                            <p className="text-xs uppercase tracking-[0.2em] text-white/70">Preview Hero</p>
-                            <h6 className="mt-2 text-2xl font-bold leading-tight">
-                              {service || "Your Service"} in {city || "Your City"}
-                            </h6>
-                            <p className="mt-2 text-sm text-white/85">
-                              {valueProp || "A modern, high-converting landing page preview with SEO-ready structure."}
-                            </p>
-                            <div className="mt-4 flex gap-2">
-                              <span className="px-3 py-1.5 rounded-full text-xs bg-white/15">Goal: {pageGoal}</span>
-                              <span className="px-3 py-1.5 rounded-full text-xs bg-white/15">{tone}</span>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                            {(getTemplateById(selectedTemplateId)?.structure || []).map((block, idx) => {
-                              const cfg = blockSettings.find((b) => b.id === block.id) || getDefaultBlockSetting(block);
-                              return (
-                                <div
-                                  key={block.id}
-                                  className="group rounded-xl border border-slate-200 bg-white/95 p-3 animate-in fade-in duration-300 shadow-sm"
-                                  style={{ animationDelay: `${idx * 35}ms` }}
-                                >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div>
-                                      <div className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                                        Section {idx + 1} - {block.type.replaceAll("_", " ")}
-                                      </div>
-                                      <div className="text-xs mt-1 text-slate-600">
-                                        {cfg.mode === "ai" ? `AI - ~${cfg.words} words` : "Manual section"}
-                                      </div>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => setEditingPreviewBlock({ id: block.id, type: block.type })}
-                                      className="p-1.5 rounded-md text-slate-500 hover:text-[#2B5E44] hover:bg-[#2B5E44]/10"
-                                      title="Edit section settings"
-                                    >
-                                      <Edit3 size={14} />
-                                    </button>
-                                  </div>
-                                  <p className="text-xs mt-2 text-slate-500 line-clamp-2">{block.content}</p>
-                                  {cfg.notes && <p className="text-[11px] mt-2 text-[#2B5E44]">Note: {cfg.notes}</p>}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+                      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-950 p-3">
+                        {templateStructure.length === 0 ? (
+                          <div className="text-sm text-slate-500">Select a template to see the structure preview.</div>
+                        ) : (
+                          <LivePreview blocks={templateStructure} mode="template" />
+                        )}
                       </div>
                     </div>
+                    {templateStructure.length > 0 && (
+                      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h5 className="text-sm font-bold text-slate-800 dark:text-slate-100">Section Controls</h5>
+                            <p className={helperClass}>Decide what AI writes vs what you will write.</p>
+                          </div>
+                          <span className="text-xs text-slate-500">{templateStructure.length} sections</span>
+                        </div>
+                        <div className="space-y-2">
+                          {templateStructure.map((block, idx) => {
+                            const cfg = blockSettings.find((b) => b.id === block.id) || getDefaultBlockSetting(block);
+                            return (
+                              <div
+                                key={block.id}
+                                className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-sm dark:border-slate-700"
+                              >
+                                <div>
+                                  <div className="font-semibold text-slate-700 dark:text-slate-200">
+                                    {idx + 1}. {block.type.replaceAll("_", " ")}
+                                  </div>
+                                  <div className="text-xs text-slate-500">
+                                    {cfg.mode === "ai" ? `AI draft ~${cfg.words} words` : "Manual section"}
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingPreviewBlock({ id: block.id, type: block.type })}
+                                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-300"
+                                >
+                                  Edit
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
                       <div className="flex items-center justify-between gap-3 mb-2">
                         <div>
@@ -1157,6 +1439,8 @@ Rules:
                       <div className="mt-3 max-h-[520px] overflow-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-3">
                         {aiPreviewLoading ? (
                           <div className="text-sm text-slate-500">Generating preview...</div>
+                        ) : aiPreviewBlocks.length === 0 ? (
+                          <div className="text-sm text-slate-500">Generate the preview to see the AI draft.</div>
                         ) : (
                           <LivePreview blocks={aiPreviewBlocks} mode="page" />
                         )}
@@ -1175,14 +1459,33 @@ Rules:
                                   Edit {block.type.replaceAll("_", " ")}
                                 </h6>
                                 <div className="space-y-3">
-                                  <select
-                                    value={cfg.mode}
-                                    onChange={(e) => updateBlockSettingById(block.id, { mode: e.target.value })}
-                                    className="w-full p-2.5 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                                  >
-                                    <option value="ai">AI writes this section</option>
-                                    <option value="manual">I will write this section</option>
-                                  </select>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => updateBlockSettingById(block.id, { mode: "ai" })}
+                                      className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                                        cfg.mode === "ai"
+                                          ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
+                                      }`}
+                                    >
+                                      AI writes this
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => updateBlockSettingById(block.id, { mode: "manual" })}
+                                      className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                                        cfg.mode === "manual"
+                                          ? "border-slate-900 bg-slate-900 text-white"
+                                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
+                                      }`}
+                                    >
+                                      I will write this
+                                    </button>
+                                  </div>
+                                  <p className={helperClass}>
+                                    AI drafts copy from your inputs. Manual keeps your wording.
+                                  </p>
                                   {cfg.mode === "ai" && (
                                     <input
                                       type="number"
@@ -1190,19 +1493,19 @@ Rules:
                                       max={800}
                                       value={cfg.words}
                                       onChange={(e) => updateBlockSettingById(block.id, { words: Number(e.target.value) })}
-                                      className="w-full p-2.5 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                      className={inputClass}
                                       placeholder="Word count"
                                     />
                                   )}
                                   <textarea
                                     value={cfg.notes || ""}
                                     onChange={(e) => updateBlockSettingById(block.id, { notes: e.target.value })}
-                                    className="w-full min-h-[90px] p-2.5 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                    className={`${textareaClass} min-h-[110px]`}
                                     placeholder="Optional note for AI (add/remove points, constraints, style)"
                                   />
                                 </div>
                                 <div className="mt-4 flex items-center justify-between gap-3">
-                                  <div className="text-[11px] text-slate-500">
+                                  <div className={helperClass}>
                                     {aiPreviewBlocks.length === 0
                                       ? "Generate the full preview to rewrite a single section."
                                       : cfg.mode === "ai"
@@ -1238,8 +1541,8 @@ Rules:
                         </div>
                       </div>
                     )}
-                    <p className="text-xs text-slate-500">
-                      AI drafts everything by default. Use the pencil icon to refine or rewrite a single section before you generate pages.
+                    <p className={helperClass}>
+                      AI drafts everything by default. Use the pencil icon to refine or rewrite a single section.
                     </p>
                   </div>
                 )}
@@ -1259,14 +1562,14 @@ Rules:
                               {remainingPages} pages remaining this month
                             </p>
                           </div>
-                          <span className="text-[11px] text-slate-500">Credits reset monthly</span>
+                          <span className={helperClass}>Credits reset monthly</span>
                         </div>
                       </div>
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className={labelClass}>How many pages?</label>
+                        <label className={labelClass}>How many pages-</label>
                         <input
                           type="number"
                           min={1}
@@ -1275,7 +1578,7 @@ Rules:
                           onChange={(e) => setDesiredPageCount(e.target.value)}
                           placeholder="10"
                           disabled={remainingPages !== null && remainingPages <= 0}
-                          className="w-full p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white disabled:opacity-60"
+                          className={`${inputClass} disabled:opacity-60`}
                         />
                         {remainingPages !== null && remainingPages <= 0 && (
                           <p className="text-xs text-amber-600">You have no pages remaining on your current plan.</p>
@@ -1303,7 +1606,7 @@ Rules:
                         value={keywordsList}
                         onChange={(e) => setKeywordsList(e.target.value)}
                         placeholder="One keyword/location per line or comma-separated"
-                        className="w-full min-h-[140px] p-3 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                        className={`${textareaClass} min-h-[160px]`}
                       />
                       <div className="flex flex-wrap gap-3 items-center mt-1">
                         <button
@@ -1375,7 +1678,7 @@ Rules:
         </div>
         <div className="p-6 border-t dark:border-slate-700 flex items-center justify-between gap-3">
           <p className="text-[11px] text-slate-400">
-            Create Project saves your draft, builds the page list, and opens the generator for the first AI draft.
+            Create Project saves your draft and prepares it for generation. Start generating anytime from Projects.
           </p>
           <div className="flex items-center gap-2">
             <button onClick={onClose} className="px-4 py-2 text-slate-500">

@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Download, Eye, Plus, Save, Trash2, X } from "lucide-react";
+import { Download, Eye, LayoutGrid, Plus, Save, Table2, Trash2, X } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import InspectorModal from "./InspectorModal";
+import PageCardView from "../PageCardView";
 
 const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
   const [localProject, setLocalProject] = useState(project);
@@ -11,6 +12,7 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
   const [showAddRow, setShowAddRow] = useState(false);
   const [newHeader, setNewHeader] = useState("");
   const [inspectCell, setInspectCell] = useState(null);
+  const [viewMode, setViewMode] = useState("cards");
 
   useEffect(() => {
     setLocalProject(project);
@@ -184,32 +186,60 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
       <div className="bg-white dark:bg-slate-800 w-full max-w-6xl h-[85vh] rounded-2xl shadow-2xl border dark:border-slate-700 flex flex-col overflow-hidden">
         <div className="p-6 border-b dark:border-slate-700 flex justify-between items-center">
           <h3 className="text-lg font-bold dark:text-white">{localProject.name}</h3>
-          <div className="flex gap-2">
-            <button
-              onClick={handleExport}
-              className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-sm font-medium flex items-center gap-1"
-            >
-              <Download size={16} /> Export CSV
-            </button>
-            <button
-              onClick={handleExportJSON}
-              className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-sm font-medium flex items-center gap-1"
-            >
-              Export JSON
-            </button>
-            <button
-              onClick={() => setShowAddRow(!showAddRow)}
-              className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium"
-            >
-              <Plus size={16} className="inline" /> Add Row
-            </button>
+          <div className="flex gap-2 items-center">
+            {/* View toggle */}
+            <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode("cards")}
+                title="Card View"
+                className={`px-2.5 py-1.5 flex items-center gap-1 text-sm transition-colors ${
+                  viewMode === "cards"
+                    ? "bg-[#2B5E44] text-white"
+                    : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700"
+                }`}
+              >
+                <LayoutGrid size={15} />
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                title="Table View"
+                className={`px-2.5 py-1.5 flex items-center gap-1 text-sm transition-colors border-l border-slate-200 dark:border-slate-700 ${
+                  viewMode === "table"
+                    ? "bg-[#2B5E44] text-white"
+                    : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700"
+                }`}
+              >
+                <Table2 size={15} />
+              </button>
+            </div>
+
+            {viewMode === "table" && (
+              <button
+                onClick={() => setShowAddRow(!showAddRow)}
+                className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium"
+              >
+                <Plus size={16} className="inline" /> Add Row
+              </button>
+            )}
             <button onClick={onClose}>
               <X className="text-slate-400" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-900/50">
+        <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900/50">
+          {/* Card view */}
+          {viewMode === "cards" && (
+            <PageCardView
+              pages={rows}
+              projectName={localProject.name}
+              onExportJSON={handleExportJSON}
+              onExportCSV={handleExport}
+            />
+          )}
+
+          {/* Table view */}
+          {viewMode === "table" && <div className="p-6">
           {headers.length === 0 && rows.length === 0 ? (
             <div className="text-center p-12">
               <p className="mb-4 text-slate-500">Empty Project.</p>
@@ -310,6 +340,7 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
               </tbody>
             </table>
           )}
+          </div>}
         </div>
       </div>
     </div>

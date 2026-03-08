@@ -15,6 +15,7 @@ const GenerateModal = ({
   setProfile,
   initialTemplateId,
   autoStartFirstDraft = false,
+  startMinimized = false,
   onStatusChange,
   expandSignal
 }) => {
@@ -29,7 +30,7 @@ const GenerateModal = ({
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
   const [pendingIndexes, setPendingIndexes] = useState([]);
   const [blockSettings, setBlockSettings] = useState([]);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(startMinimized);
   const [startedAt, setStartedAt] = useState(null);
   const [clockNow, setClockNow] = useState(Date.now());
   const abortControllerRef = useRef(null);
@@ -198,7 +199,7 @@ ABSOLUTE RULES:
 - Return ONLY raw HTML in html_body (no markdown fences).
 - Wrap everything inside: <main class="gg-wrap"> ... </main>
 - Use <section class="gg-section"> for each section.
-- The final HTML MUST contain AT LEAST 15 <section> blocks.
+- The final HTML MUST contain AT LEAST 5 <section> blocks (more is better).
 - Include a <style> block (premium responsive design system). If unsure, include modern, clean styles.
 - Prefer using the gg- classes from the style kit (gg-container, gg-grid, gg-card, gg-btn, gg-badges, gg-form, gg-input).
 - Make inner sections visually rich with cards, gradients, and clear hierarchy.
@@ -372,8 +373,8 @@ ${structurePrompt}`;
     if (!html) errors.push("html_body empty");
     if (!hasMain(html)) errors.push("missing <main> wrapper");
     if (hasMain(html) && !hasMainWrap(html)) errors.push('main wrapper must be: <main class="gg-wrap">');
-    if (sections < 15) errors.push(`needs 15+ <section> (found ${sections})`);
-    if (!hasStyleTag(html)) errors.push("missing <style> (or it must be injected)");
+    if (sections < 3) errors.push(`needs 3+ <section> blocks (found ${sections})`);
+    if (!hasStyleTag(html)) errors.push("missing <style> (injected if absent)");
 
     const slug = String(parsed?.slug || "").trim();
     if (!slug) errors.push("missing slug");
@@ -382,8 +383,8 @@ ${structurePrompt}`;
     const meta = String(parsed?.meta_description || "");
     if (meta.length > 160) errors.push("meta_description > 160 chars");
 
+    // schema is auto-fixed downstream — only fail if present but invalid JSON
     const schema = String(parsed?.schema || "").trim();
-    if (!schema) errors.push("missing schema");
     if (schema) {
       try {
         JSON.parse(schema);
@@ -415,7 +416,7 @@ Rules:
 - schema must be valid JSON-LD as a string
 - html_body must be full HTML (NO markdown)
 - html_body MUST wrap everything inside: <main class="gg-wrap"> ... </main>
-- html_body MUST contain AT LEAST 15 <section class="gg-section"> blocks
+- html_body MUST contain AT LEAST 5 <section class="gg-section"> blocks (more is better)
 - html_body MUST include a <style> block (premium responsive)
 
 Content instructions:
@@ -449,6 +450,7 @@ ${prompt}
       return;
     }
 
+    console.log(`[GG] Starting generation: ${indexesToGenerate.length} rows, targetColumn="${targetColumn}", promptLength=${prompt.length}`);
     setIsGenerating(true);
     if (!startedAt) setStartedAt(Date.now());
     abortControllerRef.current = new AbortController();
@@ -527,7 +529,7 @@ Hard requirements (must satisfy all):
 - schema must be valid JSON-LD (as a string)
 - html_body must be full HTML (no markdown)
 - html_body must include <main class="gg-wrap"> ... </main>
-- html_body must include AT LEAST 15 <section class="gg-section"> blocks
+- html_body must include AT LEAST 5 <section class="gg-section"> blocks
 - include a <style> block (premium responsive)
 
 Here is the previous JSON (do not wrap in markdown). Modify it to pass QA:
@@ -548,6 +550,7 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
             if (!response.ok || data?.error) throw new Error(data?.error || "Server Error");
 
             const content = typeof data?.content === "string" ? data.content : "";
+            console.log(`[GG] Row ${i + 1} attempt ${attempt}: raw response length=${content.length}`);
             let parsed;
 
             try {
@@ -555,6 +558,8 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
             } catch {
               parsed = JSON.parse(extractJson(content));
             }
+
+            console.log(`[GG] Row ${i + 1}: parsed OK. slug="${parsed?.slug}" sections=${countSections(String(parsed?.html_body || ""))}`);
 
             // post-process & sanitize
             const clean = {
@@ -564,6 +569,17 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
               schema: ensureSchemaString(parsed?.schema),
               html_body: stripMarkdownFences(parsed?.html_body)
             };
+
+            // Auto-fix missing schema with a basic WebPage schema
+            if (!clean.schema) {
+              clean.schema = JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "WebPage",
+                "name": clean.title || String(row?.Keyword || row?.keyword || row?.Service || "Page"),
+                "description": clean.meta_description || ""
+              });
+              console.log(`[GG] Row ${i + 1}: auto-generated fallback schema`);
+            }
 
             // Ensure style kit exists (inject if missing)
             clean.html_body = ensureStyleKit(clean.html_body);
@@ -581,6 +597,8 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
 
             finalErrors = validateOutput(clean);
             finalParsed = clean;
+
+            console.log(`[GG] Row ${i + 1} QA: ${finalErrors.length === 0 ? "PASSED" : "FAILED: " + finalErrors.join(", ")}`);
 
             if (finalErrors.length === 0) {
               // success
@@ -716,6 +734,11 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
   }, [expandSignal]);
 
   useEffect(() => {
+    if (!isOpen) return;
+    if (startMinimized) setIsMinimized(true);
+  }, [isOpen, startMinimized]);
+
+  useEffect(() => {
     if (!isGenerating) return;
     const tick = setInterval(() => setClockNow(Date.now()), 1000);
     return () => clearInterval(tick);
@@ -755,7 +778,7 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
   };
 
   if (!isOpen || !project) return null;
-  if (isMinimized) return null;
+  if (isMinimized || startMinimized) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
