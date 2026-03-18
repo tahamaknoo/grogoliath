@@ -6,7 +6,7 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { keyword, location, service, template_html, projectId } = body;
+    const { keyword, location, service, template_html, projectId, businessDescription, tone } = body;
 
     console.log('Request received:', {
       keyword,
@@ -45,8 +45,10 @@ export async function POST(request) {
     const prompt = `You are filling in an HTML landing page template for a local business.
 
 Business: ${service || keyword}
-Keyword: ${keyword}
+${businessDescription ? `About the business: ${businessDescription}` : ''}
 Location: ${location}
+Keyword: ${keyword}
+Tone: ${tone || 'Professional'}
 
 TEMPLATE (CSS has been removed — output only the HTML, no <style> tags):
 ${templateWithoutStyles}
@@ -55,9 +57,10 @@ INSTRUCTIONS:
 - Replace {{KEYWORD}} with: ${keyword}
 - Replace {{LOCATION}} with: ${location}
 - Replace {{SERVICE}} with: ${service || keyword}
-- Replace ALL other {{PLACEHOLDERS}} with relevant, professional content for this business
-- Fill in any placeholder text (e.g. "Your headline here", "Add description") with real copy
-- Write compelling, location-specific content for every section
+- Replace ALL other {{PLACEHOLDERS}} with relevant, professional content for this specific business
+- Fill in any placeholder text (e.g. "Your headline here", "Add description") with real copy tailored to this business
+- Use the business description above to write accurate, context-specific content — do NOT use generic or unrelated industry content
+- Write compelling, location-specific content for every section with a ${tone || 'professional'} tone
 - Keep ALL existing HTML tags, classes, and attributes exactly as-is
 - Return ONLY the filled HTML — no <style> tags, no explanations, no markdown`;
 

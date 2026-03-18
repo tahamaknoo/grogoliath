@@ -2,6 +2,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import TemplateBuilder from '../TemplateBuilder';
+import STARTER_TEMPLATES from '../../data/starterTemplates';
+
+// Replace all {{PLACEHOLDERS}} with demo content for previews
+const previewHtml = (html) => html
+  .replace(/\{\{KEYWORD\}\}/g, 'Plumber Chicago')
+  .replace(/\{\{LOCATION\}\}/g, 'Chicago')
+  .replace(/\{\{SERVICE\}\}/g, 'Plumbing')
+  .replace(/\{\{[A-Z0-9_]+\}\}/g, 'Sample content here');
 
 const BLANK_TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
@@ -70,7 +78,10 @@ export default function TemplatesView({ user, session, onRefresh }) {
         .from('templates')
         .select('*')
         .order('created_at', { ascending: false });
-      if (data) setTemplates(data);
+      // Merge user templates (top) + starter templates (bottom)
+      const userTemplates = (data || []).map(t => ({ ...t, _isUserTemplate: true }));
+      const starters = STARTER_TEMPLATES.map(t => ({ ...t, _isStarter: true }));
+      setTemplates([...userTemplates, ...starters]);
       setLoading(false);
     };
     fetchTemplates();
@@ -92,7 +103,7 @@ export default function TemplatesView({ user, session, onRefresh }) {
             Templates
           </h1>
           <p className="text-xl text-slate-500 dark:text-slate-400">
-            {templates.length} available {templates.length === 1 ? 'template' : 'templates'}
+            {templates.filter(t => t._isUserTemplate).length} custom + {STARTER_TEMPLATES.length} starter templates
           </p>
         </div>
         <button
@@ -103,77 +114,54 @@ export default function TemplatesView({ user, session, onRefresh }) {
         </button>
       </div>
 
-      {templates.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-12 h-12 text-[#5b4cdb]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-            </svg>
-          </div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-3">
-            No templates yet
-          </h2>
-          <p className="text-lg text-slate-500 dark:text-slate-400 mb-8">
-            Create your first template to get started
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 gap-6">
-          {templates.map((template) => (
-            <div
-              key={template.id}
-              className="group p-6 bg-white dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-2xl hover:shadow-lg hover:border-[#5b4cdb] transition-all cursor-pointer"
-              onClick={() => setSelectedTemplate(template)}
-            >
-              <div className="h-48 rounded-xl mb-4 overflow-hidden border border-slate-200 dark:border-[#27272a]">
-                {template.structure ? (
-                  <iframe
-                    srcDoc={template.structure
-                      .replace(/\{\{KEYWORD\}\}/g, 'Example Service')
-                      .replace(/\{\{LOCATION\}\}/g, 'Your City')
-                      .replace(/\{\{SERVICE\}\}/g, 'Service Type')}
-                    className="w-full h-full pointer-events-none"
-                    title={template.name}
-                    style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', height: '200%' }}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 flex items-center justify-center">
-                    <span className="text-4xl">📄</span>
-                  </div>
-                )}
-              </div>
+      <div className="grid grid-cols-3 gap-6">
+        {templates.map((template) => (
+          <div
+            key={template.id}
+            className="group p-6 bg-white dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-2xl hover:shadow-lg hover:border-[#5b4cdb] transition-all cursor-pointer"
+            onClick={() => setSelectedTemplate(template)}
+          >
+            <div className="h-48 rounded-xl mb-4 overflow-hidden border border-slate-200 dark:border-[#27272a]">
+              {template.structure ? (
+                <iframe
+                  srcDoc={previewHtml(template.structure)}
+                  className="w-full h-full pointer-events-none"
+                  title={template.name}
+                  style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', height: '200%' }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 flex items-center justify-center text-slate-400">
+                  No preview
+                </div>
+              )}
+            </div>
 
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                 {template.name}
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                {template.category || 'Template'}
-              </p>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    alert('Use Template — will launch wizard with this template pre-selected');
-                  }}
-                  className="flex-1 px-4 py-2 bg-[#5b4cdb] text-white font-semibold rounded-xl hover:bg-[#4a3dc4] transition-all"
-                >
-                  Use Template
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedTemplate(template);
-                  }}
-                  className="px-4 py-2 border border-slate-200 dark:border-[#27272a] text-slate-700 dark:text-slate-300 font-semibold rounded-xl hover:bg-slate-100 dark:hover:bg-[#27272a] transition-all"
-                >
-                  Preview
-                </button>
-              </div>
+              {template._isStarter && (
+                <span className="text-xs font-semibold px-2 py-0.5 bg-slate-100 dark:bg-[#27272a] text-slate-500 dark:text-slate-400 rounded-full">
+                  Starter
+                </span>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              {template.category || 'Template'}
+            </p>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedTemplate(template);
+              }}
+              className="w-full px-4 py-2 border border-slate-200 dark:border-[#27272a] text-slate-700 dark:text-slate-300 font-semibold rounded-xl hover:bg-slate-100 dark:hover:bg-[#27272a] transition-all"
+            >
+              Preview
+            </button>
+          </div>
+        ))}
+      </div>
 
       {showBuilder && (
         <TemplateBuilder
@@ -218,10 +206,7 @@ export default function TemplatesView({ user, session, onRefresh }) {
             <div className="overflow-hidden" style={{ height: 'calc(90vh - 180px)' }}>
               {selectedTemplate.structure ? (
                 <iframe
-                  srcDoc={selectedTemplate.structure
-                    .replace(/\{\{KEYWORD\}\}/g, 'Example Service')
-                    .replace(/\{\{LOCATION\}\}/g, 'Your City')
-                    .replace(/\{\{SERVICE\}\}/g, 'Service Type')}
+                  srcDoc={previewHtml(selectedTemplate.structure)}
                   className="w-full h-full border-0"
                   title={`Preview: ${selectedTemplate.name}`}
                 />
