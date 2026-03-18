@@ -159,7 +159,36 @@ export default function OnboardingWizard({ session, onComplete }) {
 
           if (!response.ok) throw new Error(result.error || "Failed to generate page");
 
-          pages.push(result);
+          // Save page to Supabase
+          console.log(`Preparing to save page ${i + 1} to database...`);
+          console.log('HTML length:', result.html?.length);
+          console.log('Keyword:', combo.Keyword, 'Location:', combo.Location);
+
+          const { data: savedPage, error: pageError } = await supabase
+            .from('pages')
+            .insert({
+              project_id:   project.id,
+              user_id:      session.user.id,
+              keyword:      combo.Keyword,
+              location:     combo.Location,
+              html_content: result.html,
+              status:       'completed',
+            })
+            .select()
+            .single();
+
+          console.log('Supabase insert result:', { savedPage, pageError });
+
+          if (pageError) {
+            console.error('Failed to save page to database:', pageError);
+            console.error('Full error:', JSON.stringify(pageError, null, 2));
+            // Don't throw — still count as generated even if DB save fails
+          } else {
+            console.log(`Page ${i + 1} saved to DB with ID:`, savedPage?.id);
+          }
+
+          // Always push result (has slug, title, content) — savedPage only has DB fields
+          pages.push({ ...result, db_id: savedPage?.id });
           setGeneratedPages([...pages]);
         } catch (err) {
           console.error(`Failed to generate page ${i + 1}:`, err.message);

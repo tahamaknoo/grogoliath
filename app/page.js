@@ -191,6 +191,7 @@ export default function App() {
       setActiveTab('dashboard');
       localStorage.setItem('hasSeenOnboarding', 'true');
     } else {
+      setShowOnboarding(false);
       setWizardResult(result);
       setShowSuccess(true);
       fetchProjects(false);

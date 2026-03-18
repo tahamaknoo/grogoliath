@@ -209,10 +209,18 @@ export default function SuccessScreen({ project, pages, onDeploy, onView, onDown
             </div>
 
             {/* Modal content */}
-            <div className="p-8 overflow-y-auto max-h-[calc(90vh-120px)]">
-              <div className="prose prose-slate dark:prose-invert max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: previewPage.content }} />
-              </div>
+            <div className="overflow-hidden" style={{ height: 'calc(90vh - 180px)' }}>
+              {(() => {
+                const html = previewPage.content || previewPage.html_content || previewPage.html || '';
+                const isFullDoc = /^\s*<!DOCTYPE\s+html/i.test(html) || /^\s*<html/i.test(html);
+                return isFullDoc ? (
+                  <iframe srcDoc={html} className="w-full h-full border-0" title="Page preview" />
+                ) : (
+                  <div className="p-8 overflow-y-auto h-full prose prose-slate dark:prose-invert max-w-none">
+                    <div dangerouslySetInnerHTML={{ __html: html }} />
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Modal footer */}

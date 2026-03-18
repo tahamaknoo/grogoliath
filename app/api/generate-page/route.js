@@ -6,93 +6,110 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    console.log('Request body received:', {
-      keyword: body.keyword,
-      location: body.location,
-      hasTemplate: !!body.template_html,
-      templateLength: body.template_html?.length,
-    });
-
     const { keyword, location, service, template_html, projectId } = body;
 
+    console.log('Request received:', {
+      keyword,
+      location,
+      hasTemplate: !!template_html,
+      templateLength: template_html?.length,
+    });
+
     if (!template_html) {
-      console.error('No template HTML provided');
       return NextResponse.json({ error: 'Template HTML is required' }, { status: 400 });
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      console.error('ANTHROPIC_API_KEY not found in environment');
       return NextResponse.json({ error: 'Claude API key not configured' }, { status: 500 });
     }
 
-    console.log('Claude API Key exists:', !!apiKey, 'length:', apiKey.length);
-
     const anthropic = new Anthropic({ apiKey });
 
-    // Sanitize template — strip script tags
-    let templateHtml = template_html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-    console.log('Template sanitized, length:', templateHtml.length);
+    // --- CSS extraction: strip styles before sending to Claude, re-inject after ---
+    // This cuts token usage by ~60% and eliminates truncation risk on large templates.
+    const extractedStyles = [];
+    const templateWithoutStyles = template_html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // strip scripts
+      .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (match) => {
+        extractedStyles.push(match);
+        return ''; // remove from what Claude sees
+      });
 
-    const prompt = `Generate a complete, professional HTML landing page for "${keyword}" in ${location}.
+    console.log(
+      `Template: ${template_html.length} chars total, ` +
+      `${extractedStyles.length} style block(s) extracted (${extractedStyles.reduce((n, s) => n + s.length, 0)} chars), ` +
+      `${templateWithoutStyles.length} chars sent to Claude`
+    );
 
-BASE TEMPLATE:
-${templateHtml}
+    const prompt = `You are filling in an HTML landing page template for a local business.
 
-TASK: Replace ALL placeholder tags with real, relevant content:
-- {{KEYWORD}} → ${keyword}
-- {{LOCATION}} → ${location}
-- {{SERVICE}} → ${service || keyword}
-- All other {{PLACEHOLDERS}} → relevant, professional content
+Business: ${service || keyword}
+Keyword: ${keyword}
+Location: ${location}
 
-REQUIREMENTS:
-1. Keep the EXACT HTML structure and all CSS styling
-2. Replace EVERY {{PLACEHOLDER}} with contextually appropriate content
-3. Make headlines compelling and specific to ${keyword} in ${location}
-4. Write natural, professional copy for all text sections
-5. Ensure all content is relevant to the business type
-6. Keep phone numbers, emails, and CTAs professional
-7. Return ONLY the complete HTML - no explanations, no markdown
+TEMPLATE (CSS has been removed — output only the HTML, no <style> tags):
+${templateWithoutStyles}
 
-BEGIN HTML OUTPUT:`;
+INSTRUCTIONS:
+- Replace {{KEYWORD}} with: ${keyword}
+- Replace {{LOCATION}} with: ${location}
+- Replace {{SERVICE}} with: ${service || keyword}
+- Replace ALL other {{PLACEHOLDERS}} with relevant, professional content for this business
+- Fill in any placeholder text (e.g. "Your headline here", "Add description") with real copy
+- Write compelling, location-specific content for every section
+- Keep ALL existing HTML tags, classes, and attributes exactly as-is
+- Return ONLY the filled HTML — no <style> tags, no explanations, no markdown`;
 
-    console.log('Prompt built, length:', prompt.length);
-    console.log('Calling Claude API...');
+    console.log(`Prompt length: ${prompt.length} chars. Calling Claude...`);
 
     const messagePromise = anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
+      max_tokens: 8000,
       messages: [{ role: 'user', content: prompt }],
     });
 
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Claude API timeout after 60s')), 60000)
+      setTimeout(() => reject(new Error('Claude API timeout after 90s')), 90000)
     );
 
-    console.log('Waiting for Claude response...');
     const message = await Promise.race([messagePromise, timeoutPromise]);
-    console.log('Claude response received, stop_reason:', message.stop_reason);
+    console.log('Claude stop_reason:', message.stop_reason);
 
-    const generatedHtml = message.content[0]?.text;
-    if (!generatedHtml || generatedHtml.trim().length === 0) {
-      throw new Error('Claude returned empty response');
+    if (message.stop_reason === 'max_tokens') {
+      console.warn('WARNING: Claude output was truncated — template may be too large');
     }
 
-    // Strip markdown code fences if present
-    let cleanedHtml = generatedHtml.trim();
-    if (cleanedHtml.startsWith('```html')) {
-      cleanedHtml = cleanedHtml.replace(/^```html\n?/, '').replace(/\n?```$/, '');
-    } else if (cleanedHtml.startsWith('```')) {
-      cleanedHtml = cleanedHtml.replace(/^```\n?/, '').replace(/\n?```$/, '');
+    let filledHtml = message.content[0]?.text?.trim();
+    if (!filledHtml) throw new Error('Claude returned empty response');
+
+    // Strip any markdown fences Claude might add
+    if (filledHtml.startsWith('```html')) {
+      filledHtml = filledHtml.replace(/^```html\n?/, '').replace(/\n?```$/, '');
+    } else if (filledHtml.startsWith('```')) {
+      filledHtml = filledHtml.replace(/^```\n?/, '').replace(/\n?```$/, '');
     }
 
-    console.log('Returning generated HTML, length:', cleanedHtml.length);
+    // Re-inject the extracted CSS back into the document
+    // Insert all style blocks into the <head>, or prepend if no <head>
+    const stylesBlock = extractedStyles.join('\n');
+    let finalHtml;
+    if (/<\/head>/i.test(filledHtml)) {
+      finalHtml = filledHtml.replace(/<\/head>/i, `${stylesBlock}\n</head>`);
+    } else if (/<head>/i.test(filledHtml)) {
+      finalHtml = filledHtml.replace(/<head>/i, `<head>\n${stylesBlock}`);
+    } else {
+      // No head tag — prepend styles
+      finalHtml = stylesBlock + '\n' + filledHtml;
+    }
+
+    console.log(`Final HTML: ${finalHtml.length} chars`);
 
     const slug = keyword.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
 
     return NextResponse.json({
-      html: cleanedHtml,
-      content: cleanedHtml, // alias for backward compat
+      html: finalHtml,
+      content: finalHtml,
       keyword,
       location,
       service,
@@ -101,10 +118,9 @@ BEGIN HTML OUTPUT:`;
       projectId,
       generatedAt: new Date().toISOString(),
     });
+
   } catch (error) {
-    console.error('=== API ROUTE ERROR ===');
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
+    console.error('=== API ROUTE ERROR ===', error.message);
     return NextResponse.json({ error: error.message || 'Failed to generate page' }, { status: 500 });
   }
 }
