@@ -67,7 +67,8 @@ export default function DashboardView({ projects, onNewProject, session }) {
               onClick={onNewProject}
               className="px-6 py-3 bg-gradient-to-r from-[#5b4cdb] to-[#4a3dc4] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-[#5b4cdb]/30 transition-all"
             >
-              ➕ New Project
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              New Project
             </button>
           </div>
 

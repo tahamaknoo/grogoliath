@@ -6,7 +6,7 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { keyword, location, service, template_html, projectId, businessDescription, tone } = body;
+    const { keyword, location, service, template_html, projectId, businessDescription, tone, length } = body;
 
     console.log('Request received:', {
       keyword,
@@ -61,6 +61,7 @@ INSTRUCTIONS:
 - Fill in any placeholder text (e.g. "Your headline here", "Add description") with real copy tailored to this business
 - Use the business description above to write accurate, context-specific content — do NOT use generic or unrelated industry content
 - Write compelling, location-specific content for every section with a ${tone || 'professional'} tone
+- Content length target: ${length === 'Short' ? 'keep copy concise, ~1-2 sentences per section' : length === 'Long' ? 'write detailed, thorough copy, ~4-6 sentences per section' : 'use moderate copy length, ~2-3 sentences per section'}
 - Keep ALL existing HTML tags, classes, and attributes exactly as-is
 - Return ONLY the filled HTML — no <style> tags, no explanations, no markdown`;
 

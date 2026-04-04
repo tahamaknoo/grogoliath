@@ -410,6 +410,7 @@ export default function App() {
             {activeTab === "projects" && (
               <ProjectsView
                 projects={projects}
+                session={session}
                 onNewProject={handleNewProject}
                 onRefresh={() => fetchProjects(false)}
               />
