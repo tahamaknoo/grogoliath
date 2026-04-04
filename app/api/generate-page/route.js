@@ -28,23 +28,23 @@ export async function POST(request) {
 
     const anthropic = new Anthropic({ apiKey });
 
-    // --- CSS extraction: strip styles before sending to Claude, re-inject after ---
-    // This cuts token usage by ~60% and eliminates truncation risk on large templates.
+    // Strip <script> tags only. Keep all <style> blocks and inline styles intact —
+    // they are part of the template design and must be preserved in the output.
     const extractedStyles = [];
-    const templateWithoutStyles = template_html
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // strip scripts
+    const templateForClaude = template_html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
       .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (match) => {
         extractedStyles.push(match);
-        return ''; // remove from what Claude sees
+        return `<!-- STYLE_BLOCK_${extractedStyles.length - 1} -->`; // placeholder marker
       });
 
     console.log(
       `Template: ${template_html.length} chars total, ` +
-      `${extractedStyles.length} style block(s) extracted (${extractedStyles.reduce((n, s) => n + s.length, 0)} chars), ` +
-      `${templateWithoutStyles.length} chars sent to Claude`
+      `${extractedStyles.length} style block(s) extracted, ` +
+      `${templateForClaude.length} chars sent to Claude`
     );
 
-    const prompt = `You are filling in an HTML landing page template for a local business.
+    const prompt = `You are filling in an HTML landing page template for a local business. Your job is to replace placeholder text with real, compelling copy — keeping ALL HTML structure, tags, attributes, and inline styles exactly as they are.
 
 Business: ${service || keyword}
 ${businessDescription ? `About the business: ${businessDescription}` : ''}
@@ -52,26 +52,26 @@ Location: ${location}
 Keyword: ${keyword}
 Tone: ${tone || 'Professional'}
 
-TEMPLATE (CSS has been removed — output only the HTML, no <style> tags):
-${templateWithoutStyles}
+TEMPLATE:
+${templateForClaude}
 
 INSTRUCTIONS:
 - Replace {{KEYWORD}} with: ${keyword}
 - Replace {{LOCATION}} with: ${location}
 - Replace {{SERVICE}} with: ${service || keyword}
-- Replace ALL other {{PLACEHOLDERS}} with relevant, professional content for this specific business
-- Fill in any placeholder text (e.g. "Your headline here", "Add description") with real copy tailored to this business
-- Use the business description above to write accurate, context-specific content — do NOT use generic or unrelated industry content
-- Write compelling, location-specific content for every section with a ${tone || 'professional'} tone
-- Content length target: ${length === 'Short' ? 'keep copy concise, ~1-2 sentences per section' : length === 'Long' ? 'write detailed, thorough copy, ~4-6 sentences per section' : 'use moderate copy length, ~2-3 sentences per section'}
-- Keep ALL existing HTML tags, classes, and attributes exactly as-is
-- Return ONLY the filled HTML — no <style> tags, no explanations, no markdown`;
+- Replace ALL other {{PLACEHOLDER}} tokens with relevant, professional copy for this specific business
+- Do NOT remove, modify, or rewrite any HTML tags, attributes, class names, or inline style attributes
+- Do NOT remove or alter <!-- STYLE_BLOCK_N --> comment markers — leave them exactly as-is
+- Write compelling, location-specific copy in a ${tone || 'professional'} tone
+- Content length: ${length === 'Short' ? '1–2 sentences per section' : length === 'Long' ? '4–6 sentences per section' : '2–3 sentences per section'}
+- Use the business description to write accurate content — do NOT use generic unrelated industry content
+- Return ONLY the complete HTML — no explanations, no markdown fences`;
 
     console.log(`Prompt length: ${prompt.length} chars. Calling Claude...`);
 
     const messagePromise = anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 8000,
+      max_tokens: 16000,
       messages: [{ role: 'user', content: prompt }],
     });
 
@@ -96,17 +96,23 @@ INSTRUCTIONS:
       filledHtml = filledHtml.replace(/^```\n?/, '').replace(/\n?```$/, '');
     }
 
-    // Re-inject the extracted CSS back into the document
-    // Insert all style blocks into the <head>, or prepend if no <head>
-    const stylesBlock = extractedStyles.join('\n');
-    let finalHtml;
-    if (/<\/head>/i.test(filledHtml)) {
-      finalHtml = filledHtml.replace(/<\/head>/i, `${stylesBlock}\n</head>`);
-    } else if (/<head>/i.test(filledHtml)) {
-      finalHtml = filledHtml.replace(/<head>/i, `<head>\n${stylesBlock}`);
-    } else {
-      // No head tag — prepend styles
-      finalHtml = stylesBlock + '\n' + filledHtml;
+    // Restore style blocks from marker comments Claude preserved
+    let finalHtml = filledHtml;
+    extractedStyles.forEach((styleBlock, i) => {
+      finalHtml = finalHtml.replace(`<!-- STYLE_BLOCK_${i} -->`, styleBlock);
+    });
+
+    // If any markers weren't restored (Claude dropped them), inject all styles into <head>
+    const remainingMarkers = finalHtml.match(/<!-- STYLE_BLOCK_\d+ -->/g);
+    if (remainingMarkers && extractedStyles.length > 0) {
+      const stylesBlock = extractedStyles.join('\n');
+      if (/<\/head>/i.test(finalHtml)) {
+        finalHtml = finalHtml.replace(/<\/head>/i, `${stylesBlock}\n</head>`);
+      } else {
+        finalHtml = stylesBlock + '\n' + finalHtml;
+      }
+      // Clean up any leftover markers
+      finalHtml = finalHtml.replace(/<!-- STYLE_BLOCK_\d+ -->/g, '');
     }
 
     console.log(`Final HTML: ${finalHtml.length} chars`);

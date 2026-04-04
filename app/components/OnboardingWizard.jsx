@@ -76,8 +76,10 @@ export default function OnboardingWizard({ session, onComplete }) {
 
     try {
       let project = existingProject || createdProject;
+      console.log("[generate] starting, template:", selectedTemplate?.name, "keyword:", keyword, "location:", location);
 
       if (!project) {
+        console.log("[generate] creating project in Supabase...");
         const { data, error } = await supabase
           .from("projects")
           .insert({
@@ -93,7 +95,8 @@ export default function OnboardingWizard({ session, onComplete }) {
           })
           .select()
           .single();
-        if (error) throw new Error(error.message);
+        if (error) throw new Error(`Supabase project insert failed: ${error.message}`);
+        console.log("[generate] project created:", data?.id);
         project = data;
         setCreatedProject(data);
       } else {
@@ -101,23 +104,38 @@ export default function OnboardingWizard({ session, onComplete }) {
         await supabase.from("pages").delete().eq("project_id", project.id);
       }
 
-      const response = await fetch("/api/generate-page", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId:           project.id,
-          keyword:             `${keyword} in ${location}`,
-          location,
-          service:             businessType,
-          businessDescription: businessDescription.trim(),
-          tone,
-          length,
-          template_html:       selectedTemplate?.structure || "",
-        }),
-      });
+      const controller = new AbortController();
+      const fetchTimeout = setTimeout(() => controller.abort(), 110000);
 
+      console.log("[generate] calling /api/generate-page...");
+      let response;
+      try {
+        response = await fetch("/api/generate-page", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            projectId:           project.id,
+            keyword:             `${keyword} in ${location}`,
+            location,
+            service:             businessType,
+            businessDescription: businessDescription.trim(),
+            tone,
+            length,
+            template_html:       selectedTemplate?.structure || "",
+          }),
+        });
+      } catch (fetchErr) {
+        if (fetchErr.name === "AbortError") throw new Error("Generation timed out after 110s — the Claude API took too long. Try again.");
+        throw fetchErr;
+      } finally {
+        clearTimeout(fetchTimeout);
+      }
+
+      console.log("[generate] response status:", response.status);
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to generate page");
+      console.log("[generate] html preview (first 300 chars):", result.html?.slice(0, 300));
 
       await supabase.from("pages").insert({
         project_id:   project.id,
