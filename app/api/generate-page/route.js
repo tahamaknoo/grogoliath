@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
+export const maxDuration = 120; // Vercel: allow up to 120s (requires Pro plan for >10s)
+
 export async function POST(request) {
   console.log('=== API ROUTE STARTED (Claude) ===');
 

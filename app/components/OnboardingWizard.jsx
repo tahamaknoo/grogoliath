@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import STARTER_TEMPLATES from "../data/starterTemplates";
 
@@ -29,8 +29,10 @@ export default function OnboardingWizard({ session, onComplete }) {
   const [generationError, setGenerationError] = useState("");
   const [createdProject, setCreatedProject] = useState(null);
   const [generatedPage, setGeneratedPage]   = useState(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const generationStarted = useRef(false);
+  const timerRef = useRef(null);
 
   useEffect(() => { fetchTemplates(); }, []);
 
@@ -69,6 +71,8 @@ export default function OnboardingWizard({ session, onComplete }) {
     setGenerationError("");
     setPreviewHtml("");
     setGeneratedPage(null);
+    setElapsedSeconds(0);
+    timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
 
     try {
       let project = existingProject || createdProject;
@@ -129,6 +133,7 @@ export default function OnboardingWizard({ session, onComplete }) {
     } catch (err) {
       setGenerationError(err.message || "Something went wrong");
     } finally {
+      clearInterval(timerRef.current);
       setIsGenerating(false);
     }
   };
@@ -440,10 +445,20 @@ export default function OnboardingWizard({ session, onComplete }) {
                       Building your preview…
                     </h1>
                     <p className="text-xl text-slate-500 dark:text-slate-400">
-                      Claude is writing copy for <strong className="text-slate-700 dark:text-slate-300">{keyword} in {location}</strong>
+                      GroGoliath is writing copy for <strong className="text-slate-700 dark:text-slate-300">{keyword} in {location}</strong>
                     </p>
                   </div>
-                  <p className="text-sm text-slate-400">This usually takes 20–40 seconds</p>
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-2xl font-mono font-bold text-[#5b4cdb]">
+                      {String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:{String(elapsedSeconds % 60).padStart(2, '0')}
+                    </div>
+                    <p className="text-sm text-slate-400">
+                      {elapsedSeconds < 15 ? 'Setting up your project…' :
+                       elapsedSeconds < 40 ? 'Writing headlines, descriptions, and copy…' :
+                       elapsedSeconds < 70 ? 'Polishing the content — almost there…' :
+                       'Taking a bit longer than usual, still working…'}
+                    </p>
+                  </div>
                 </div>
               ) : generationError ? (
                 <div className="text-center space-y-6 py-12">
