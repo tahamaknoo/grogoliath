@@ -66,6 +66,14 @@ export default function OnboardingWizard({ session, onComplete }) {
     }
   };
 
+  const withTimeout = (promise, ms, label) =>
+    Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+      ),
+    ]);
+
   const handleGeneratePreview = async (existingProject = null) => {
     setIsGenerating(true);
     setGenerationError("");
@@ -76,13 +84,10 @@ export default function OnboardingWizard({ session, onComplete }) {
 
     try {
       let project = existingProject || createdProject;
-      console.log("[generate] starting, template:", selectedTemplate?.name, "keyword:", keyword, "location:", location);
 
       if (!project) {
-        console.log("[generate] creating project in Supabase...");
-        const { data, error } = await supabase
-          .from("projects")
-          .insert({
+        const { data, error } = await withTimeout(
+          supabase.from("projects").insert({
             user_id: session.user.id,
             name: `${businessType} Pages`,
             status: "Draft",
@@ -92,22 +97,24 @@ export default function OnboardingWizard({ session, onComplete }) {
               settings: { tone, length, templateId: selectedTemplate?.id },
             },
             row_count: 1,
-          })
-          .select()
-          .single();
-        if (error) throw new Error(`Supabase project insert failed: ${error.message}`);
-        console.log("[generate] project created:", data?.id);
+          }).select().single(),
+          10000,
+          "Supabase project insert"
+        );
+        if (error) throw new Error(`Could not save project: ${error.message}`);
         project = data;
         setCreatedProject(data);
       } else {
-        // If regenerating, remove the old page first
-        await supabase.from("pages").delete().eq("project_id", project.id);
+        await withTimeout(
+          supabase.from("pages").delete().eq("project_id", project.id),
+          8000,
+          "Supabase page delete"
+        ).catch(() => {}); // non-fatal if this times out
       }
 
       const controller = new AbortController();
-      const fetchTimeout = setTimeout(() => controller.abort(), 110000);
+      const fetchTimeout = setTimeout(() => controller.abort(), 100000);
 
-      console.log("[generate] calling /api/generate-page...");
       let response;
       try {
         response = await fetch("/api/generate-page", {
@@ -126,25 +133,27 @@ export default function OnboardingWizard({ session, onComplete }) {
           }),
         });
       } catch (fetchErr) {
-        if (fetchErr.name === "AbortError") throw new Error("Generation timed out after 110s — the Claude API took too long. Try again.");
+        if (fetchErr.name === "AbortError") throw new Error("Generation timed out — please try again.");
         throw fetchErr;
       } finally {
         clearTimeout(fetchTimeout);
       }
 
-      console.log("[generate] response status:", response.status);
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to generate page");
-      console.log("[generate] html preview (first 300 chars):", result.html?.slice(0, 300));
 
-      await supabase.from("pages").insert({
-        project_id:   project.id,
-        user_id:      session.user.id,
-        keyword:      `${keyword} in ${location}`,
-        location,
-        html_content: result.html,
-        status:       "completed",
-      });
+      await withTimeout(
+        supabase.from("pages").insert({
+          project_id:   project.id,
+          user_id:      session.user.id,
+          keyword:      `${keyword} in ${location}`,
+          location,
+          html_content: result.html,
+          status:       "completed",
+        }),
+        8000,
+        "Supabase page insert"
+      ).catch(() => {}); // non-fatal — preview still shows even if save fails
 
       setPreviewHtml(result.html);
       setGeneratedPage(result);
