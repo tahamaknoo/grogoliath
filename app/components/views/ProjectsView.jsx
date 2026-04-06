@@ -152,7 +152,7 @@ function ProjectDetailView({ project, session, onBack, onRefresh }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId:           project.id,
-          keyword:             `${keyword} in ${location}`,
+          keyword,
           location,
           service:             project.name,
           tone:                settings.tone || 'Professional',

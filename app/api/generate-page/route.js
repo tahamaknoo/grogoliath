@@ -44,28 +44,49 @@ export async function POST(request) {
       `${templateForClaude.length} chars sent to Claude`
     );
 
-    const prompt = `You are filling in an HTML landing page template for a local business. Your job is to replace placeholder text with real, compelling copy — keeping ALL HTML structure, tags, attributes, and inline styles exactly as they are.
+    const businessName = service || keyword;
 
-Business: ${service || keyword}
-${businessDescription ? `About the business: ${businessDescription}` : ''}
-Location: ${location}
-Keyword: ${keyword}
-Tone: ${tone || 'Professional'}
+    const prompt = `You are filling in an HTML landing page template for a local service business. Replace every {{PLACEHOLDER}} with unique, compelling copy. Keep ALL HTML tags, attributes, and inline styles exactly as-is.
+
+BUSINESS INFO:
+- Business: ${businessName}
+- Location: ${location}
+- Primary keyword: ${keyword}
+- Tone: ${tone || 'Professional'}
+${businessDescription ? `- About them: ${businessDescription}` : ''}
+
+FIXED REPLACEMENTS (use these exact values):
+- {{KEYWORD}} → ${keyword}
+- {{LOCATION}} → ${location}
+- {{SERVICE}} → ${businessName}
+
+CONTENT PLACEHOLDERS — write unique copy for each one:
+- {{HERO_HEADLINE}} → A punchy, specific main headline (e.g. "Chicago's Most Trusted Drain Cleaning Experts")
+- {{HERO_SUBHEADLINE}} → 1–2 sentences expanding on the headline, mentioning the location and service
+- {{META_DESCRIPTION}} → 150-char SEO meta description for this page
+- {{SERVICES_HEADLINE}} → Heading for the services/features section
+- {{SERVICES_INTRO}} → Intro paragraph for the services section
+- {{FEATURE_1_TITLE}}, {{FEATURE_2_TITLE}}, {{FEATURE_3_TITLE}} → Three distinct service or feature names
+- {{FEATURE_1_TEXT}}, {{FEATURE_2_TEXT}}, {{FEATURE_3_TEXT}} → Description for each feature (${length === 'Short' ? '1 sentence' : length === 'Long' ? '3–4 sentences' : '2 sentences'})
+- {{WHY_HEADLINE}} → Heading for the "why choose us" section
+- {{WHY_INTRO}} → Intro for the why section
+- {{WHY_1_TITLE}}, {{WHY_2_TITLE}}, {{WHY_3_TITLE}} → Three unique trust/differentiator points
+- {{WHY_1_TEXT}}, {{WHY_2_TEXT}}, {{WHY_3_TEXT}} → Explanation for each point
+- {{TESTIMONIAL_1_QUOTE}}, {{TESTIMONIAL_2_QUOTE}} → Realistic customer review quotes mentioning the service and location
+- {{TESTIMONIAL_1_NAME}}, {{TESTIMONIAL_2_NAME}} → Realistic local customer names
+- {{CTA_HEADLINE}} → Call-to-action section headline
+- {{CTA_SUBTEXT}} → Supporting sentence under the CTA headline
+- Any other {{PLACEHOLDER}} → Write appropriate content for its context in the page
+
+RULES:
+- Every placeholder must produce DIFFERENT copy — do NOT repeat the same text in multiple sections
+- Do NOT use generic filler — make copy specific to this business, service, and location
+- Do NOT touch <!-- STYLE_BLOCK_N --> markers — leave them exactly as written
+- Do NOT modify any HTML tags, class names, or style attributes
+- Return ONLY the complete filled HTML — no markdown, no commentary
 
 TEMPLATE:
-${templateForClaude}
-
-INSTRUCTIONS:
-- Replace {{KEYWORD}} with: ${keyword}
-- Replace {{LOCATION}} with: ${location}
-- Replace {{SERVICE}} with: ${service || keyword}
-- Replace ALL other {{PLACEHOLDER}} tokens with relevant, professional copy for this specific business
-- Do NOT remove, modify, or rewrite any HTML tags, attributes, class names, or inline style attributes
-- Do NOT remove or alter <!-- STYLE_BLOCK_N --> comment markers — leave them exactly as-is
-- Write compelling, location-specific copy in a ${tone || 'professional'} tone
-- Content length: ${length === 'Short' ? '1–2 sentences per section' : length === 'Long' ? '4–6 sentences per section' : '2–3 sentences per section'}
-- Use the business description to write accurate content — do NOT use generic unrelated industry content
-- Return ONLY the complete HTML — no explanations, no markdown fences`;
+${templateForClaude}`;
 
     console.log(`Prompt length: ${prompt.length} chars. Calling Claude...`);
 

@@ -116,7 +116,7 @@ export default function OnboardingWizard({ session, onComplete }) {
           signal: controller.signal,
           body: JSON.stringify({
             projectId:           project.id,
-            keyword:             `${keyword} in ${location}`,
+            keyword,
             location,
             service:             businessType,
             businessDescription: businessDescription.trim(),
