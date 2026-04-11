@@ -101,10 +101,10 @@ export default function OnboardingWizard({ session, onComplete }) {
             },
             row_count: 1,
           }).select().single(),
-          10000,
-          "Supabase project insert"
+          25000,
+          "Saving project (Supabase is slow to respond — check your internet connection or try again)"
         );
-        if (error) throw new Error(`Could not save project: ${error.message}`);
+        if (error) throw new Error(`Could not save project: ${error.message} — make sure you are logged in and your Supabase projects table has an INSERT policy for authenticated users.`);
         project = data;
         setCreatedProject(data);
       } else {
