@@ -30,6 +30,9 @@ export default function OnboardingWizard({ session, onComplete }) {
   const [createdProject, setCreatedProject] = useState(null);
   const [generatedPage, setGeneratedPage]   = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [refineInstruction, setRefineInstruction] = useState("");
+  const [isRefining, setIsRefining]         = useState(false);
+  const [refineError, setRefineError]       = useState("");
 
   const generationStarted = useRef(false);
   const timerRef = useRef(null);
@@ -167,6 +170,45 @@ export default function OnboardingWizard({ session, onComplete }) {
 
   const handleRegenerate = () => {
     handleGeneratePreview(createdProject);
+  };
+
+  const handleRefine = async () => {
+    if (!refineInstruction.trim() || !previewHtml) return;
+    setIsRefining(true);
+    setRefineError("");
+    try {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 100000);
+      let response;
+      try {
+        response = await fetch("/api/refine-page", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({ current_html: previewHtml, instruction: refineInstruction }),
+        });
+      } catch (err) {
+        if (err.name === "AbortError") throw new Error("Refinement timed out — try again.");
+        throw err;
+      } finally {
+        clearTimeout(t);
+      }
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Refinement failed");
+      setPreviewHtml(result.html);
+      setRefineInstruction("");
+      // Update saved page in Supabase non-fatally
+      if (createdProject) {
+        supabase.from("pages")
+          .update({ html_content: result.html })
+          .eq("project_id", createdProject.id)
+          .catch(() => {});
+      }
+    } catch (err) {
+      setRefineError(err.message || "Something went wrong");
+    } finally {
+      setIsRefining(false);
+    }
   };
 
   const handleOpenProject = () => {
@@ -509,13 +551,14 @@ export default function OnboardingWizard({ session, onComplete }) {
                         Your preview is ready
                       </h1>
                       <p className="text-lg text-slate-500 dark:text-slate-400">
-                        {keyword} in {location} — happy with it? Open your project to add more pages.
+                        {keyword} in {location} — tweak it or open your project to add more pages.
                       </p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <button
                         onClick={handleRegenerate}
-                        className="px-5 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 border-2 border-slate-200 dark:border-[#27272a] rounded-xl hover:border-slate-300 dark:hover:border-[#3f3f46] transition-colors"
+                        disabled={isRefining}
+                        className="px-5 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 border-2 border-slate-200 dark:border-[#27272a] rounded-xl hover:border-slate-300 dark:hover:border-[#3f3f46] disabled:opacity-40 transition-colors"
                       >
                         Regenerate
                       </button>
@@ -530,11 +573,49 @@ export default function OnboardingWizard({ session, onComplete }) {
 
                   {/* Full-page iframe preview */}
                   <div className="rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-[#27272a] shadow-2xl" style={{ height: "70vh" }}>
-                    <iframe
-                      srcDoc={previewHtml}
-                      className="w-full h-full border-none"
-                      title="Page preview"
-                    />
+                    {isRefining ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-[#0f0f10]">
+                        <div className="w-10 h-10 border-4 border-[#5b4cdb] border-t-transparent rounded-full animate-spin" />
+                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Applying your changes…</p>
+                      </div>
+                    ) : (
+                      <iframe
+                        srcDoc={previewHtml}
+                        className="w-full h-full border-none"
+                        title="Page preview"
+                      />
+                    )}
+                  </div>
+
+                  {/* Refine bar */}
+                  <div className="bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-2xl p-4">
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+                      Request a change
+                    </p>
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={refineInstruction}
+                        onChange={(e) => { setRefineInstruction(e.target.value); setRefineError(""); }}
+                        onKeyDown={(e) => e.key === "Enter" && !isRefining && handleRefine()}
+                        placeholder='e.g. "Make the headline shorter", "Add a pros and cons section", "Change the CTA button text to Call Now"'
+                        disabled={isRefining}
+                        className="flex-1 px-4 py-3 bg-white dark:bg-[#0f0f10] border border-slate-200 dark:border-[#27272a] rounded-xl text-sm focus:outline-none focus:border-[#5b4cdb] disabled:opacity-50 transition-colors"
+                      />
+                      <button
+                        onClick={handleRefine}
+                        disabled={!refineInstruction.trim() || isRefining}
+                        className="px-5 py-3 bg-[#5b4cdb] text-white text-sm font-bold rounded-xl hover:bg-[#4a3dc4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                      >
+                        {isRefining ? "Applying…" : "Apply"}
+                      </button>
+                    </div>
+                    {refineError && (
+                      <p className="text-xs text-red-500 mt-2">{refineError}</p>
+                    )}
+                    <p className="text-xs text-slate-400 mt-2">
+                      Only the specific thing you describe will change — the rest of the page stays as-is.
+                    </p>
                   </div>
 
                   <div className="flex justify-center">
