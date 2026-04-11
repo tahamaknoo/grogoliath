@@ -202,7 +202,7 @@ export default function OnboardingWizard({ session, onComplete }) {
         supabase.from("pages")
           .update({ html_content: result.html })
           .eq("project_id", createdProject.id)
-          .catch(() => {});
+          .then(() => {}).catch(() => {});
       }
     } catch (err) {
       setRefineError(err.message || "Something went wrong");
@@ -544,78 +544,72 @@ export default function OnboardingWizard({ session, onComplete }) {
                   </button>
                 </div>
               ) : previewHtml ? (
-                <div className="space-y-6">
-                  <div className="flex items-start justify-between">
+                <div className="space-y-4">
+                  {/* Header row */}
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h1 className="font-display text-5xl font-black text-slate-900 dark:text-white mb-2">
+                      <h1 className="font-display text-4xl font-black text-slate-900 dark:text-white mb-1">
                         Your preview is ready
                       </h1>
-                      <p className="text-lg text-slate-500 dark:text-slate-400">
-                        {keyword} in {location} — tweak it or open your project to add more pages.
+                      <p className="text-base text-slate-500 dark:text-slate-400">
+                        {keyword} in {location}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
+                    <button
+                      onClick={handleOpenProject}
+                      className="px-6 py-3 bg-[#5b4cdb] text-white font-bold rounded-xl hover:bg-[#4a3dc4] transition-colors shrink-0"
+                    >
+                      Open Project →
+                    </button>
+                  </div>
+
+                  {/* Instruction bar — above the preview */}
+                  <div className="bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-2xl p-3">
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        value={refineInstruction}
+                        onChange={(e) => { setRefineInstruction(e.target.value); setRefineError(""); }}
+                        onKeyDown={(e) => e.key === "Enter" && !isRefining && handleRefine()}
+                        placeholder='Describe a change — e.g. "Add a pros and cons section", "Shorten the headline", "Change CTA to Book a Free Call"'
+                        disabled={isRefining}
+                        className="flex-1 px-4 py-2.5 bg-white dark:bg-[#0f0f10] border border-slate-200 dark:border-[#27272a] rounded-xl text-sm focus:outline-none focus:border-[#5b4cdb] disabled:opacity-50 transition-colors"
+                      />
+                      <button
+                        onClick={handleRefine}
+                        disabled={!refineInstruction.trim() || isRefining}
+                        className="px-4 py-2.5 bg-[#5b4cdb] text-white text-sm font-bold rounded-xl hover:bg-[#4a3dc4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                      >
+                        {isRefining ? (
+                          <span className="flex items-center gap-2">
+                            <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                            Applying…
+                          </span>
+                        ) : "Apply change"}
+                      </button>
                       <button
                         onClick={handleRegenerate}
                         disabled={isRefining}
-                        className="px-5 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 border-2 border-slate-200 dark:border-[#27272a] rounded-xl hover:border-slate-300 dark:hover:border-[#3f3f46] disabled:opacity-40 transition-colors"
+                        title="Discard all changes and regenerate from scratch"
+                        className="px-4 py-2.5 text-sm font-semibold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-[#27272a] rounded-xl hover:border-slate-300 disabled:opacity-40 transition-colors shrink-0"
                       >
                         Regenerate
                       </button>
-                      <button
-                        onClick={handleOpenProject}
-                        className="px-6 py-3 bg-[#5b4cdb] text-white font-bold rounded-xl hover:bg-[#4a3dc4] transition-colors"
-                      >
-                        Open Project →
-                      </button>
                     </div>
+                    {refineError && <p className="text-xs text-red-500 mt-2 pl-1">{refineError}</p>}
+                    {!refineError && <p className="text-xs text-slate-400 mt-2 pl-1">Only the thing you describe changes — everything else stays as-is.</p>}
                   </div>
 
-                  {/* Full-page iframe preview */}
-                  <div className="rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-[#27272a] shadow-2xl" style={{ height: "70vh" }}>
+                  {/* iframe */}
+                  <div className="rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-[#27272a] shadow-2xl" style={{ height: "68vh" }}>
                     {isRefining ? (
                       <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-[#0f0f10]">
                         <div className="w-10 h-10 border-4 border-[#5b4cdb] border-t-transparent rounded-full animate-spin" />
                         <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Applying your changes…</p>
                       </div>
                     ) : (
-                      <iframe
-                        srcDoc={previewHtml}
-                        className="w-full h-full border-none"
-                        title="Page preview"
-                      />
+                      <iframe srcDoc={previewHtml} className="w-full h-full border-none" title="Page preview" />
                     )}
-                  </div>
-
-                  {/* Refine bar */}
-                  <div className="bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-2xl p-4">
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                      Request a change
-                    </p>
-                    <div className="flex gap-3">
-                      <input
-                        type="text"
-                        value={refineInstruction}
-                        onChange={(e) => { setRefineInstruction(e.target.value); setRefineError(""); }}
-                        onKeyDown={(e) => e.key === "Enter" && !isRefining && handleRefine()}
-                        placeholder='e.g. "Make the headline shorter", "Add a pros and cons section", "Change the CTA button text to Call Now"'
-                        disabled={isRefining}
-                        className="flex-1 px-4 py-3 bg-white dark:bg-[#0f0f10] border border-slate-200 dark:border-[#27272a] rounded-xl text-sm focus:outline-none focus:border-[#5b4cdb] disabled:opacity-50 transition-colors"
-                      />
-                      <button
-                        onClick={handleRefine}
-                        disabled={!refineInstruction.trim() || isRefining}
-                        className="px-5 py-3 bg-[#5b4cdb] text-white text-sm font-bold rounded-xl hover:bg-[#4a3dc4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-                      >
-                        {isRefining ? "Applying…" : "Apply"}
-                      </button>
-                    </div>
-                    {refineError && (
-                      <p className="text-xs text-red-500 mt-2">{refineError}</p>
-                    )}
-                    <p className="text-xs text-slate-400 mt-2">
-                      Only the specific thing you describe will change — the rest of the page stays as-is.
-                    </p>
                   </div>
 
                   <div className="flex justify-center">
