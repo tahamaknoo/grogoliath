@@ -558,17 +558,7 @@ export default function OnboardingWizard({ session, onComplete }) {
                         {keyword} in {location}
                       </p>
                     </div>
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <button
-                        onClick={handleOpenProject}
-                        className="px-6 py-3 bg-[#5b4cdb] text-white font-bold rounded-xl hover:bg-[#4a3dc4] transition-colors"
-                      >
-                        Finalize Project →
-                      </button>
-                      <p className="text-xs text-slate-400 text-right">
-                        Add more pages & keywords in the Projects window
-                      </p>
-                    </div>
+                    <div />
                   </div>
 
                   {/* Instruction bar */}
@@ -712,6 +702,19 @@ export default function OnboardingWizard({ session, onComplete }) {
                     ) : (
                       <iframe srcDoc={previewHtml} className="w-full h-full border-none" title="Desktop preview" />
                     )}
+                  </div>
+
+                  {/* Finalize button */}
+                  <div className="flex flex-col items-center gap-2 pt-2">
+                    <button
+                      onClick={handleOpenProject}
+                      className="px-10 py-4 bg-[#5b4cdb] text-white text-lg font-bold rounded-2xl hover:bg-[#4a3dc4] hover:shadow-xl hover:shadow-[#5b4cdb]/30 hover:scale-[1.02] transition-all"
+                    >
+                      Finalize Project →
+                    </button>
+                    <p className="text-xs text-slate-400">
+                      You can add more pages & target more keywords inside the Projects window
+                    </p>
                   </div>
                 </div>
               ) : null}
