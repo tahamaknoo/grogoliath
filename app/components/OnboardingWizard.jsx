@@ -572,12 +572,11 @@ export default function OnboardingWizard({ session, onComplete }) {
                       50% { background-position: 100% 50%; }
                       100% { background-position: 0% 50%; }
                     }
-                    @keyframes dot1 { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-5px);opacity:1} }
-                    @keyframes dot2 { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-5px);opacity:1} }
-                    @keyframes dot3 { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-5px);opacity:1} }
-                    .refine-dot-1 { animation: dot1 1.2s ease-in-out infinite; }
-                    .refine-dot-2 { animation: dot2 1.2s ease-in-out infinite 0.15s; }
-                    .refine-dot-3 { animation: dot3 1.2s ease-in-out infinite 0.3s; }
+                    @keyframes sparklePulse {
+                      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.9; }
+                      50% { transform: scale(1.2) rotate(15deg); opacity: 1; }
+                    }
+                    .refine-sparkle { animation: sparklePulse 2.5s ease-in-out infinite; }
                     .refine-border {
                       background: linear-gradient(white, white) padding-box,
                         linear-gradient(270deg, #5b4cdb, #818cf8, #c084fc, #4a3dc4) border-box;
@@ -593,13 +592,12 @@ export default function OnboardingWizard({ session, onComplete }) {
                     }
                   `}</style>
                   <div className="refine-border rounded-2xl p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      {/* Animated sparkle dots */}
-                      <div className="flex items-end gap-[3px] h-4">
-                        <span className="refine-dot-1 w-1.5 h-1.5 rounded-full bg-[#5b4cdb] inline-block" />
-                        <span className="refine-dot-2 w-1.5 h-1.5 rounded-full bg-[#818cf8] inline-block" />
-                        <span className="refine-dot-3 w-1.5 h-1.5 rounded-full bg-[#c084fc] inline-block" />
-                      </div>
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <svg className="refine-sparkle w-4 h-4 text-[#5b4cdb] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l1.8 6.2H20l-5.1 3.7 1.9 6.1L12 14.3l-4.8 3.7 1.9-6.1L4 8.2h6.2z"/>
+                        <circle cx="19" cy="5" r="1.5" opacity="0.5"/>
+                        <circle cx="5" cy="19" r="1" opacity="0.4"/>
+                      </svg>
                       <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Refine this page</span>
                       <span className="text-xs text-slate-400">Only what you describe changes — everything else stays</span>
                     </div>
