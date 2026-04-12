@@ -33,6 +33,7 @@ export default function OnboardingWizard({ session, onComplete }) {
   const [refineInstruction, setRefineInstruction] = useState("");
   const [isRefining, setIsRefining]         = useState(false);
   const [refineError, setRefineError]       = useState("");
+  const [previewDevice, setPreviewDevice]   = useState("desktop");
 
   const generationStarted = useRef(false);
   const timerRef = useRef(null);
@@ -557,12 +558,17 @@ export default function OnboardingWizard({ session, onComplete }) {
                         {keyword} in {location}
                       </p>
                     </div>
-                    <button
-                      onClick={handleOpenProject}
-                      className="px-6 py-3 bg-[#5b4cdb] text-white font-bold rounded-xl hover:bg-[#4a3dc4] transition-colors shrink-0"
-                    >
-                      Open Project →
-                    </button>
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <button
+                        onClick={handleOpenProject}
+                        className="px-6 py-3 bg-[#5b4cdb] text-white font-bold rounded-xl hover:bg-[#4a3dc4] transition-colors"
+                      >
+                        Finalize Project →
+                      </button>
+                      <p className="text-xs text-slate-400 text-right">
+                        Add more pages & keywords in the Projects window
+                      </p>
+                    </div>
                   </div>
 
                   {/* Instruction bar */}
@@ -637,19 +643,36 @@ export default function OnboardingWizard({ session, onComplete }) {
                     {refineError && <p className="text-xs text-red-500 mt-2.5 pl-1">{refineError}</p>}
                   </div>
 
-                  {/* iframe */}
-                  <div className="rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-[#27272a] shadow-2xl" style={{ height: "68vh" }}>
-                    {isRefining ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-[#0f0f10]">
-                        <div className="w-10 h-10 border-4 border-[#5b4cdb] border-t-transparent rounded-full animate-spin" />
-                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Applying your changes…</p>
-                      </div>
-                    ) : (
-                      <iframe srcDoc={previewHtml} className="w-full h-full border-none" title="Page preview" />
-                    )}
-                  </div>
-
-                  <div className="flex justify-center">
+                  {/* Device toggle + open in tab */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-[#27272a] rounded-xl">
+                      <button
+                        onClick={() => setPreviewDevice("desktop")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                          previewDevice === "desktop"
+                            ? "bg-white dark:bg-[#18181b] text-slate-900 dark:text-white shadow-sm"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
+                        }`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Desktop
+                      </button>
+                      <button
+                        onClick={() => setPreviewDevice("mobile")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                          previewDevice === "mobile"
+                            ? "bg-white dark:bg-[#18181b] text-slate-900 dark:text-white shadow-sm"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
+                        }`}
+                      >
+                        <svg className="w-3 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Mobile
+                      </button>
+                    </div>
                     <button
                       onClick={() => {
                         const blob = new Blob([previewHtml], { type: "text/html" });
@@ -657,10 +680,38 @@ export default function OnboardingWizard({ session, onComplete }) {
                         window.open(url, "_blank");
                         setTimeout(() => URL.revokeObjectURL(url), 10000);
                       }}
-                      className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline transition-colors"
+                      className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 underline transition-colors"
                     >
                       Open in new tab
                     </button>
+                  </div>
+
+                  {/* iframe */}
+                  <div
+                    className="rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-[#27272a] shadow-2xl flex items-start justify-center bg-slate-100 dark:bg-[#0f0f10]"
+                    style={{ height: "68vh" }}
+                  >
+                    {isRefining ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+                        <div className="w-10 h-10 border-4 border-[#5b4cdb] border-t-transparent rounded-full animate-spin" />
+                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Applying your changes…</p>
+                      </div>
+                    ) : previewDevice === "mobile" ? (
+                      <div className="h-full flex items-center justify-center py-4">
+                        <div className="relative h-full" style={{ width: "390px" }}>
+                          {/* Phone chrome */}
+                          <div className="absolute inset-0 rounded-[2.5rem] border-[6px] border-slate-300 dark:border-slate-600 pointer-events-none z-10 shadow-2xl" />
+                          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-slate-300 dark:bg-slate-600 rounded-b-xl z-20" />
+                          <iframe
+                            srcDoc={previewHtml}
+                            className="w-full h-full border-none rounded-[2rem]"
+                            title="Mobile preview"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <iframe srcDoc={previewHtml} className="w-full h-full border-none" title="Desktop preview" />
+                    )}
                   </div>
                 </div>
               ) : null}
