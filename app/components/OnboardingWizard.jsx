@@ -572,11 +572,19 @@ export default function OnboardingWizard({ session, onComplete }) {
                       50% { background-position: 100% 50%; }
                       100% { background-position: 0% 50%; }
                     }
-                    @keyframes sparklePulse {
-                      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.9; }
-                      50% { transform: scale(1.2) rotate(15deg); opacity: 1; }
+                    @keyframes shimmerText {
+                      0% { background-position: 0% 50%; }
+                      50% { background-position: 100% 50%; }
+                      100% { background-position: 0% 50%; }
                     }
-                    .refine-sparkle { animation: sparklePulse 2.5s ease-in-out infinite; }
+                    .refine-label {
+                      background: linear-gradient(90deg, #5b4cdb, #818cf8, #c084fc, #5b4cdb);
+                      background-size: 200% auto;
+                      -webkit-background-clip: text;
+                      -webkit-text-fill-color: transparent;
+                      background-clip: text;
+                      animation: shimmerText 3s linear infinite;
+                    }
                     .refine-border {
                       background: linear-gradient(white, white) padding-box,
                         linear-gradient(270deg, #5b4cdb, #818cf8, #c084fc, #4a3dc4) border-box;
@@ -593,13 +601,8 @@ export default function OnboardingWizard({ session, onComplete }) {
                   `}</style>
                   <div className="refine-border rounded-2xl p-4">
                     <div className="flex items-center gap-2.5 mb-3">
-                      <svg className="refine-sparkle w-4 h-4 text-[#5b4cdb] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l1.8 6.2H20l-5.1 3.7 1.9 6.1L12 14.3l-4.8 3.7 1.9-6.1L4 8.2h6.2z"/>
-                        <circle cx="19" cy="5" r="1.5" opacity="0.5"/>
-                        <circle cx="5" cy="19" r="1" opacity="0.4"/>
-                      </svg>
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Refine this page</span>
-                      <span className="text-xs text-slate-400">Only what you describe changes — everything else stays</span>
+                      <span className="refine-label text-xs font-black uppercase tracking-wider">Refine this page</span>
+                      <span className="text-xs text-slate-400">— only what you describe changes</span>
                     </div>
                     <div className="flex gap-2 items-center">
                       <input
