@@ -563,14 +563,43 @@ export default function OnboardingWizard({ session, onComplete }) {
                     </button>
                   </div>
 
-                  {/* Instruction bar — above the preview */}
-                  <div className="bg-gradient-to-r from-[#5b4cdb]/8 to-[#4a3dc4]/8 dark:from-[#5b4cdb]/15 dark:to-[#4a3dc4]/15 border-2 border-[#5b4cdb]/25 rounded-2xl p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <svg className="w-4 h-4 text-[#5b4cdb] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      <span className="text-xs font-bold text-[#5b4cdb] uppercase tracking-wider">Request a change</span>
-                      <span className="text-xs text-slate-400 dark:text-slate-500 ml-1">— only what you describe will change</span>
+                  {/* Instruction bar */}
+                  <style>{`
+                    @keyframes gradientBorder {
+                      0% { background-position: 0% 50%; }
+                      50% { background-position: 100% 50%; }
+                      100% { background-position: 0% 50%; }
+                    }
+                    @keyframes dot1 { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-5px);opacity:1} }
+                    @keyframes dot2 { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-5px);opacity:1} }
+                    @keyframes dot3 { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-5px);opacity:1} }
+                    .refine-dot-1 { animation: dot1 1.2s ease-in-out infinite; }
+                    .refine-dot-2 { animation: dot2 1.2s ease-in-out infinite 0.15s; }
+                    .refine-dot-3 { animation: dot3 1.2s ease-in-out infinite 0.3s; }
+                    .refine-border {
+                      background: linear-gradient(white, white) padding-box,
+                        linear-gradient(270deg, #5b4cdb, #818cf8, #c084fc, #4a3dc4) border-box;
+                      background-size: 300% 300%;
+                      animation: gradientBorder 4s ease infinite;
+                      border: 2px solid transparent;
+                    }
+                    .dark .refine-border {
+                      background: linear-gradient(#18181b, #18181b) padding-box,
+                        linear-gradient(270deg, #5b4cdb, #818cf8, #c084fc, #4a3dc4) border-box;
+                      background-size: 300% 300%;
+                      animation: gradientBorder 4s ease infinite;
+                    }
+                  `}</style>
+                  <div className="refine-border rounded-2xl p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      {/* Animated sparkle dots */}
+                      <div className="flex items-end gap-[3px] h-4">
+                        <span className="refine-dot-1 w-1.5 h-1.5 rounded-full bg-[#5b4cdb] inline-block" />
+                        <span className="refine-dot-2 w-1.5 h-1.5 rounded-full bg-[#818cf8] inline-block" />
+                        <span className="refine-dot-3 w-1.5 h-1.5 rounded-full bg-[#c084fc] inline-block" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Refine this page</span>
+                      <span className="text-xs text-slate-400">Only what you describe changes — everything else stays</span>
                     </div>
                     <div className="flex gap-2 items-center">
                       <input
@@ -580,12 +609,12 @@ export default function OnboardingWizard({ session, onComplete }) {
                         onKeyDown={(e) => e.key === "Enter" && !isRefining && handleRefine()}
                         placeholder='e.g. "Add a pros and cons section below the hero", "Shorten the headline to 6 words", "Change CTA to Book a Free Call"'
                         disabled={isRefining}
-                        className="flex-1 px-4 py-3 bg-white dark:bg-[#0f0f10] border-2 border-[#5b4cdb]/20 rounded-xl text-sm focus:outline-none focus:border-[#5b4cdb] disabled:opacity-50 transition-colors placeholder:text-slate-400"
+                        className="flex-1 px-4 py-3 bg-slate-50 dark:bg-[#0f0f10] border border-slate-200 dark:border-[#27272a] rounded-xl text-sm focus:outline-none focus:border-[#5b4cdb] focus:bg-white dark:focus:bg-[#0f0f10] disabled:opacity-50 transition-colors placeholder:text-slate-400"
                       />
                       <button
                         onClick={handleRefine}
                         disabled={!refineInstruction.trim() || isRefining}
-                        className="px-5 py-3 bg-[#5b4cdb] text-white text-sm font-bold rounded-xl hover:bg-[#4a3dc4] disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:shadow-lg hover:shadow-[#5b4cdb]/25 shrink-0"
+                        className="px-5 py-3 bg-[#5b4cdb] text-white text-sm font-bold rounded-xl hover:bg-[#4a3dc4] disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:shadow-lg hover:shadow-[#5b4cdb]/30 shrink-0"
                       >
                         {isRefining ? (
                           <span className="flex items-center gap-2">
@@ -594,20 +623,12 @@ export default function OnboardingWizard({ session, onComplete }) {
                           </span>
                         ) : (
                           <span className="flex items-center gap-1.5">
-                            Apply change
+                            Apply
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
                           </span>
                         )}
-                      </button>
-                      <button
-                        onClick={handleRegenerate}
-                        disabled={isRefining}
-                        title="Discard all changes and regenerate from scratch"
-                        className="px-4 py-3 text-sm font-semibold text-slate-500 dark:text-slate-400 border-2 border-slate-200 dark:border-[#27272a] rounded-xl hover:border-slate-300 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-40 transition-colors shrink-0"
-                      >
-                        Regenerate
                       </button>
                     </div>
                     {refineError && <p className="text-xs text-red-500 mt-2.5 pl-1">{refineError}</p>}
