@@ -564,40 +564,53 @@ export default function OnboardingWizard({ session, onComplete }) {
                   </div>
 
                   {/* Instruction bar — above the preview */}
-                  <div className="bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-2xl p-3">
+                  <div className="bg-gradient-to-r from-[#5b4cdb]/8 to-[#4a3dc4]/8 dark:from-[#5b4cdb]/15 dark:to-[#4a3dc4]/15 border-2 border-[#5b4cdb]/25 rounded-2xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-[#5b4cdb] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      <span className="text-xs font-bold text-[#5b4cdb] uppercase tracking-wider">Request a change</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500 ml-1">— only what you describe will change</span>
+                    </div>
                     <div className="flex gap-2 items-center">
                       <input
                         type="text"
                         value={refineInstruction}
                         onChange={(e) => { setRefineInstruction(e.target.value); setRefineError(""); }}
                         onKeyDown={(e) => e.key === "Enter" && !isRefining && handleRefine()}
-                        placeholder='Describe a change — e.g. "Add a pros and cons section", "Shorten the headline", "Change CTA to Book a Free Call"'
+                        placeholder='e.g. "Add a pros and cons section below the hero", "Shorten the headline to 6 words", "Change CTA to Book a Free Call"'
                         disabled={isRefining}
-                        className="flex-1 px-4 py-2.5 bg-white dark:bg-[#0f0f10] border border-slate-200 dark:border-[#27272a] rounded-xl text-sm focus:outline-none focus:border-[#5b4cdb] disabled:opacity-50 transition-colors"
+                        className="flex-1 px-4 py-3 bg-white dark:bg-[#0f0f10] border-2 border-[#5b4cdb]/20 rounded-xl text-sm focus:outline-none focus:border-[#5b4cdb] disabled:opacity-50 transition-colors placeholder:text-slate-400"
                       />
                       <button
                         onClick={handleRefine}
                         disabled={!refineInstruction.trim() || isRefining}
-                        className="px-4 py-2.5 bg-[#5b4cdb] text-white text-sm font-bold rounded-xl hover:bg-[#4a3dc4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                        className="px-5 py-3 bg-[#5b4cdb] text-white text-sm font-bold rounded-xl hover:bg-[#4a3dc4] disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:shadow-lg hover:shadow-[#5b4cdb]/25 shrink-0"
                       >
                         {isRefining ? (
                           <span className="flex items-center gap-2">
                             <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
                             Applying…
                           </span>
-                        ) : "Apply change"}
+                        ) : (
+                          <span className="flex items-center gap-1.5">
+                            Apply change
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                          </span>
+                        )}
                       </button>
                       <button
                         onClick={handleRegenerate}
                         disabled={isRefining}
                         title="Discard all changes and regenerate from scratch"
-                        className="px-4 py-2.5 text-sm font-semibold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-[#27272a] rounded-xl hover:border-slate-300 disabled:opacity-40 transition-colors shrink-0"
+                        className="px-4 py-3 text-sm font-semibold text-slate-500 dark:text-slate-400 border-2 border-slate-200 dark:border-[#27272a] rounded-xl hover:border-slate-300 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-40 transition-colors shrink-0"
                       >
                         Regenerate
                       </button>
                     </div>
-                    {refineError && <p className="text-xs text-red-500 mt-2 pl-1">{refineError}</p>}
-                    {!refineError && <p className="text-xs text-slate-400 mt-2 pl-1">Only the thing you describe changes — everything else stays as-is.</p>}
+                    {refineError && <p className="text-xs text-red-500 mt-2.5 pl-1">{refineError}</p>}
                   </div>
 
                   {/* iframe */}
