@@ -77,44 +77,55 @@ export default function OnboardingWizard({ session, onComplete }) {
       ),
     ]);
 
+  const saveProjectInBackground = async (html) => {
+    try {
+      let project = createdProject;
+      if (!project) {
+        const { data, error } = await supabase.from("projects").insert({
+          user_id: session.user.id,
+          name: `${businessType} Pages`,
+          status: "Draft",
+          data: {
+            headers: ["Keyword", "Location", "Service"],
+            rows: [{ Keyword: keyword, Location: location, Service: businessType }],
+            settings: { tone, length, templateId: selectedTemplate?.id },
+          },
+          row_count: 1,
+        }).select().single();
+        if (error || !data) return;
+        project = data;
+        setCreatedProject(data);
+      } else {
+        // Remove old page on regenerate
+        await supabase.from("pages").delete().eq("project_id", project.id).then(() => {}).catch(() => {});
+      }
+      await supabase.from("pages").insert({
+        project_id:   project.id,
+        user_id:      session.user.id,
+        keyword:      `${keyword} in ${location}`,
+        location,
+        html_content: html,
+        status:       "completed",
+      }).then(() => {}).catch(() => {});
+    } catch {
+      // Background save failed silently — user still has their preview
+    }
+  };
+
   const handleGeneratePreview = async (existingProject = null) => {
     setIsGenerating(true);
     setGenerationError("");
     setPreviewHtml("");
     setGeneratedPage(null);
     setElapsedSeconds(0);
+    if (existingProject === null && createdProject) {
+      // Regenerating — keep reference but clear old pages
+      setCreatedProject(prev => prev);
+    }
     timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
 
     try {
-      let project = existingProject || createdProject;
-
-      if (!project) {
-        const { data, error } = await withTimeout(
-          supabase.from("projects").insert({
-            user_id: session.user.id,
-            name: `${businessType} Pages`,
-            status: "Draft",
-            data: {
-              headers: ["Keyword", "Location", "Service"],
-              rows: [{ Keyword: keyword, Location: location, Service: businessType }],
-              settings: { tone, length, templateId: selectedTemplate?.id },
-            },
-            row_count: 1,
-          }).select().single(),
-          25000,
-          "Saving project (Supabase is slow to respond — check your internet connection or try again)"
-        );
-        if (error) throw new Error(`Could not save project: ${error.message} — make sure you are logged in and your Supabase projects table has an INSERT policy for authenticated users.`);
-        project = data;
-        setCreatedProject(data);
-      } else {
-        await withTimeout(
-          supabase.from("pages").delete().eq("project_id", project.id),
-          8000,
-          "Supabase page delete"
-        ).catch(() => {}); // non-fatal if this times out
-      }
-
+      // Generate first — never block on Supabase
       const controller = new AbortController();
       const fetchTimeout = setTimeout(() => controller.abort(), 100000);
 
@@ -125,7 +136,6 @@ export default function OnboardingWizard({ session, onComplete }) {
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
           body: JSON.stringify({
-            projectId:           project.id,
             keyword,
             location,
             service:             businessType,
@@ -145,21 +155,13 @@ export default function OnboardingWizard({ session, onComplete }) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to generate page");
 
-      await withTimeout(
-        supabase.from("pages").insert({
-          project_id:   project.id,
-          user_id:      session.user.id,
-          keyword:      `${keyword} in ${location}`,
-          location,
-          html_content: result.html,
-          status:       "completed",
-        }),
-        8000,
-        "Supabase page insert"
-      ).catch(() => {}); // non-fatal — preview still shows even if save fails
-
+      // Show preview immediately
       setPreviewHtml(result.html);
       setGeneratedPage(result);
+
+      // Save to Supabase in background — never blocks the user
+      saveProjectInBackground(result.html);
+
     } catch (err) {
       setGenerationError(err.message || "Something went wrong");
     } finally {
