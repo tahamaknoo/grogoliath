@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { requireUser, safeError } from "../../../lib/apiAuth";
+import { safeFetchUrl } from "../../../lib/safeUrl";
 
 const MAX_CHARS = 12000;
 
@@ -13,6 +15,8 @@ const sanitizeHtml = (html) => {
 };
 
 export async function POST(req) {
+  const auth = await requireUser(req);
+  if (auth.error) return auth.error;
   try {
     const { url } = await req.json();
     if (!url) {
@@ -20,8 +24,12 @@ export async function POST(req) {
     }
 
     const normalized = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    const guard = await safeFetchUrl(normalized);
+    if (!guard.ok) {
+      return NextResponse.json({ error: guard.reason }, { status: 400 });
+    }
 
-    const siteResponse = await fetch(normalized, {
+    const siteResponse = await fetch(guard.url, {
       redirect: "follow",
       headers: {
         "User-Agent":
@@ -87,6 +95,6 @@ ${cleaned}
 
     return NextResponse.json({ content: data.choices?.[0]?.message?.content || "" });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return safeError('analyze-site', error);
   }
 }

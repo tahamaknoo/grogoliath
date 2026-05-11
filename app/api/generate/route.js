@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
+import { requireUser, safeError } from '../../../lib/apiAuth';
 
 export async function POST(req) {
+  const auth = await requireUser(req);
+  if (auth.error) return auth.error;
   try {
     const { prompt } = await req.json();
 
@@ -33,6 +36,6 @@ export async function POST(req) {
     return NextResponse.json({ content: data.choices[0].message.content });
 
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return safeError('generate', error);
   }
 }

@@ -12,7 +12,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .dark {
@@ -23,7 +23,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-body), serif;
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 @keyframes scale-in {
@@ -54,4 +54,200 @@ body {
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+/* ── Avatar click animations ──────────────────────────────────────────────
+   Each click on the sidebar profile triggers one of these at random.       */
+
+@keyframes avatar-pop {
+  0%   { transform: scale(1)    rotate(0deg); }
+  20%  { transform: scale(1.20) rotate(-10deg); }
+  40%  { transform: scale(0.94) rotate(8deg); }
+  60%  { transform: scale(1.08) rotate(-5deg); }
+  80%  { transform: scale(0.98) rotate(3deg); }
+  100% { transform: scale(1)    rotate(0deg); }
+}
+.animate-avatar-pop { animation: avatar-pop 0.65s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+@keyframes avatar-spin {
+  0%   { transform: rotate(0deg)   scale(1); }
+  50%  { transform: rotate(180deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+.animate-avatar-spin { animation: avatar-spin 0.7s cubic-bezier(0.65, 0, 0.35, 1); }
+
+@keyframes avatar-flip {
+  0%   { transform: perspective(400px) rotateY(0deg); }
+  50%  { transform: perspective(400px) rotateY(180deg); }
+  100% { transform: perspective(400px) rotateY(360deg); }
+}
+.animate-avatar-flip { animation: avatar-flip 0.7s ease-in-out; }
+
+@keyframes avatar-jelly {
+  0%   { transform: scale(1, 1); }
+  20%  { transform: scale(1.25, 0.75); }
+  40%  { transform: scale(0.78, 1.22); }
+  60%  { transform: scale(1.15, 0.85); }
+  80%  { transform: scale(0.95, 1.05); }
+  100% { transform: scale(1, 1); }
+}
+.animate-avatar-jelly { animation: avatar-jelly 0.6s ease-out; }
+
+@keyframes avatar-shake {
+  0%, 100% { transform: translateX(0)   rotate(0deg); }
+  15%      { transform: translateX(-5px) rotate(-6deg); }
+  30%      { transform: translateX(5px)  rotate(6deg); }
+  45%      { transform: translateX(-4px) rotate(-5deg); }
+  60%      { transform: translateX(4px)  rotate(5deg); }
+  75%      { transform: translateX(-2px) rotate(-2deg); }
+  90%      { transform: translateX(2px)  rotate(2deg); }
+}
+.animate-avatar-shake { animation: avatar-shake 0.55s ease-in-out; }
+
+@keyframes avatar-heartbeat {
+  0%, 100% { transform: scale(1); }
+  14%      { transform: scale(1.3); }
+  28%      { transform: scale(1); }
+  42%      { transform: scale(1.3); }
+  70%      { transform: scale(1); }
+}
+.animate-avatar-heartbeat { animation: avatar-heartbeat 0.85s ease-out; }
+
+@keyframes avatar-tada {
+  0%        { transform: scale(1)   rotate(0); }
+  10%, 20%  { transform: scale(0.9) rotate(-6deg); }
+  30%, 50%, 70%, 90% { transform: scale(1.15) rotate(6deg); }
+  40%, 60%, 80%      { transform: scale(1.15) rotate(-6deg); }
+  100%      { transform: scale(1)   rotate(0); }
+}
+.animate-avatar-tada { animation: avatar-tada 0.8s ease-out; }
+
+@keyframes avatar-rubber {
+  0%   { transform: scale(1, 1); }
+  30%  { transform: scale(1.3, 0.7); }
+  40%  { transform: scale(0.8, 1.2); }
+  50%  { transform: scale(1.15, 0.85); }
+  65%  { transform: scale(0.95, 1.05); }
+  100% { transform: scale(1, 1); }
+}
+.animate-avatar-rubber { animation: avatar-rubber 0.7s ease-out; }
+
+/* ── Grogoliath Loader ───────────────────────────────────────────────────── */
+.gg-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #5eead425;
+  border-top-color: #5eead4;
+  border-radius: 50%;
+  animation: gg-spin 0.75s linear infinite;
+}
+
+@keyframes gg-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Dark mode toggle */
+.ui-switch {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.ui-switch input {
+  display: none;
+}
+
+.ui-switch .slider {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  background: #cbd5e1;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 300ms ease, box-shadow 300ms ease;
+  flex-shrink: 0;
+}
+
+.ui-switch .slider::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: #ffffff;
+  border-radius: 50%;
+  transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 280ms ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 13px 13px;
+}
+
+.ui-switch input:checked + .slider {
+  background: #053f44;
+  box-shadow: 0 0 0 1px #5eead430, 0 0 14px #5eead425;
+}
+
+.ui-switch input:checked + .slider::after {
+  transform: translateX(24px);
+  background-color: #0f1c1a;
+  box-shadow: 0 0 8px #5eead455, 0 1px 4px rgba(0, 0, 0, 0.4);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235eead4' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 12px;
+}
+
+.ui-switch:active .slider::after {
+  width: 26px;
+}
+
+/* ── Themed scrollbars ──────────────────────────────────────────────────── */
+/* Light mode (default) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d4 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #a3a3a3;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Dark mode override */
+.dark *,
+.dark {
+  scrollbar-color: #333333 transparent;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: #333333;
+  background-clip: content-box;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: #3f3f3f;
+  background-clip: content-box;
 }

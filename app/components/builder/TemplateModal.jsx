@@ -3,6 +3,7 @@
 import LivePreview from "./LivePreview";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { apiFetch } from "@/lib/apiFetch";
 import {
   Search,
   ArrowUp, ArrowDown, Trash2, Type, FileCode, Award,
@@ -426,7 +427,7 @@ const TemplateModal = ({
         `Allowed types: header, text, hero, pain_point, solution, usp, pricing, cta, schema_service, faq_auto, comparison, pros_cons, social_proof, process, case_study, contact_form, trust_badges, schema_blog, stats, html, image, columns_n, columns_2, grid_2x2. ` +
         `Allowed categories: basic, marketing, seo, premium.`;
 
-      const response = await fetch("/api/generate", {
+      const response = await apiFetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: systemPrompt })
@@ -529,21 +530,21 @@ const TemplateModal = ({
             <button
               onClick={() => moveBlock(index, "up")}
               disabled={index === 0}
-              className="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-indigo-50 disabled:opacity-30 transition-colors"
+              className="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-indigo-50 disabled:opacity-30 transition-colors dark:text-[#fbfbfb]"
             >
               <ArrowUp size={18} />
             </button>
             <button
               onClick={() => moveBlock(index, "down")}
               disabled={index === blocks.length - 1}
-              className="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-indigo-50 disabled:opacity-30 transition-colors"
+              className="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-indigo-50 disabled:opacity-30 transition-colors dark:text-[#fbfbfb]"
             >
               <ArrowDown size={18} />
             </button>
             <div className="w-px h-4 bg-slate-200 mx-1"></div>
             <button
               onClick={() => removeBlock(block.id)}
-              className="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
+              className="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors dark:text-[#fbfbfb]"
             >
               <Trash2 size={18} />
             </button>
@@ -568,7 +569,7 @@ const TemplateModal = ({
                   setDragIndex(null);
                   setDragOverIndex(null);
                 }}
-                className="cursor-grab active:cursor-grabbing p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="cursor-grab active:cursor-grabbing p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-[#fbfbfb]"
                 title="Drag to reorder"
               >
                 <GripVertical size={16} />
@@ -672,7 +673,7 @@ const TemplateModal = ({
           <div className="mt-4 space-y-3">
             {splitColumns(block.content, columnCount || 2).map((col, idx) => (
               <div key={idx} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:bg-slate-900 dark:border-slate-700">
-                <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-1">
+                <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-1 dark:text-[#fbfbfb]">
                   Column {idx + 1}
                 </div>
                 <textarea
@@ -753,7 +754,7 @@ const TemplateModal = ({
             }}
             role="button"
             tabIndex={0}
-            className="ml-auto text-slate-400 hover:text-slate-600"
+            className="ml-auto text-slate-400 hover:text-slate-600 dark:text-[#fbfbfb]"
             aria-label={`Info: ${label}`}
           >
             <HelpCircle size={14} />
@@ -809,7 +810,7 @@ const TemplateModal = ({
                 </div>
                 <button
                   onClick={() => setInfoModal(null)}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-slate-400 hover:text-slate-600 dark:text-[#fbfbfb]"
                   aria-label="Close info"
                 >
                   <X size={18} />
@@ -835,7 +836,7 @@ const TemplateModal = ({
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
             <div className="relative z-10 w-full md:w-72 border-b md:border-b-0 md:border-r p-4 bg-slate-50 dark:bg-slate-900 overflow-y-auto h-full max-h-[40vh] md:max-h-none space-y-4 pointer-events-auto">
               <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:bg-slate-800 dark:border-slate-700">
-                <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold mb-2">
+                <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold mb-2 dark:text-[#fbfbfb]">
                   AI Template Builder
                 </div>
                 <input
@@ -856,7 +857,7 @@ const TemplateModal = ({
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:bg-slate-800 dark:border-slate-700">
-                <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold mb-2">
+                <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold mb-2 dark:text-[#fbfbfb]">
                   Suggested structure
                 </div>
                 <div className="text-[11px] text-slate-500 space-y-1">
@@ -887,7 +888,7 @@ const TemplateModal = ({
 
               <div className="space-y-6">
                 <div>
-                  <label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1">
+                  <label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1 dark:text-[#fbfbfb]">
                     <Layers size={12} /> Core
                   </label>
                   <div className="space-y-2">
@@ -901,7 +902,7 @@ const TemplateModal = ({
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1">
+                  <label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1 dark:text-[#fbfbfb]">
                     <Megaphone size={12} /> Marketing
                   </label>
                   <div className="space-y-2">
@@ -914,7 +915,7 @@ const TemplateModal = ({
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1">
+                  <label className="text-xs font-bold uppercase text-slate-400 mb-2 block flex items-center gap-1 dark:text-[#fbfbfb]">
                     <Search size={12} /> SEO
                   </label>
                   <div className="space-y-2">
@@ -947,7 +948,7 @@ const TemplateModal = ({
               {blocks.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-center text-slate-500">
                   <div className="max-w-md">
-                    <div className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">Get started</div>
+                    <div className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400 dark:text-[#fbfbfb]">Get started</div>
                     <h4 className="text-xl font-bold text-slate-800 mt-2">Add your first block</h4>
                     <p className="text-sm mt-2">
                       Click a block on the left to build your structure, or use AI to generate a starter layout.

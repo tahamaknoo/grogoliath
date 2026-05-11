@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireUser, safeError } from '../../../lib/apiAuth';
 
 function escapeXml(unsafe) {
   if (!unsafe) return '';
@@ -11,6 +12,8 @@ function escapeXml(unsafe) {
 }
 
 export async function POST(req) {
+  const auth = await requireUser(req);
+  if (auth.error) return auth.error;
   try {
     const { pages, projectName } = await req.json();
 
@@ -86,7 +89,6 @@ export async function POST(req) {
     });
 
   } catch (error) {
-    console.error('WordPress export error:', error);
-    return NextResponse.json({ error: error.message || 'Export failed' }, { status: 500 });
+    return safeError('export-wordpress', error);
   }
 }

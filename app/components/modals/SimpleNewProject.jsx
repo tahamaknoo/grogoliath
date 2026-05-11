@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Upload, X } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
+import { apiFetch } from "../../../lib/apiFetch";
 
 // Handles quoted CSV values with commas inside them
 function parseCSVLine(line) {
@@ -34,7 +35,7 @@ const TIPS = [
   "💡 You can minimize this window and continue working",
   "⚡ Each page gets unique, SEO-optimized content automatically",
   "🎯 You can edit any keyword in the preview table",
-  "🚀 Larger projects take a bit longer — patience pays off!",
+  "🚀 Larger projects take a bit longer. Patience pays off!",
   "✨ All pages are mobile-responsive by default",
   "📊 Your pages will be ready for download after generation",
 ];
@@ -120,7 +121,7 @@ Return ONLY valid JSON in this EXACT format:
 Generate ALL combinations now. Return ONLY the JSON, no other text.`;
 
     try {
-      const res = await fetch("/api/generate", {
+      const res = await apiFetch("/api/generate", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ prompt }),
@@ -264,16 +265,16 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
     }
   };
 
-  const inputClass = "w-full text-2xl font-semibold text-slate-900 dark:text-white bg-transparent border-b-2 border-slate-200 dark:border-[#27272a] focus:border-[#5b4cdb] outline-none pb-3 placeholder-slate-300 dark:placeholder-slate-600 transition-colors";
-  const fieldClass = "w-full text-base text-slate-900 dark:text-white bg-transparent border-b border-slate-200 dark:border-[#27272a] focus:border-[#5b4cdb] outline-none pb-3 placeholder-slate-400 dark:placeholder-slate-600 transition-colors";
+  const inputClass = "w-full text-2xl font-semibold text-slate-900 dark:text-white bg-transparent border-b-2 border-slate-200 dark:border-[#303030] focus:border-[#5b4cdb] outline-none pb-3 placeholder-slate-300 dark:placeholder-slate-600 transition-colors";
+  const fieldClass = "w-full text-base text-slate-900 dark:text-white bg-transparent border-b border-slate-200 dark:border-[#303030] focus:border-[#5b4cdb] outline-none pb-3 placeholder-slate-400 dark:placeholder-slate-600 transition-colors";
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white dark:bg-[#0f0f10] overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-white dark:bg-[#111111] overflow-y-auto">
       <div className="min-h-screen flex items-center justify-center p-8">
       {/* Close button */}
       <button
         onClick={handleClose}
-        className="absolute top-8 right-8 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+        className="absolute top-8 right-8 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors dark:text-[#fbfbfb]"
       >
         <X size={24} />
       </button>
@@ -282,7 +283,7 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
         {/* Step progress bar */}
         <div className="flex gap-2 mb-16">
           <div className="h-1 flex-1 bg-[#5b4cdb] rounded-full" />
-          <div className={`h-1 flex-1 rounded-full transition-colors ${step === 2 ? "bg-[#5b4cdb]" : "bg-slate-200 dark:bg-[#27272a]"}`} />
+          <div className={`h-1 flex-1 rounded-full transition-colors ${step === 2 ? "bg-[#5b4cdb]" : "bg-slate-200 dark:bg-[#303030]"}`} />
         </div>
 
         {/* ── Step 1: Name ── */}
@@ -304,7 +305,7 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
               className={`${inputClass} mb-14`}
             />
             <div className="flex items-center justify-between">
-              <button onClick={handleClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium text-sm transition-colors">
+              <button onClick={handleClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium text-sm transition-colors dark:text-[#fbfbfb]">
                 Cancel
               </button>
               <button
@@ -343,11 +344,11 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
                   className={`p-5 border-2 rounded-2xl text-left transition-all disabled:opacity-35 disabled:cursor-not-allowed ${
                     dataMethod === m.id
                       ? "border-[#5b4cdb] bg-[#f2f1fe] dark:bg-[#5b4cdb]/10"
-                      : "border-slate-200 dark:border-[#27272a] hover:border-slate-300 dark:hover:border-[#3f3f46]"
+                      : "border-slate-200 dark:border-[#303030] hover:border-slate-300 dark:hover:border-[#404040]"
                   }`}
                 >
                   <div className="font-bold text-sm text-slate-900 dark:text-white mb-0.5">{m.label}</div>
-                  <div className="text-xs text-slate-400">{m.sub}</div>
+                  <div className="text-xs text-slate-400 dark:text-[#fbfbfb]">{m.sub}</div>
                 </button>
               ))}
             </div>
@@ -360,14 +361,14 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
                   className={`flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl cursor-pointer transition-colors ${
                     csvFile
                       ? "border-[#5b4cdb] bg-[#f2f1fe] dark:bg-[#5b4cdb]/10"
-                      : "border-slate-200 dark:border-[#27272a] hover:border-slate-300 dark:hover:border-[#3f3f46] hover:bg-slate-50 dark:hover:bg-[#18181b]"
+                      : "border-slate-200 dark:border-[#303030] hover:border-slate-300 dark:hover:border-[#404040] hover:bg-slate-50 dark:hover:bg-[#1c1c1c]"
                   }`}
                 >
                   <Upload size={20} className={csvFile ? "text-[#5b4cdb]" : "text-slate-400"} />
                   <span className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
                     {csvFile ? csvFile.name : "Click to upload CSV"}
                   </span>
-                  <span className="text-xs text-slate-400 mt-1">
+                  <span className="text-xs text-slate-400 mt-1 dark:text-[#fbfbfb]">
                     {csvData ? `${csvData.rows.length} rows · ${csvData.headers.length} columns` : ".csv files only"}
                   </span>
                   <input id="csv-upload" type="file" accept=".csv" onChange={handleCSVUpload} className="hidden" />
@@ -379,7 +380,7 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
             {dataMethod === "ai" && (
               <div className="space-y-8 mb-10">
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Business type</label>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 dark:text-[#fbfbfb]">Business type</label>
                   <input
                     type="text"
                     value={aiFields.business}
@@ -389,7 +390,7 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Target locations</label>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 dark:text-[#fbfbfb]">Target locations</label>
                   <input
                     type="text"
                     value={aiFields.locations}
@@ -397,10 +398,10 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
                     placeholder="e.g., Austin, Dallas, Houston"
                     className={fieldClass}
                   />
-                  <p className="text-xs text-slate-400 mt-2">Separate multiple cities with commas</p>
+                  <p className="text-xs text-slate-400 mt-2 dark:text-[#fbfbfb]">Separate multiple cities with commas</p>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Services / Keywords</label>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 dark:text-[#fbfbfb]">Services / Keywords</label>
                   <input
                     type="text"
                     value={aiFields.keywords}
@@ -408,7 +409,7 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
                     placeholder="e.g., emergency repair, drain cleaning"
                     className={fieldClass}
                   />
-                  <p className="text-xs text-slate-400 mt-2">Separate multiple services with commas</p>
+                  <p className="text-xs text-slate-400 mt-2 dark:text-[#fbfbfb]">Separate multiple services with commas</p>
                 </div>
 
                 {/* Auto-calculated page count */}
@@ -462,15 +463,15 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
                     <div className="font-bold text-[#5b4cdb] text-sm">
                       {csvData.rows.length} keyword combinations ready
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                    <div className="text-xs text-slate-500 dark:text-[#fbfbfb]">
                       Review and edit below before creating your project
                     </div>
                   </div>
                 </div>
 
                 {/* Editable table */}
-                <div className="border border-slate-200 dark:border-[#27272a] rounded-xl overflow-hidden">
-                  <div className="bg-slate-50 dark:bg-[#18181b] px-4 py-3 border-b border-slate-200 dark:border-[#27272a] flex items-center justify-between">
+                <div className="border border-slate-200 dark:border-[#303030] rounded-xl overflow-hidden">
+                  <div className="bg-slate-50 dark:bg-[#1c1c1c] px-4 py-3 border-b border-slate-200 dark:border-[#303030] flex items-center justify-between">
                     <h4 className="text-sm font-bold text-slate-900 dark:text-white">Preview Keywords</h4>
                     <button
                       onClick={() => {
@@ -486,19 +487,19 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
 
                   <div className="max-h-72 overflow-y-auto">
                     <table className="w-full">
-                      <thead className="bg-slate-50 dark:bg-[#18181b] sticky top-0">
+                      <thead className="bg-slate-50 dark:bg-[#1c1c1c] sticky top-0">
                         <tr>
-                          <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-8">#</th>
+                          <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-500 dark:text-[#fbfbfb] uppercase tracking-wider w-8">#</th>
                           {csvData.headers.map((h) => (
-                            <th key={h} className="px-3 py-2.5 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{h}</th>
+                            <th key={h} className="px-3 py-2.5 text-left text-xs font-bold text-slate-500 dark:text-[#fbfbfb] uppercase tracking-wider">{h}</th>
                           ))}
-                          <th className="px-3 py-2.5 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Del</th>
+                          <th className="px-3 py-2.5 text-right text-xs font-bold text-slate-500 dark:text-[#fbfbfb] uppercase tracking-wider">Del</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-[#27272a]">
+                      <tbody className="divide-y divide-slate-100 dark:divide-[#303030]">
                         {csvData.rows.map((row, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-[#18181b] transition-colors">
-                            <td className="px-3 py-2 text-xs text-slate-400">{idx + 1}</td>
+                          <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-[#1c1c1c] transition-colors">
+                            <td className="px-3 py-2 text-xs text-slate-400 dark:text-[#fbfbfb]">{idx + 1}</td>
                             {csvData.headers.map((h) => (
                               <td key={h} className="px-3 py-2">
                                 <input
@@ -530,7 +531,7 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-400 dark:text-[#fbfbfb]">
                   Total: <span className="font-bold text-slate-700 dark:text-slate-300">{csvData.rows.length}</span> pages will be created
                 </p>
               </div>
@@ -543,7 +544,7 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setStep(1)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium text-sm transition-colors"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium text-sm transition-colors dark:text-[#fbfbfb]"
               >
                 ← Back
               </button>
@@ -575,14 +576,14 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
 
             {/* Progress details panel */}
             {isCreating && (
-              <div className="mt-6 p-6 bg-slate-50 dark:bg-[#18181b] rounded-2xl border border-slate-200 dark:border-[#27272a] space-y-4">
+              <div className="mt-6 p-6 bg-slate-50 dark:bg-[#1c1c1c] rounded-2xl border border-slate-200 dark:border-[#303030] space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-slate-900 dark:text-white">Creating your project…</span>
                   <span className="text-sm font-mono text-slate-500">{creationProgress}%</span>
                 </div>
 
                 {/* Progress bar */}
-                <div className="h-2 bg-slate-200 dark:bg-[#27272a] rounded-full overflow-hidden">
+                <div className="h-2 bg-slate-200 dark:bg-[#303030] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#5b4cdb] rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${creationProgress}%` }}
@@ -590,7 +591,7 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
                 </div>
 
                 {/* Time estimate */}
-                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-[#fbfbfb]">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -608,7 +609,7 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
                 <div className="flex gap-3 pt-1">
                   <button
                     onClick={handleClose}
-                    className="flex-1 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#27272a] rounded-lg transition-colors"
+                    className="flex-1 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#303030] rounded-lg transition-colors"
                   >
                     Minimize
                   </button>

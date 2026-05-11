@@ -1,9 +1,10 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 
-const inter = Inter({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-jakarta",
   display: "swap",
 });
 
@@ -14,13 +15,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <head>
-        <link
-          href="https://api.fontshare.com/v2/css?f[]=switzer@600,700,800,900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="en" className={jakarta.variable}>
       <body suppressHydrationWarning={true}>
         {children}
       </body>

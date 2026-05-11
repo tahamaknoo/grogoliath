@@ -52,7 +52,7 @@ export default function TestOnboarding() {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0f0f10]">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#111111]">
         <div className="text-center">
           <p className="text-slate-500 mb-4">Sign in to test the onboarding wizard</p>
           <a

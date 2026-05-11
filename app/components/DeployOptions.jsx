@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { apiFetch } from '../../lib/apiFetch';
 
 export default function DeployOptions({ project, pages, onBack }) {
   const [isDeploying, setIsDeploying] = useState(false);
@@ -29,7 +30,7 @@ export default function DeployOptions({ project, pages, onBack }) {
     try {
       setDeployStatus('Creating deployment on Vercel...');
 
-      const response = await fetch('/api/deploy-vercel', {
+      const response = await apiFetch('/api/deploy-vercel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -100,7 +101,7 @@ export default function DeployOptions({ project, pages, onBack }) {
     try {
       setDeployStatus('Creating deployment on Netlify...');
 
-      const response = await fetch('/api/deploy-netlify', {
+      const response = await apiFetch('/api/deploy-netlify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -149,7 +150,7 @@ export default function DeployOptions({ project, pages, onBack }) {
 
   const handleWordPressExport = async () => {
     try {
-      const response = await fetch('/api/export-wordpress', {
+      const response = await apiFetch('/api/export-wordpress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pages, projectName: project?.name || 'My Pages' }),
@@ -183,7 +184,7 @@ export default function DeployOptions({ project, pages, onBack }) {
 
   const handleDownloadZIP = async () => {
     try {
-      const response = await fetch('/api/download-zip', {
+      const response = await apiFetch('/api/download-zip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pages, projectName: project?.name || 'My Pages' }),
@@ -214,7 +215,7 @@ export default function DeployOptions({ project, pages, onBack }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-white dark:bg-[#0f0f10] z-50 overflow-y-auto">
+    <div className="fixed inset-0 bg-white dark:bg-[#111111] z-50 overflow-y-auto">
       <div className="min-h-screen flex items-center justify-center p-8">
         <div className="max-w-4xl w-full">
 
@@ -233,7 +234,7 @@ export default function DeployOptions({ project, pages, onBack }) {
             <h1 className="font-display text-6xl font-black text-slate-900 dark:text-white mb-4 leading-tight">
               Deploy your pages
             </h1>
-            <p className="text-2xl text-slate-500 dark:text-slate-400">
+            <p className="text-2xl text-slate-500 dark:text-[#fbfbfb]">
               Choose where to host your {pages?.length || 0} pages
             </p>
           </div>
@@ -256,14 +257,14 @@ export default function DeployOptions({ project, pages, onBack }) {
           )}
 
           {!isDeploying && deployStatus && (
-            <div className="mb-8 p-6 bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-2xl text-sm font-medium text-slate-700 dark:text-slate-300">
+            <div className="mb-8 p-6 bg-slate-50 dark:bg-[#1c1c1c] border border-slate-200 dark:border-[#303030] rounded-2xl text-sm font-medium text-slate-700 dark:text-slate-300">
               {deployStatus}
             </div>
           )}
 
           {/* Recommended option */}
           <div className="mb-8">
-            <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-4">
+            <div className="text-sm font-bold text-slate-500 dark:text-[#fbfbfb] uppercase tracking-wide mb-4">
               Recommended (Fastest)
             </div>
 
@@ -316,18 +317,18 @@ export default function DeployOptions({ project, pages, onBack }) {
 
           {/* Other options */}
           <div>
-            <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-4">
+            <div className="text-sm font-bold text-slate-500 dark:text-[#fbfbfb] uppercase tracking-wide mb-4">
               Other Options
             </div>
 
             <div className="grid grid-cols-3 gap-6">
               {/* Netlify */}
-              <div className="p-8 bg-white dark:bg-[#18181b] border-2 border-slate-200 dark:border-[#27272a] rounded-3xl hover:border-slate-300 dark:hover:border-[#3f3f46] hover:shadow-lg transition-all">
+              <div className="p-8 bg-white dark:bg-[#1c1c1c] border-2 border-slate-200 dark:border-[#303030] rounded-3xl hover:border-slate-300 dark:hover:border-[#404040] hover:shadow-lg transition-all">
                 <div className="text-4xl mb-4">🌐</div>
                 <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                   Netlify
                 </h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                <p className="text-sm text-slate-600 dark:text-[#fbfbfb] mb-6">
                   Free hosting with instant rollbacks
                 </p>
                 <button
@@ -340,12 +341,12 @@ export default function DeployOptions({ project, pages, onBack }) {
               </div>
 
               {/* WordPress */}
-              <div className="p-8 bg-white dark:bg-[#18181b] border-2 border-slate-200 dark:border-[#27272a] rounded-3xl hover:border-slate-300 dark:hover:border-[#3f3f46] hover:shadow-lg transition-all">
+              <div className="p-8 bg-white dark:bg-[#1c1c1c] border-2 border-slate-200 dark:border-[#303030] rounded-3xl hover:border-slate-300 dark:hover:border-[#404040] hover:shadow-lg transition-all">
                 <div className="text-4xl mb-4">📦</div>
                 <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                   WordPress
                 </h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                <p className="text-sm text-slate-600 dark:text-[#fbfbfb] mb-6">
                   Export as WordPress XML
                 </p>
                 <button
@@ -358,12 +359,12 @@ export default function DeployOptions({ project, pages, onBack }) {
               </div>
 
               {/* Download ZIP */}
-              <div className="p-8 bg-white dark:bg-[#18181b] border-2 border-slate-200 dark:border-[#27272a] rounded-3xl hover:border-slate-300 dark:hover:border-[#3f3f46] hover:shadow-lg transition-all">
+              <div className="p-8 bg-white dark:bg-[#1c1c1c] border-2 border-slate-200 dark:border-[#303030] rounded-3xl hover:border-slate-300 dark:hover:border-[#404040] hover:shadow-lg transition-all">
                 <div className="text-4xl mb-4">💾</div>
                 <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                   Download
                 </h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                <p className="text-sm text-slate-600 dark:text-[#fbfbfb] mb-6">
                   Get ZIP file of all pages
                 </p>
                 <button

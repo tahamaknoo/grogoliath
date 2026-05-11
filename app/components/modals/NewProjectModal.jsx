@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Edit3, Globe, LayoutTemplate, Loader2, Wand2, X } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
+import { apiFetch } from "../../../lib/apiFetch";
 import LivePreview from "../builder/LivePreview";
 
 const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, onOpenTemplateBuilder, initialData, initialTemplateId, profile }) => {
@@ -86,7 +87,7 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
   const activeTemplate = getTemplateById(selectedTemplateId);
   const templateStructure = activeTemplate?.structure || [];
   const labelClass = "text-sm font-semibold text-slate-700 dark:text-slate-200";
-  const helperClass = "text-xs text-slate-500 dark:text-slate-400";
+  const helperClass = "text-xs text-slate-500 dark:text-[#fbfbfb]";
   const inputClass =
     "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 focus:border-emerald-400 transition dark:bg-slate-800 dark:border-slate-700 dark:text-white";
   const textareaClass =
@@ -348,7 +349,7 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
     setFormError("");
 
     try {
-      const response = await fetch("/api/analyze-site", {
+      const response = await apiFetch("/api/analyze-site", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: normalizedUrl })
@@ -569,7 +570,7 @@ Rules:
       const settings =
         blockSettings.length > 0 ? blockSettings : template.structure.map((b) => getDefaultBlockSetting(b));
       const prompt = buildPreviewPrompt(template, settings);
-      const response = await fetch("/api/generate", {
+      const response = await apiFetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt })
@@ -627,7 +628,7 @@ Rules:
 
     try {
       const prompt = buildSingleBlockPrompt(block, blockSettings, currentContent);
-      const response = await fetch("/api/generate", {
+      const response = await apiFetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt })
@@ -833,18 +834,18 @@ Rules:
               <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3 text-xs text-slate-600 dark:text-slate-300">
                 <div className="font-semibold text-slate-700 dark:text-slate-200">Status feed</div>
                 <div className="mt-1">{progressMessage || "Working..."}</div>
-                <div className="mt-1 text-[11px] text-slate-400">
+                <div className="mt-1 text-[11px] text-slate-400 dark:text-[#fbfbfb]">
                   Project: {projectName || "Untitled"} ? Planned pages: {Math.max(1, Number(desiredPageCount) || 1)}
                 </div>
               </div>
-              <p className="text-xs text-slate-400 mt-2">You can keep working while we finish this.</p>
+              <p className="text-xs text-slate-400 mt-2 dark:text-[#fbfbfb]">You can keep working while we finish this.</p>
             </div>
           </div>
         )}
         <div className="p-6 border-b dark:border-slate-700 flex justify-between items-center">
           <h3 className="text-lg font-bold dark:text-white">{initialData ? "Edit Project" : "New Project"}</h3>
           <button onClick={onClose}>
-            <X className="text-slate-400" />
+            <X className="text-slate-400 dark:text-[#fbfbfb]" />
           </button>
         </div>
 
@@ -1028,7 +1029,7 @@ Rules:
                                   <div className="text-base font-semibold text-slate-900 dark:text-slate-100">{t.name}</div>
                                   <div className="text-xs text-slate-500 mt-1">{(t.structure || []).length} sections</div>
                                   <div className="mt-4 flex items-center justify-between">
-                                    <span className="text-xs text-slate-400">Click to select</span>
+                                    <span className="text-xs text-slate-400 dark:text-[#fbfbfb]">Click to select</span>
                                     <span
                                       className={`text-xs font-bold px-2 py-1 rounded-full ${
                                         isSelected
@@ -1557,7 +1558,7 @@ Rules:
                       <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-xs uppercase font-bold text-slate-400">Plan Credits</p>
+                            <p className="text-xs uppercase font-bold text-slate-400 dark:text-[#fbfbfb]">Plan Credits</p>
                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                               {remainingPages} pages remaining this month
                             </p>
@@ -1670,14 +1671,14 @@ Rules:
                       </button>
                     </div>
                   </div>
-                  <div className="text-xs text-slate-400 text-center">You can go back and edit anytime.</div>
+                  <div className="text-xs text-slate-400 text-center dark:text-[#fbfbfb]">You can go back and edit anytime.</div>
                 </div>
               </>
             );
           })()}
         </div>
         <div className="p-6 border-t dark:border-slate-700 flex items-center justify-between gap-3">
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-slate-400 dark:text-[#fbfbfb]">
             Create Project saves your draft and prepares it for generation. Start generating anytime from Projects.
           </p>
           <div className="flex items-center gap-2">

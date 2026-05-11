@@ -222,7 +222,7 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
               </button>
             )}
             <button onClick={onClose}>
-              <X className="text-slate-400" />
+              <X className="text-slate-400 dark:text-[#fbfbfb]" />
             </button>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FileSpreadsheet, HardDrive, Trash2, UploadCloud } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
+import Loader from "../Loader";
 
 const DatasetsView = ({ user }) => {
   const [datasets, setDatasets] = useState([]);
@@ -51,7 +52,7 @@ const DatasetsView = ({ user }) => {
       <div className="flex justify-between items-start mb-12">
         <div>
           <h1 className="text-5xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">Datasets</h1>
-          <p className="text-xl text-slate-500 dark:text-slate-400">Manage and reuse your uploaded CSV files.</p>
+          <p className="text-xl text-slate-500 dark:text-[#fbfbfb]">Manage and reuse your uploaded CSV files.</p>
         </div>
         <button
           onClick={() => fileInputRef.current.click()}
@@ -63,12 +64,12 @@ const DatasetsView = ({ user }) => {
       </div>
 
       {loading ? (
-        <div className="text-center py-24 text-slate-400 text-base">Loading...</div>
+        <div className="flex justify-center py-24"><Loader inline /></div>
       ) : datasets.length === 0 ? (
         <div className="text-center py-24">
           <div className="text-6xl mb-6">📂</div>
           <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">No datasets yet</h3>
-          <p className="text-lg text-slate-500 dark:text-slate-400 mb-8">Upload CSV files to reuse them across multiple projects.</p>
+          <p className="text-lg text-slate-500 dark:text-[#fbfbfb] mb-8">Upload CSV files to reuse them across multiple projects.</p>
           <button
             onClick={() => fileInputRef.current.click()}
             className="px-8 py-4 bg-[#5b4cdb] text-white text-base font-semibold rounded-xl hover:bg-[#4a3dc4] transition-colors"
@@ -81,7 +82,7 @@ const DatasetsView = ({ user }) => {
           {datasets.map((d) => (
             <div
               key={d.id}
-              className="group p-6 bg-white dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-2xl hover:border-slate-300 dark:hover:border-[#3f3f46] hover:shadow-sm transition-all"
+              className="group p-6 bg-white dark:bg-[#1c1c1c] border border-slate-200 dark:border-[#303030] rounded-2xl hover:border-slate-300 dark:hover:border-[#404040] hover:shadow-sm transition-all"
             >
               <div className="flex justify-between items-start mb-5">
                 <div className="w-10 h-10 bg-[#f2f1fe] dark:bg-[#5b4cdb]/10 rounded-xl flex items-center justify-center text-[#5b4cdb]">

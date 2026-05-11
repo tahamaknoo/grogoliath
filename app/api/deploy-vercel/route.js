@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
+import { requireUser, safeError } from '../../../lib/apiAuth';
 
 export async function POST(req) {
+  const auth = await requireUser(req);
+  if (auth.error) return auth.error;
   try {
     const { pages, projectName, vercelToken } = await req.json();
 
@@ -190,7 +193,6 @@ export async function POST(req) {
     });
 
   } catch (error) {
-    console.error('Vercel deployment error:', error);
-    return NextResponse.json({ error: error.message || 'Deployment failed', details: error.toString() }, { status: 500 });
+    return safeError('deploy-vercel', error);
   }
 }

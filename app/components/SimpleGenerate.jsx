@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Loader2, X } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
+import { apiFetch } from "../../lib/apiFetch";
 import PRESET_TEMPLATES from "../constants/presetTemplates";
 
 const WORD_COUNTS = { short: 100, medium: 200, long: 400 };
@@ -11,7 +12,7 @@ const WORD_COUNTS = { short: 100, medium: 200, long: 400 };
 const STYLE_KIT = `<style>
   :root{--text:#0f172a;--muted:#475569;--brand:#4f46e5;--brand2:#7c3aed;--border:rgba(15,23,42,.10);--radius:18px;--shadow:0 18px 50px rgba(2,6,23,.10);--max:1100px}
   *{box-sizing:border-box}
-  body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,sans-serif}
+  body{margin:0;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
   img{max-width:100%;height:auto;display:block}a{text-decoration:none}
   .gg-wrap{width:100%;background:linear-gradient(180deg,#fff 0%,#f8fafc 55%,#fff 100%);color:var(--text)}
   .gg-container{max-width:var(--max);margin:0 auto;padding:0 18px}
@@ -159,7 +160,7 @@ export default function SimpleGenerate({ project, profile, session, setProfile, 
     for (const row of sampleRows) {
       try {
         const prompt = buildRowPrompt(selectedTemplate, row);
-        const res = await fetch("/api/generate", {
+        const res = await apiFetch("/api/generate", {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify({ prompt }),
@@ -284,7 +285,7 @@ ${filled}`.trim();
                 ? prompt
                 : `Your previous output failed QA.\n\nFailures:\n${finalErrors.map((e) => `- ${e}`).join("\n")}\n\nFix all issues and return valid JSON only.\n\nPrevious output:\n${JSON.stringify(finalParsed || {}, null, 2)}`;
 
-            const res = await fetch("/api/generate", {
+            const res = await apiFetch("/api/generate", {
               method:  "POST",
               headers: { "Content-Type": "application/json" },
               body:    JSON.stringify({ prompt: callPrompt }),
@@ -362,12 +363,12 @@ ${filled}`.trim();
               break;
             } else {
               console.log(`[GG] Row ${s + 1} QA FAILED (attempt ${attempt}):`, finalErrors);
-              addLog(`Row ${s + 1}: QA issues — ${finalErrors.join(", ")}`);
+              addLog(`Row ${s + 1}: QA issues: ${finalErrors.join(", ")}`);
             }
           } catch (err) {
             if (err?.name === "AbortError") break;
             console.error(`[GG] Row ${s + 1} attempt ${attempt}:`, err);
-            addLog(`Row ${s + 1}: Error — ${err.message}`);
+            addLog(`Row ${s + 1}: Error: ${err.message}`);
           }
         }
 
@@ -424,7 +425,7 @@ ${filled}`.trim();
       }
 
       console.log(`[GG] ===== GENERATION COMPLETE: ${successCount} pages saved =====`);
-      addLog(wasAborted ? "Stopped." : `Complete — ${successCount} pages generated.`);
+      addLog(wasAborted ? "Stopped." : `Complete: ${successCount} pages generated.`);
       setDone(!wasAborted);
     } catch (err) {
       console.error("[GG] Generation error:", err);
@@ -451,9 +452,9 @@ ${filled}`.trim();
         <div className="px-8 py-5 border-b dark:border-slate-700 flex items-center justify-between shrink-0">
           <div>
             <h2 className="font-bold text-lg dark:text-white">Generate Pages</h2>
-            <p className="text-sm text-slate-500">{project?.name} — {needsGenRows.length} page{needsGenRows.length !== 1 ? "s" : ""} to generate</p>
+            <p className="text-sm text-slate-500">{project?.name}: {needsGenRows.length} page{needsGenRows.length !== 1 ? "s" : ""} to generate</p>
           </div>
-          <button onClick={onClose} disabled={isGenerating} className="text-slate-400 hover:text-slate-600 disabled:opacity-40">
+          <button onClick={onClose} disabled={isGenerating} className="text-slate-400 hover:text-slate-600 disabled:opacity-40 dark:text-[#fbfbfb]">
             <X size={20} />
           </button>
         </div>
@@ -509,7 +510,7 @@ ${filled}`.trim();
 
               {filteredUserTmpl.length > 0 && (
                 <div className="mb-8">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">My Templates</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 dark:text-[#fbfbfb]">My Templates</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {filteredUserTmpl.map((t) => (
                       <button
@@ -523,7 +524,7 @@ ${filled}`.trim();
                       >
                         <div className="font-semibold text-sm dark:text-white truncate">{t.name}</div>
                         <div className="text-xs text-slate-500 mt-1">{t.category || "Custom"}</div>
-                        <div className="text-xs text-slate-400 mt-1">{t.structure?.length || 0} sections</div>
+                        <div className="text-xs text-slate-400 mt-1 dark:text-[#fbfbfb]">{t.structure?.length || 0} sections</div>
                       </button>
                     ))}
                   </div>
@@ -531,9 +532,9 @@ ${filled}`.trim();
               )}
 
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Preset Library</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 dark:text-[#fbfbfb]">Preset Library</h4>
                 {filteredPresets.length === 0 ? (
-                  <p className="text-slate-400 text-sm">No presets match your search.</p>
+                  <p className="text-slate-400 text-sm dark:text-[#fbfbfb]">No presets match your search.</p>
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {filteredPresets.map((t) => (
@@ -548,7 +549,7 @@ ${filled}`.trim();
                       >
                         <div className="font-semibold text-sm dark:text-white truncate">{t.name}</div>
                         <div className="text-xs text-slate-500 mt-1">{t.category}</div>
-                        <div className="text-xs text-slate-400 mt-1">{t.structure?.length || 0} sections</div>
+                        <div className="text-xs text-slate-400 mt-1 dark:text-[#fbfbfb]">{t.structure?.length || 0} sections</div>
                       </button>
                     ))}
                   </div>
@@ -584,7 +585,7 @@ ${filled}`.trim();
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold dark:text-white mb-3">Content Length <span className="text-slate-400 font-normal">(per section)</span></label>
+                  <label className="block text-sm font-bold dark:text-white mb-3">Content Length <span className="text-slate-400 font-normal dark:text-[#fbfbfb]">(per section)</span></label>
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { value: "short",  label: "Short",  desc: "~100 words" },
@@ -629,7 +630,7 @@ ${filled}`.trim();
 
               {previewPages.length === 0 && !isGeneratingPreviews && (
                 <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
-                  <p className="text-slate-400 text-sm mb-4">No previews yet — takes about 30 seconds</p>
+                  <p className="text-slate-400 text-sm mb-4 dark:text-[#fbfbfb]">No previews yet. Takes about 30 seconds.</p>
                   <button
                     onClick={generatePreviews}
                     className="px-6 py-3 bg-[#2B5E44] text-white rounded-xl font-bold hover:bg-[#234d37] text-sm"
@@ -654,11 +655,12 @@ ${filled}`.trim();
                       <div className="bg-slate-50 dark:bg-slate-900 px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                         <span className="font-semibold text-sm dark:text-white truncate">{preview.title}</span>
-                        <span className="font-mono text-xs text-slate-400 truncate">/{preview.slug}</span>
+                        <span className="font-mono text-xs text-slate-400 truncate dark:text-[#fbfbfb]">/{preview.slug}</span>
                       </div>
                       <div className="h-80 overflow-hidden">
                         <iframe
                           srcDoc={preview.html}
+                          sandbox="allow-scripts"
                           className="w-full h-full border-0 scale-[0.85] origin-top-left"
                           style={{ width: "117%", height: "117%" }}
                           title={`Preview ${idx + 1}`}
@@ -685,7 +687,7 @@ ${filled}`.trim();
                       onClick={() => setStep(4)}
                       className="flex-1 px-6 py-2.5 bg-[#2B5E44] text-white rounded-xl text-sm font-bold hover:bg-[#234d37]"
                     >
-                      Looks Good — Confirm &amp; Generate All {needsGenRows.length} Pages
+                      Looks Good. Confirm &amp; Generate All {needsGenRows.length} Pages
                     </button>
                   </div>
                 </div>
@@ -721,7 +723,7 @@ ${filled}`.trim();
                   { label: "Length",      value: `${aiSettings.length} (~${WORD_COUNTS[aiSettings.length]}w/section)`, capitalize: true },
                 ].map(({ label, value, capitalize }) => (
                   <div key={label}>
-                    <p className="text-slate-400 text-xs uppercase tracking-wider font-bold mb-1">{label}</p>
+                    <p className="text-slate-400 text-xs uppercase tracking-wider font-bold mb-1 dark:text-[#fbfbfb]">{label}</p>
                     <p className={`font-semibold dark:text-white ${capitalize ? "capitalize" : ""}`}>{value}</p>
                   </div>
                 ))}
@@ -800,7 +802,7 @@ ${filled}`.trim();
                 )}
                 {!isGenerating && done && (
                   <button onClick={onClose} className="px-5 py-2.5 bg-[#2B5E44] text-white rounded-xl text-sm font-bold hover:bg-[#234d37]">
-                    Done — View Projects
+                    Done. View Projects
                   </button>
                 )}
                 {!isGenerating && !done && (

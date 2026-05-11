@@ -34,7 +34,7 @@ export default function PageCardView({ pages, projectName, onExportJSON, onExpor
           </div>
           {pendingPages.length > 0 && (
             <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-center">
-              <div className="text-2xl font-bold text-slate-400">{pendingPages.length}</div>
+              <div className="text-2xl font-bold text-slate-400 dark:text-[#fbfbfb]">{pendingPages.length}</div>
               <div className="text-xs text-slate-500 font-medium">Pending</div>
             </div>
           )}
@@ -57,7 +57,7 @@ export default function PageCardView({ pages, projectName, onExportJSON, onExpor
 
       {/* Generated pages */}
       {generatedPages.length === 0 && (
-        <div className="text-center py-16 text-slate-400">
+        <div className="text-center py-16 text-slate-400 dark:text-[#fbfbfb]">
           <p className="text-lg font-semibold mb-1">No pages generated yet</p>
           <p className="text-sm">Use the Generate button to create pages for this project.</p>
         </div>
@@ -82,7 +82,7 @@ export default function PageCardView({ pages, projectName, onExportJSON, onExpor
 
               {/* Meta description */}
               {page.meta_description && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-[#fbfbfb] mb-3 line-clamp-2 leading-relaxed">
                   {page.meta_description}
                 </p>
               )}
@@ -118,7 +118,7 @@ export default function PageCardView({ pages, projectName, onExportJSON, onExpor
       {/* Pending rows */}
       {pendingPages.length > 0 && (
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 dark:text-[#fbfbfb]">
             Pending ({pendingPages.length})
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -127,7 +127,7 @@ export default function PageCardView({ pages, projectName, onExportJSON, onExpor
                 key={idx}
                 className="bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-5 opacity-60"
               >
-                <div className="font-mono text-xs text-slate-400 mb-1 truncate">
+                <div className="font-mono text-xs text-slate-400 mb-1 truncate dark:text-[#fbfbfb]">
                   /{page.slug || page.Keyword || "pending"}
                 </div>
                 <p className="text-sm font-medium text-slate-500 line-clamp-2">
@@ -162,7 +162,7 @@ export default function PageCardView({ pages, projectName, onExportJSON, onExpor
                 </button>
                 <button
                   onClick={() => setPreviewPage(null)}
-                  className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-[#fbfbfb]"
                 >
                   <X size={16} />
                 </button>

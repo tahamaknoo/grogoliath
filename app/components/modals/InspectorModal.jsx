@@ -47,7 +47,7 @@ const InspectorModal = ({ isOpen, onClose, content, headerName, onSave }) => {
             </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2">
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 dark:text-[#fbfbfb]">
               <X size={20} />
             </button>
           </div>

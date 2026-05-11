@@ -1,12 +1,19 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = 'https://ilbivscafgeqdbcamkdd.supabase.co';
-// Note: Use service_role key when running seed script, then change back to anon key
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYml2c2NhZmdlcWRiY2Fta2RkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NzUwNTQsImV4cCI6MjA3OTE1MTA1NH0._BYABE01GCqAqvg6nZsTswtyKFLj93_RAKrfHvdggyg';
+// Run with: node --env-file=.env.local scripts/seed-templates.js <user-uuid>
+// Never hardcode keys here — keep them in .env.local (which is gitignored).
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY.');
+  console.error('Run with: node --env-file=.env.local scripts/seed-templates.js <user-uuid>');
+  process.exit(1);
+}
 
 const USER_ID = process.argv[2] || process.env.SEED_USER_ID;
 if (!USER_ID) {
-  console.error('Usage: node scripts/seed-templates.js <user-uuid>');
+  console.error('Usage: node --env-file=.env.local scripts/seed-templates.js <user-uuid>');
   process.exit(1);
 }
 

@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { requireUser, safeError } from '../../../lib/apiAuth';
 
 export const maxDuration = 120;
 
 export async function POST(request) {
+  const auth = await requireUser(request);
+  if (auth.error) return auth.error;
   try {
     const body = await request.json();
     const { current_html, instruction } = body;
@@ -78,7 +81,6 @@ ${htmlForClaude}`;
     return NextResponse.json({ html: refinedHtml });
 
   } catch (error) {
-    console.error('Refine page error:', error.message);
-    return NextResponse.json({ error: error.message || 'Failed to refine page' }, { status: 500 });
+    return safeError('refine-page', error);
   }
 }

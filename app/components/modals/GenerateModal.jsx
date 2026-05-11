@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import PRESET_TEMPLATES from "../../constants/presetTemplates";
 import { supabase } from "../../../lib/supabaseClient";
+import { apiFetch } from "../../../lib/apiFetch";
 
 const GenerateModal = ({
   isOpen,
@@ -62,7 +63,7 @@ const GenerateModal = ({
     --max:1100px;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, "Apple Color Emoji","Segoe UI Emoji";}
+  body{margin:0;font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;}
   img{max-width:100%;height:auto;display:block}
   a{text-decoration:none}
   .gg-wrap{width:100%;background:linear-gradient(180deg,#ffffff 0%, #f8fafc 55%, #ffffff 100%);color:var(--text)}
@@ -102,7 +103,7 @@ const GenerateModal = ({
   .gg-faq{display:grid;gap:10px}
   .gg-faq details{border:1px solid rgba(15,23,42,.12);background:#fff;border-radius:16px;padding:12px 14px;box-shadow:var(--shadow)}
   .gg-faq summary{cursor:pointer;font-weight:900}
-  .gg-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.32em;color:#94a3b8;font-weight:800}
+  .gg-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.32em;color:#fbfbfb;font-weight:800}
   .gg-subhead{font-size:14px;color:#64748b;line-height:1.6}
   .gg-section-alt{background:linear-gradient(180deg,#f8fafc 0%, #ffffff 100%)}
   .gg-feature-grid{display:grid;gap:16px}
@@ -539,7 +540,7 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
                 );
 
           try {
-            const response = await fetch("/api/generate", {
+            const response = await apiFetch("/api/generate", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ prompt: callPrompt }),

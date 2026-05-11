@@ -65,7 +65,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
 
   if (!hasBlocks) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400 min-h-[400px] bg-slate-50/50 rounded-xl border-2 border-dashed border-slate-200 dark:bg-slate-900/30 dark:border-slate-700">
+      <div className="flex flex-col items-center justify-center h-full text-slate-400 min-h-[400px] bg-slate-50/50 rounded-xl border-2 border-dashed border-slate-200 dark:bg-slate-900/30 dark:border-slate-700 dark:text-[#fbfbfb]">
         <LayoutTemplate size={48} className="mb-4 opacity-20" />
         <p className="text-sm">Add blocks to build your page preview</p>
       </div>
@@ -83,7 +83,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
               <div className="w-3 h-3 rounded-full bg-amber-400"></div>
               <div className="w-3 h-3 rounded-full bg-green-400"></div>
             </div>
-            <div className="flex-1 max-w-md bg-white h-6 rounded-md border border-slate-200 text-[10px] text-slate-400 flex items-center px-2 truncate dark:bg-slate-800 dark:border-slate-700">
+            <div className="flex-1 max-w-md bg-white h-6 rounded-md border border-slate-200 text-[10px] text-slate-400 flex items-center px-2 truncate dark:bg-slate-800 dark:border-slate-700 dark:text-[#fbfbfb]">
               https://grogoliath.com/preview
             </div>
           </div>
@@ -213,7 +213,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                 rendered.push(
                   <section key={`${block.id}-grouped`} className={`py-6 ${sectionPad}`}>
                     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:bg-slate-950 dark:border-slate-800">
-                      <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold mb-3">
+                      <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold mb-3 dark:text-[#fbfbfb]">
                         <span>Section</span>
                         <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></span>
                       </div>
@@ -234,7 +234,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
               case "header":
                 rendered.push(
                   <section key={block.id} className={`py-6 ${sectionPad}`}>
-                    <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold">
+                    <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold dark:text-[#fbfbfb]">
                       <span>Section</span>
                       <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></span>
                     </div>
@@ -282,7 +282,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                             </span>
                           ))}
                         </div>
-                        <div className="mt-6 flex flex-wrap items-center gap-3 text-[11px] text-slate-400 uppercase tracking-wider font-bold">
+                        <div className="mt-6 flex flex-wrap items-center gap-3 text-[11px] text-slate-400 uppercase tracking-wider font-bold dark:text-[#fbfbfb]">
                           <span className="text-slate-500">Trusted by</span>
                           {["Northwind", "Apex", "Atlas", "Nimbus"].map((brand) => (
                             <span key={brand} className="px-2.5 py-1 rounded-full bg-white/70 border border-slate-200 font-semibold text-slate-500 dark:bg-slate-900/70 dark:border-slate-800 dark:text-slate-300">
@@ -320,7 +320,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                             <button className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-emerald-500 text-white text-sm font-bold py-3 shadow-lg">
                               Get my plan
                             </button>
-                            <div className="text-[11px] text-slate-400 text-center">
+                            <div className="text-[11px] text-slate-400 text-center dark:text-[#fbfbfb]">
                               Rated 4.9/5 from 1200+ service teams
                             </div>
                           </div>
@@ -369,7 +369,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                         >
                           <div className="absolute -right-10 -top-10 w-24 h-24 rounded-full bg-indigo-100/60 dark:bg-indigo-500/10"></div>
                           <div className="relative">
-                            <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">
+                            <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2 dark:text-[#fbfbfb]">
                               <span className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px]">
                                 {idx + 1}
                               </span>
@@ -406,7 +406,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                         >
                           <div className="absolute -right-10 -top-10 w-24 h-24 rounded-full bg-indigo-100/60 dark:bg-indigo-500/10"></div>
                           <div className="relative">
-                            <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">
+                            <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2 dark:text-[#fbfbfb]">
                               <span className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px]">
                                 {idx + 1}
                               </span>
@@ -441,7 +441,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                           key={idx}
                           className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-white to-slate-50 p-5 shadow-sm dark:bg-slate-950 dark:from-slate-950 dark:to-slate-900 dark:border-slate-800"
                         >
-                          <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">
+                          <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2 dark:text-[#fbfbfb]">
                             <span>Item {idx + 1}</span>
                             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                           </div>
@@ -482,7 +482,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-70"></div>
                       <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/90 border border-slate-200 p-4 shadow-lg dark:bg-slate-950/80 dark:border-slate-800">
-                        <div className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Visual</div>
+                        <div className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1 dark:text-[#fbfbfb]">Visual</div>
                         <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                           {hasToken ? `Dynamic image: ${rawImageUrl}` : imageCaption}
                         </div>
@@ -553,7 +553,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                   <section key={block.id} className={`py-8 ${sectionPad}`}>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-bold text-slate-900 dark:text-white">Why teams choose us</h3>
-                      <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">USP</span>
+                      <span className="text-xs text-slate-400 uppercase tracking-wider font-bold dark:text-[#fbfbfb]">USP</span>
                     </div>
                     <div className={`grid gap-4 ${grid4}`}>
                       {items.map((item, idx) => (
@@ -561,7 +561,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                           key={idx}
                           className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:bg-slate-950 dark:border-slate-800"
                         >
-                          <div className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-2">
+                          <div className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-2 dark:text-[#fbfbfb]">
                             Advantage {idx + 1}
                           </div>
                           <p className="text-sm text-slate-700 dark:text-slate-200">{item}</p>
@@ -578,7 +578,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                   <section key={block.id} className={`py-8 ${sectionPad}`}>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-bold text-slate-900 dark:text-white">Proof and impact</h3>
-                      <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Results</span>
+                      <span className="text-xs text-slate-400 uppercase tracking-wider font-bold dark:text-[#fbfbfb]">Results</span>
                     </div>
                     <div className={`grid gap-4 ${grid3}`}>
                       {stats.map((item, idx) => (
@@ -589,7 +589,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                           <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
                             {18 + idx * 12}%
                           </div>
-                          <div className="text-xs uppercase tracking-wider text-slate-400 font-bold mt-1">
+                          <div className="text-xs uppercase tracking-wider text-slate-400 font-bold mt-1 dark:text-[#fbfbfb]">
                             Lift
                           </div>
                           <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{item}</p>
@@ -608,7 +608,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                   <section key={block.id} className={`py-12 bg-slate-50 dark:bg-slate-900/30 ${sectionPad}`}>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                       <div>
-                        <div className="text-xs uppercase tracking-wider text-slate-400 font-bold">Transparent pricing</div>
+                        <div className="text-xs uppercase tracking-wider text-slate-400 font-bold dark:text-[#fbfbfb]">Transparent pricing</div>
                         <h3 className="text-xl font-bold text-slate-900 dark:text-white">Plans built for growth</h3>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -715,7 +715,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                         >
                           <summary className="flex justify-between items-center cursor-pointer p-4 font-semibold text-slate-900 text-sm dark:text-white">
                             <span>Question {i + 1}: {item}</span>
-                            <ChevronDown size={16} className="text-slate-400" />
+                            <ChevronDown size={16} className="text-slate-400 dark:text-[#fbfbfb]" />
                           </summary>
                           <div className="px-4 pb-4 text-sm text-slate-600 dark:text-slate-300">
                             Short, direct answer focused on clarity and trust.
@@ -733,7 +733,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                     className="py-10 border-y border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/30"
                   >
                     <div className={`max-w-6xl mx-auto ${sectionPad}`}>
-                      <p className="text-center text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">
+                      <p className="text-center text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 dark:text-[#fbfbfb]">
                         Trusted by industry leaders
                       </p>
                       <div className="flex flex-wrap justify-center gap-4">
@@ -819,7 +819,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                   <section key={block.id} className={`py-10 ${sectionPad}`}>
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-xl font-bold text-slate-900 dark:text-white">Comparison</h3>
-                      <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Decision table</span>
+                      <span className="text-xs text-slate-400 uppercase tracking-wider font-bold dark:text-[#fbfbfb]">Decision table</span>
                     </div>
                     <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:bg-slate-950 dark:border-slate-800">
                       <table className="min-w-[520px] w-full text-sm text-left">
@@ -897,7 +897,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                   <section key={block.id} className={`py-10 ${sectionPad}`}>
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-xl font-bold text-slate-900 dark:text-white">How it works</h3>
-                      <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Process</span>
+                      <span className="text-xs text-slate-400 uppercase tracking-wider font-bold dark:text-[#fbfbfb]">Process</span>
                     </div>
                     <div className={`grid gap-4 ${grid3}`}>
                       {parseList(content, 3).map((item, idx) => (
@@ -1009,7 +1009,7 @@ export default function LivePreview({ blocks = [], mode = "template" }) {
                     key={block.id}
                     className="p-6 text-center border-b border-slate-100 dark:border-slate-800"
                   >
-                    <p className="text-slate-400 font-mono text-xs">
+                    <p className="text-slate-400 font-mono text-xs dark:text-[#fbfbfb]">
                       Block: {block.type}
                     </p>
                   </div>
