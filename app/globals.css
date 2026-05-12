@@ -132,6 +132,23 @@ body {
 }
 .animate-avatar-rubber { animation: avatar-rubber 0.7s ease-out; }
 
+/* Gentle floating cards on the login screen — slight up/down drift + tiny tilt. */
+@keyframes float-y-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-10px) rotate(-1deg); }
+}
+@keyframes float-y-medium {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-14px) rotate(1.2deg); }
+}
+@keyframes float-y-fast {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-8px) rotate(-0.8deg); }
+}
+.animate-float-slow   { animation: float-y-slow   6s ease-in-out infinite; }
+.animate-float-medium { animation: float-y-medium 5s ease-in-out infinite; }
+.animate-float-fast   { animation: float-y-fast   4.2s ease-in-out infinite; }
+
 /* ── Grogoliath Loader ───────────────────────────────────────────────────── */
 .gg-spinner {
   width: 40px;

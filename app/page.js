@@ -79,15 +79,15 @@ function LoginScreen() {
     <div className="min-h-screen bg-white dark:bg-[#1c1c1c] flex">
       {/* Left: form */}
       <div className="flex-1 flex flex-col px-6 sm:px-10 lg:px-16 py-8 lg:py-12 overflow-y-auto">
-        {/* Logo */}
-        <div className="mb-12">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/grogoliath_horizontal_transparent_2400x900.png" alt="GroGoliath" className="h-10 w-auto dark:hidden" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/GroGoliath_Dark_C_BrandTeal.png" alt="GroGoliath" className="h-10 w-auto hidden dark:block" />
-        </div>
-
         <div className="w-full max-w-md mx-auto flex-1 flex flex-col justify-center">
+          {/* Logo — sits right above the heading */}
+          <div className="mb-8 flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/grogoliath_horizontal_transparent_2400x900.png" alt="GroGoliath" className="h-12 w-auto dark:hidden" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/GroGoliath_Dark_C_BrandTeal.png" alt="GroGoliath" className="h-12 w-auto hidden dark:block" />
+          </div>
+
           <h1 className="text-3xl sm:text-4xl font-black text-[#262626] dark:text-white tracking-[-0.02em] leading-tight mb-2">
             {isSignup ? "Create your account" : "Welcome back"}
           </h1>
@@ -221,7 +221,7 @@ function LoginScreen() {
         <div className="relative z-10 w-full h-full flex items-center justify-center p-12">
           <div className="relative w-full max-w-md aspect-[4/5]">
             {/* Top stats chip */}
-            <div className="absolute top-0 left-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 animate-fade-in">
+            <div className="absolute top-0 left-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 animate-fade-in animate-float-slow">
               <div className="w-9 h-9 rounded-xl bg-[#075056] text-white flex items-center justify-center">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
               </div>
@@ -232,7 +232,7 @@ function LoginScreen() {
             </div>
 
             {/* Quote card */}
-            <div className="absolute top-[28%] right-0 w-[78%] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-5 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <div className="absolute top-[28%] right-0 w-[78%] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-5 animate-fade-in animate-float-medium" style={{ animationDelay: '0.1s, 0.8s' }}>
               <p className="text-base font-bold text-[#075056] leading-snug mb-3">
                 &ldquo;GroGoliath ranked us on page 1 for 240 location keywords in three months.&rdquo;
               </p>
@@ -248,7 +248,7 @@ function LoginScreen() {
             </div>
 
             {/* Growth card */}
-            <div className="absolute bottom-0 left-[10%] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-5 w-[68%] animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <div className="absolute bottom-0 left-[10%] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-5 w-[68%] animate-fade-in animate-float-fast" style={{ animationDelay: '0.2s, 1.5s' }}>
               <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#888888] mb-1">Organic traffic</div>
               <div className="flex items-baseline gap-2">
                 <div className="text-3xl font-black text-[#262626]">+312%</div>
