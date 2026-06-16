@@ -1,20 +1,151 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { LogOut } from "lucide-react";
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "../../../lib/supabaseClient";
 import MarbleAvatar from "../MarbleAvatar";
+import { useConfirm } from "../ConfirmDialog";
+import { PLANS, STANDARD_PLAN_IDS, TOPUP_PACK, planHighlights, annualMonthlyEquivalent, isAdmin } from "../../../lib/plans";
+import { apiFetch } from "../../../lib/apiFetch";
 
 const SettingsView = ({ email, onLogout, profile, session, onProfileUpdate }) => {
-  const planKey = profile?.plan ? String(profile.plan).toLowerCase() : "basic";
-  const planLabel = planKey[0].toUpperCase() + planKey.slice(1);
-  const planPricing = { basic: { price: "$49", pages: 100 }, pro: { price: "$99", pages: 250 } };
-  const planInfo = planPricing[planKey] || planPricing.basic;
-  const pageLimit = Number(profile?.page_limit || planInfo.pages || 0);
-  const pagesUsed = Number(profile?.pages_used || 0);
-  const remaining = pageLimit > 0 ? Math.max(0, pageLimit - pagesUsed) : 0;
-  const usedPct = pageLimit > 0 ? Math.min(100, Math.round((pagesUsed / pageLimit) * 100)) : 0;
-  const showUpgrade = planKey !== "pro";
+  const confirm = useConfirm();
+
+  // Settings sub-navigation + Plans-tab toggles. The active sub-tab is mirrored
+  // in the URL (?tab=settings&section=...) so a refresh keeps you in place and
+  // upgrade prompts can deep-link to Plans.
+  const SECTIONS = ["profile", "plans", "billing", "account"];
+  const readSection = () => {
+    if (typeof window === "undefined") return "profile";
+    const s = new URLSearchParams(window.location.search).get("section");
+    return SECTIONS.includes(s) ? s : "profile";
+  };
+  const [tab, setTabState] = useState(readSection);
+  const [billingPeriod, setBillingPeriod] = useState("monthly"); // monthly | annual
+  const [showAgency, setShowAgency] = useState(false);
+  const [planNotice, setPlanNotice] = useState(null);
+
+  // Switch sub-tab AND reflect it in the URL (so refresh stays put).
+  const setTab = (id) => {
+    setTabState(id);
+    if (typeof window !== "undefined") {
+      window.history.replaceState({ tab: "settings" }, "", `?tab=settings&section=${id}`);
+    }
+  };
+
+  // Re-sync the sub-tab when the URL changes (deep-links, back/forward).
+  useEffect(() => {
+    const sync = () => setTabState(readSection());
+    window.addEventListener("gg-navigate", sync);
+    window.addEventListener("popstate", sync);
+    return () => {
+      window.removeEventListener("gg-navigate", sync);
+      window.removeEventListener("popstate", sync);
+    };
+  }, []);
+
+  // Admin profiles bypass the credit / plan model entirely (full access).
+  const admin = isAdmin(profile);
+
+  // Current plan from the profile (defaults to free). Credit usage if present.
+  const currentPlanId = (profile?.plan && PLANS[String(profile.plan).toLowerCase()])
+    ? String(profile.plan).toLowerCase()
+    : "free";
+  const currentPlan = PLANS[currentPlanId];
+  // Credit balance from the new credit model. `remaining` is what's spendable
+  // (monthly allotment minus used, plus carry-over top-ups).
+  const monthlyTotal = Number(profile?.monthly_credits ?? currentPlan.credits ?? 0);
+  const monthlyUsed = Number(profile?.monthly_credits_used ?? 0);
+  const topupCredits = Number(profile?.topup_credits ?? 0);
+  const creditsRemaining = Math.max(0, monthlyTotal - monthlyUsed) + topupCredits;
+  const creditsTotal = monthlyTotal + topupCredits;
+  const creditsUsed = Math.max(0, creditsTotal - creditsRemaining);
+  const usedPct = creditsTotal > 0 ? Math.min(100, Math.round((creditsUsed / creditsTotal) * 100)) : 0;
+
+  // Billing — `billingBusy` holds the id of the currently-loading action so
+  // we can show a spinner on JUST that button (not all of them). Possible
+  // values: null (idle), 'starter' | 'growth' | 'agency' (plan checkout),
+  // 'topup' (one-time pack), 'portal' (manage billing redirect). The button
+  // disabled-state covers ALL when any one is busy so the user can't fire two
+  // billing redirects concurrently.
+  const [billingBusy, setBillingBusy] = useState(null);
+  const [billingInterval, setBillingInterval] = useState('monthly'); // 'monthly' | 'annual' toggle
+
+  // When the user clicks "Upgrade now" we redirect to Lemon Squeezy via
+  // window.location.href. If they hit the browser Back button on the LS page,
+  // most browsers restore this page from their Back-Forward Cache (BFCache)
+  // *without* re-running React — so `billingBusy` is still set to the plan id
+  // and the button shows "Opening checkout…" forever. The `pageshow` event
+  // fires with `persisted=true` specifically in the BFCache-restore case, so
+  // we clear stale loading state then. Also handles refresh + visibility
+  // returns as a safety net.
+  useEffect(() => {
+    const onShow = (e) => {
+      if (e.persisted) setBillingBusy(null);
+    };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, []);
+  const handleChoosePlan = async (planId) => {
+    if (planId === 'free' || !PLANS[planId]?.paid) return;
+    if (billingBusy) return; // already loading something
+    setPlanNotice(null);
+    setBillingBusy(planId);
+    try {
+      const res = await apiFetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planId, interval: billingInterval }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || `Checkout failed (${res.status})`);
+      }
+      // location.href triggers immediately; we don't reset busy on success
+      // because the page is about to unload anyway. Spinner stays visible
+      // until the new page replaces the current one.
+      window.location.href = data.url;
+    } catch (e) {
+      setPlanNotice(e?.message || 'Could not start checkout. Please try again.');
+      setBillingBusy(null);
+    }
+  };
+  const handleBuyTopup = async () => {
+    if (billingBusy) return;
+    setPlanNotice(null);
+    setBillingBusy('topup');
+    try {
+      const res = await apiFetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: 'topup' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || `Top-up checkout failed (${res.status})`);
+      }
+      window.location.href = data.url;
+    } catch (e) {
+      setPlanNotice(e?.message || 'Could not start top-up checkout.');
+      setBillingBusy(null);
+    }
+  };
+  const handleManageBilling = async () => {
+    if (billingBusy) return;
+    setPlanNotice(null);
+    setBillingBusy('portal');
+    try {
+      const res = await apiFetch('/api/billing/portal', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || `Could not open billing portal (${res.status})`);
+      }
+      window.location.href = data.url;
+    } catch (e) {
+      setPlanNotice(e?.message || 'Could not open the billing portal.');
+      setBillingBusy(null);
+    }
+  };
 
   // Profile state
   const user = session?.user;
@@ -135,7 +266,13 @@ const SettingsView = ({ email, onLogout, profile, session, onProfileUpdate }) =>
 
   const handleRemoveAvatar = async () => {
     if (!user?.id) return;
-    if (!window.confirm('Remove your profile photo?')) return;
+    const ok = await confirm({
+      title: 'Remove profile photo?',
+      message: 'Your photo will be deleted from our servers. You can upload a new one any time.',
+      confirmLabel: 'Remove photo',
+      variant: 'danger',
+    });
+    if (!ok) return;
 
     const token = session?.access_token;
     if (!token) {
@@ -239,13 +376,123 @@ const SettingsView = ({ email, onLogout, profile, session, onProfileUpdate }) =>
     }
   };
 
+  const renderPlanCard = (plan) => {
+    const isCurrent = plan.id === currentPlanId;
+    const price = plan.paid ? (billingPeriod === 'annual' ? annualMonthlyEquivalent(plan) : plan.monthly) : 0;
+    const highlights = planHighlights(plan.id);
+    const badge = plan.id === 'growth' ? 'Most popular' : plan.id === 'agency' ? 'Best for teams' : null;
+    return (
+      <div
+        key={plan.id}
+        className={`relative flex flex-col rounded-2xl border p-6 transition-all ${
+          isCurrent
+            ? 'border-[#075056] dark:border-[#5eead4] ring-1 ring-[#075056]/30 bg-white dark:bg-[#262626]'
+            : 'border-slate-200 dark:border-[#333333] bg-white dark:bg-[#262626]'
+        }`}
+      >
+        {/* Name + badge */}
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">{plan.name}</h3>
+          {badge && (
+            <span className="px-2 py-0.5 bg-slate-900 dark:bg-white text-white dark:text-[#0a0a0a] text-[9px] font-bold uppercase tracking-wider rounded">{badge}</span>
+          )}
+        </div>
+        <p className="text-xs text-slate-500 dark:text-[#888888] mb-5">{plan.tagline}</p>
+
+        {/* Price */}
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-3xl font-black text-slate-900 dark:text-white">${price.toLocaleString()}</span>
+          <span className="text-sm text-slate-400 dark:text-[#888888]">{plan.paid ? '/ month' : 'forever'}</span>
+        </div>
+        <p className="text-xs text-slate-400 dark:text-[#888888] mt-1 mb-5 min-h-[1rem]">
+          {plan.paid && billingPeriod === 'annual' ? `$${plan.annual.toLocaleString()} billed yearly` : plan.paid ? 'billed monthly' : 'no card required'}
+        </p>
+
+        {/* CTA — directly under the price, like the reference.
+            Busy state: when this plan's checkout is loading, swap the label
+            for a spinner + "Opening checkout…" so the user sees something
+            happen the moment they click (the LS API roundtrip itself takes
+            1-3s; the spinner covers that latency). All plan buttons are
+            disabled while any one is loading to prevent double-clicks
+            firing two redirects. */}
+        {(() => {
+          const thisLoading = billingBusy === plan.id;
+          const anyLoading = !!billingBusy;
+          return (
+            <button
+              onClick={() => handleChoosePlan(plan.id)}
+              disabled={isCurrent || !plan.paid || anyLoading}
+              className={`w-full px-4 py-2.5 text-sm font-bold rounded-lg transition-colors mb-6 inline-flex items-center justify-center gap-2 ${
+                isCurrent
+                  ? 'border border-slate-200 dark:border-[#3a3a3a] text-slate-500 dark:text-[#888888] cursor-default'
+                  : !plan.paid
+                    ? 'border border-slate-200 dark:border-[#3a3a3a] text-slate-400 dark:text-[#777777] cursor-default'
+                    : anyLoading && !thisLoading
+                      ? 'bg-[#075056]/40 text-white/80 cursor-not-allowed'
+                      : 'bg-[#075056] text-white hover:bg-[#064548]'
+              }`}
+            >
+              {thisLoading && (
+                <span
+                  className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"
+                  aria-hidden
+                />
+              )}
+              {isCurrent
+                ? 'Your current plan'
+                : !plan.paid
+                  ? 'Free forever'
+                  : thisLoading
+                    ? 'Opening checkout…'
+                    : 'Upgrade now'}
+            </button>
+          );
+        })()}
+
+        {/* Feature highlights */}
+        <ul className="space-y-3">
+          {highlights.map((label, i) => {
+            const isHeader = label.startsWith('Everything in');
+            return (
+              <li key={i} className="flex items-start gap-2.5 text-sm">
+                <span className="shrink-0 mt-0.5 w-4 h-4 rounded-full bg-[#075056] dark:bg-[#5eead4] flex items-center justify-center">
+                  <svg className="w-2.5 h-2.5 text-white dark:text-[#0a0a0a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+                <span className={isHeader ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-[#bbbbbb]'}>{label}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  };
+
   return (
-    <div className="max-w-3xl mx-auto pt-8 animate-in pb-16">
-      <div className="mb-12">
+    <div className="max-w-4xl mx-auto pt-8 animate-in pb-16">
+      <div className="mb-8">
         <h1 className="text-5xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">Settings</h1>
         <p className="text-xl text-slate-500 dark:text-[#fbfbfb]">Manage your account and preferences.</p>
       </div>
 
+      {/* Sub-tab navigation */}
+      <div className="flex items-center gap-1 border-b border-slate-200 dark:border-[#333333] mb-8">
+        {[['profile', 'Profile'], ['plans', 'Plans'], ['billing', 'Billing'], ['account', 'Account']].map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => { setTab(id); setPlanNotice(null); }}
+            className={`relative px-4 py-3 text-sm font-bold transition-colors ${
+              tab === id ? 'text-[#075056] dark:text-[#5eead4]' : 'text-slate-500 dark:text-[#888888] hover:text-slate-800 dark:hover:text-white'
+            }`}
+          >
+            {label}
+            {tab === id && <span className="absolute -bottom-px left-2 right-2 h-0.5 bg-[#075056] dark:bg-[#5eead4] rounded-full" />}
+          </button>
+        ))}
+      </div>
+
+      {/* ── PROFILE TAB ── */}
+      {tab === 'profile' && (
+      <>
       {/* Profile card */}
       <div className="bg-white dark:bg-[#262626] border border-slate-200 dark:border-[#333333] rounded-3xl p-8 mb-4">
         <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Profile</h3>
@@ -404,67 +651,215 @@ const SettingsView = ({ email, onLogout, profile, session, onProfileUpdate }) =>
           {savingPassword ? "Updating…" : "Update Password"}
         </button>
       </div>
+      </>
+      )}
 
-      {/* Plan card */}
-      <div className="bg-white dark:bg-[#262626] border border-slate-200 dark:border-[#333333] rounded-3xl p-8 mb-4">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <div className="text-xs font-bold text-[#075056] mb-2 uppercase tracking-widest">Current Plan</div>
-            <h2 className="text-4xl font-black text-slate-900 dark:text-white mb-1">{planLabel} Plan</h2>
-            <p className="text-base text-slate-500 dark:text-[#fbfbfb]">
-              {pagesUsed} of {pageLimit > 0 ? pageLimit : "N/A"} pages used this month
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-5xl font-black text-slate-900 dark:text-white">{planInfo.price}</div>
-            <div className="text-slate-400 text-sm mt-1 dark:text-[#fbfbfb]">per month</div>
-          </div>
-        </div>
-
-        <div className="h-2 bg-slate-100 dark:bg-[#333333] rounded-full overflow-hidden mb-3">
-          <div
-            className="h-full bg-[#075056] rounded-full transition-all duration-700"
-            style={{ width: `${usedPct}%` }}
-          />
-        </div>
-        <div className="flex items-center justify-between text-sm text-slate-500 dark:text-[#fbfbfb] mb-6">
-          <span>{pagesUsed} used</span>
-          <span>{pageLimit > 0 ? remaining : "N/A"} remaining</span>
-        </div>
-
-        {profile && (
-          <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-            <div className="bg-slate-50 dark:bg-[#333333] rounded-2xl p-5">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 dark:text-[#fbfbfb]">Project limit</div>
-              <div className="text-2xl font-black text-slate-900 dark:text-white">{profile.project_limit ?? "N/A"}</div>
-            </div>
-            <div className="bg-slate-50 dark:bg-[#333333] rounded-2xl p-5">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 dark:text-[#fbfbfb]">Pages remaining</div>
-              <div className="text-2xl font-black text-slate-900 dark:text-white">{pageLimit > 0 ? remaining : "N/A"}</div>
+      {/* ── PLANS TAB ── */}
+      {tab === 'plans' && (
+        <div className="space-y-5">
+          {/* Header: title + toggles */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-[#888888]">Choose your plan</p>
+            <div className="flex items-center gap-2">
+              <div className="inline-flex p-1 bg-slate-100 dark:bg-[#1f1f1f] rounded-lg border border-slate-200 dark:border-[#2a2a2a]">
+                <button onClick={() => setShowAgency(false)} className={`px-3.5 py-1.5 text-sm font-semibold rounded-md transition-all ${!showAgency ? 'bg-white dark:bg-[#2a2a2a] text-[#075056] dark:text-[#5eead4] shadow-sm' : 'text-slate-500 dark:text-[#888888]'}`}>Individual</button>
+                <button onClick={() => setShowAgency(true)} className={`px-3.5 py-1.5 text-sm font-semibold rounded-md transition-all ${showAgency ? 'bg-white dark:bg-[#2a2a2a] text-[#075056] dark:text-[#5eead4] shadow-sm' : 'text-slate-500 dark:text-[#888888]'}`}>Agency</button>
+              </div>
+              <div className="inline-flex p-1 bg-slate-100 dark:bg-[#1f1f1f] rounded-lg border border-slate-200 dark:border-[#2a2a2a]">
+                <button onClick={() => setBillingPeriod('monthly')} className={`px-3.5 py-1.5 text-sm font-semibold rounded-md transition-all ${billingPeriod === 'monthly' ? 'bg-white dark:bg-[#2a2a2a] text-[#075056] dark:text-[#5eead4] shadow-sm' : 'text-slate-500 dark:text-[#888888]'}`}>Monthly</button>
+                <button onClick={() => setBillingPeriod('annual')} className={`px-3.5 py-1.5 text-sm font-semibold rounded-md transition-all flex items-center gap-1.5 ${billingPeriod === 'annual' ? 'bg-white dark:bg-[#2a2a2a] text-[#075056] dark:text-[#5eead4] shadow-sm' : 'text-slate-500 dark:text-[#888888]'}`}>Annually <span className="px-1 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold">2 MO FREE</span></button>
+              </div>
             </div>
           </div>
-        )}
 
-        {showUpgrade && (
+          {/* Promo banner — only when on monthly */}
+          {billingPeriod === 'monthly' && (
+            <div className="flex items-center justify-between gap-4 flex-wrap rounded-2xl border border-[#075056]/20 dark:border-[#5eead4]/20 bg-[#075056]/[0.04] dark:bg-[#075056]/10 px-5 py-4">
+              <div>
+                <span className="text-sm font-bold text-slate-900 dark:text-white">
+                  Get 2 months free
+                  <span className="ml-2 px-1.5 py-0.5 rounded bg-[#075056] text-white text-[10px] font-bold align-middle">SAVE ~17%</span>
+                </span>
+                <p className="text-xs text-slate-500 dark:text-[#aaaaaa] mt-0.5">Switch any paid plan to annual billing and pay for 10 months instead of 12.</p>
+              </div>
+              <button onClick={() => setBillingPeriod('annual')} className="shrink-0 px-4 py-2 text-sm font-bold text-[#075056] dark:text-[#5eead4] bg-white dark:bg-[#1f1f1f] border border-[#075056]/30 dark:border-[#5eead4]/30 rounded-lg hover:bg-[#075056]/5 dark:hover:bg-[#075056]/20 transition-colors">
+                Switch to annually
+              </button>
+            </div>
+          )}
+
+          {planNotice && (
+            <div className="px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/15 text-amber-700 dark:text-amber-300 text-sm font-medium border border-amber-200 dark:border-amber-800/40">
+              {planNotice}
+            </div>
+          )}
+
+          {/* Cards */}
+          {!showAgency ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {STANDARD_PLAN_IDS.map(id => renderPlanCard(PLANS[id]))}
+            </div>
+          ) : (
+            <div className="max-w-sm">{renderPlanCard(PLANS.agency)}</div>
+          )}
+
+          {/* ADD-ONS */}
+          <div className="pt-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-[#888888] mb-3">Add-ons</p>
+            <div className="bg-white dark:bg-[#262626] border border-slate-200 dark:border-[#333333] rounded-2xl p-5 flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-xl bg-[#075056]/10 dark:bg-[#075056]/25 flex items-center justify-center shrink-0 text-[#075056] dark:text-[#5eead4]">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6M9 15h6"/></svg>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">{TOPUP_PACK.credits}-page top-up pack</h4>
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold uppercase">Carries over</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-[#aaaaaa] mt-0.5">Extra credits on top of your monthly quota. Never expire.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <div className="text-lg font-black text-slate-900 dark:text-white">${TOPUP_PACK.price}</div>
+                  <div className="text-[11px] text-slate-400 dark:text-[#888888]">one-time</div>
+                </div>
+                <button
+                  onClick={handleBuyTopup}
+                  disabled={currentPlanId === 'free' || !!billingBusy}
+                  title={currentPlanId === 'free' ? 'Available on paid plans' : undefined}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg bg-[#075056] text-white hover:bg-[#064548] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {billingBusy === 'topup' && (
+                    <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" aria-hidden />
+                  )}
+                  {billingBusy === 'topup' ? 'Opening checkout…' : 'Add to plan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── BILLING TAB ── */}
+      {tab === 'billing' && (
+        <div className="space-y-4">
+          {/* Subscription summary */}
+          <div className="bg-white dark:bg-[#262626] border border-slate-200 dark:border-[#333333] rounded-3xl p-6 flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <div className="text-xs font-bold text-[#075056] dark:text-[#5eead4] uppercase tracking-widest mb-1">Subscription</div>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+                {currentPlan.name}{currentPlan.paid ? ` · $${currentPlan.monthly}/mo` : ''}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-[#aaaaaa] mt-0.5">{currentPlan.paid ? 'Active' : 'No active subscription'}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleManageBilling}
+                disabled={!!billingBusy}
+                className="px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-[#3a3a3a] rounded-xl hover:border-[#075056] dark:hover:border-[#5eead4] transition-colors inline-flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {billingBusy === 'portal' ? (
+                  <>
+                    <span className="inline-block w-3.5 h-3.5 border-2 border-slate-400/40 border-t-slate-700 dark:border-t-white rounded-full animate-spin" aria-hidden />
+                    Opening portal…
+                  </>
+                ) : (
+                  <>
+                    Manage billing
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  </>
+                )}
+              </button>
+              <button onClick={() => { setTab('plans'); setPlanNotice(null); }} className="px-4 py-2.5 text-sm font-bold bg-[#075056] text-white rounded-xl hover:bg-[#064548] transition-colors">Choose a plan</button>
+            </div>
+          </div>
+
+          {/* Credit usage — replaced with an Admin card for admin profiles */}
+          {admin ? (
+            <div className="bg-white dark:bg-[#262626] border border-[#075056]/30 dark:border-[#5eead4]/30 rounded-3xl p-6">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#075056]/10 dark:bg-[#5eead4]/10">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#075056] dark:text-[#5eead4]"><path d="m12 2 3 7 7 .5-5.5 4.5L18 22l-6-4-6 4 1.5-8L2 9.5 9 9z"/></svg>
+                </span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">Admin access</h4>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#075056] text-white">Unlimited</span>
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-[#aaaaaa] mt-0.5">
+                    All features unlocked. No credit metering, no plan limits.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-[#262626] border border-slate-200 dark:border-[#333333] rounded-3xl p-6">
+              <div className="flex items-end justify-between mb-3 flex-wrap gap-2">
+                <h4 className="text-lg font-bold text-slate-900 dark:text-white">Page credits</h4>
+                <span className="text-sm text-slate-500 dark:text-[#aaaaaa]">
+                  {creditsUsed.toLocaleString()} of {creditsTotal.toLocaleString()} used{currentPlan.creditsReset ? ' this period' : ''}
+                </span>
+              </div>
+              <div className="h-2.5 bg-slate-100 dark:bg-[#333333] rounded-full overflow-hidden">
+                <div className="h-full bg-[#075056] dark:bg-[#5eead4] rounded-full transition-all duration-700" style={{ width: `${usedPct}%` }} />
+              </div>
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#888888] mt-2">
+                <span>{creditsUsed.toLocaleString()} used</span>
+                <span>{creditsRemaining.toLocaleString()} remaining</span>
+              </div>
+            </div>
+          )}
+
+          {planNotice && (
+            <div className="px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/15 text-amber-700 dark:text-amber-300 text-sm font-medium border border-amber-200 dark:border-amber-800/40">
+              {planNotice}
+            </div>
+          )}
+
+          {/* Payment method */}
+          <div className="bg-white dark:bg-[#262626] border border-slate-200 dark:border-[#333333] rounded-3xl p-6">
+            <h4 className="text-lg font-bold text-slate-900 dark:text-white">Payment method</h4>
+            <p className="text-sm text-slate-500 dark:text-[#aaaaaa] mt-0.5">How you pay for GroGoliath. Cards are processed securely by our payment provider.</p>
+            <div className="mt-4 flex items-center justify-between p-4 rounded-2xl border border-dashed border-slate-200 dark:border-[#3a3a3a]">
+              <span className="text-sm text-slate-500 dark:text-[#888888]">No payment method on file</span>
+              <button
+                onClick={currentPlan.paid ? handleManageBilling : () => setTab('plans')}
+                disabled={billingBusy}
+                className="text-sm font-bold text-[#075056] dark:text-[#5eead4] hover:underline inline-flex items-center gap-1 disabled:opacity-50"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14"/></svg>
+                {currentPlan.paid ? 'Manage billing' : 'Add payment method'}
+              </button>
+            </div>
+          </div>
+
+          {/* Transactions */}
+          <div className="bg-white dark:bg-[#262626] border border-slate-200 dark:border-[#333333] rounded-3xl p-6">
+            <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Latest transactions</h4>
+            <div className="border border-slate-200 dark:border-[#333333] rounded-2xl overflow-hidden">
+              <div className="grid grid-cols-4 gap-2 px-5 py-3 bg-slate-50 dark:bg-[#1f1f1f] text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#888888]">
+                <span>Invoice</span><span>Date</span><span>Amount</span><span>Status</span>
+              </div>
+              <div className="px-5 py-10 text-center text-sm text-slate-400 dark:text-[#888888]">No transactions yet</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ACCOUNT TAB ── */}
+      {tab === 'account' && (
+        <div className="bg-white dark:bg-[#262626] border border-slate-200 dark:border-[#333333] rounded-3xl p-8">
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Account</h3>
+          <p className="text-sm text-slate-500 dark:text-[#aaaaaa] mb-6">Sign out of GroGoliath on this device.</p>
           <button
-            onClick={() => alert("Billing portal is not configured yet.")}
-            className="px-8 py-4 bg-[#075056] text-white text-base font-semibold rounded-xl hover:bg-[#064548] transition-colors"
+            onClick={onLogout}
+            className="flex items-center gap-2 px-6 py-3 text-red-500 font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-sm"
           >
-            Upgrade to Pro
+            <LogOut size={16} /> Sign Out
           </button>
-        )}
-      </div>
-
-      {/* Danger zone */}
-      <div className="bg-white dark:bg-[#262626] border border-slate-200 dark:border-[#333333] rounded-3xl p-8">
-        <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Account</h3>
-        <button
-          onClick={onLogout}
-          className="flex items-center gap-2 px-6 py-3 text-red-500 font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-sm"
-        >
-          <LogOut size={16} /> Sign Out
-        </button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

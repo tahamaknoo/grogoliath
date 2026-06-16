@@ -1,16 +1,10 @@
 "use client";
 import { supabase } from "./supabaseClient";
 
-const PLAN_LIMITS: Record<string, { page_limit: number; project_limit: number }> = {
-  basic: { page_limit: 100, project_limit: 3 },
-  pro: { page_limit: 250, project_limit: 10 }
-};
-
 export async function ensureProfile(sessionUser: any) {
   if (!sessionUser?.id) return null;
 
-  // Pull every column so this works regardless of which optional fields
-  // (avatar_url, full_name, email...) exist on the profiles table.
+  // Pull every column so this works regardless of which optional fields exist.
   const { data: existing, error: selErr } = await supabase
     .from("profiles")
     .select("*")
@@ -22,38 +16,21 @@ export async function ensureProfile(sessionUser: any) {
     return null;
   }
 
-  // If exists, ensure plan limits match current pricing
-  if (existing) {
-    const planKey = String(existing.plan || "basic").toLowerCase();
-    const limits = PLAN_LIMITS[planKey];
-    if (limits) {
-      const patch: Record<string, any> = {};
-      if (Number(existing.page_limit) !== limits.page_limit) patch.page_limit = limits.page_limit;
-      if (existing.project_limit === null || existing.project_limit === undefined) {
-        patch.project_limit = limits.project_limit;
-      }
-      if (Object.keys(patch).length > 0) {
-        const { data: updated, error: updErr } = await supabase
-          .from("profiles")
-          .update(patch)
-          .eq("id", sessionUser.id)
-          .select()
-          .single();
-        if (!updErr && updated) return updated;
-      }
-    }
-    return existing;
-  }
+  // Existing row is the source of truth — plan/credits are managed server-side
+  // (Stripe webhook + spend_credits RPC), so never patch them from the client.
+  if (existing) return existing;
 
-  // No row yet — create a default one. Use upsert so a race / RLS quirk doesn't
-  // crash the app with a duplicate-key error if the row appears between SELECT and INSERT.
+  // No row yet — create a Free-tier profile with the one-time 5 credits.
+  // Once the signup trigger is in place server-side this branch won't run
+  // (the row will already exist), so it's a safe fallback.
   const payload = {
     id: sessionUser.id,
     email: sessionUser.email,
-    plan: "basic",
-    page_limit: PLAN_LIMITS.basic.page_limit,
-    pages_used: 0,
-    project_limit: PLAN_LIMITS.basic.project_limit,
+    plan: "free",
+    monthly_credits: 5,        // Free's 5 one-time credits live in the monthly bucket
+    monthly_credits_used: 0,   // (Free's plan never resets, so they don't refill)
+    topup_credits: 0,
+    credits_initialized: true,
   };
 
   const { data: created, error: insErr } = await supabase
@@ -64,7 +41,6 @@ export async function ensureProfile(sessionUser: any) {
 
   if (insErr) {
     console.warn("ensureProfile upsert failed:", insErr.message);
-    // Last-resort: re-select what's there
     const { data: fallback } = await supabase
       .from("profiles")
       .select("*")

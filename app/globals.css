@@ -132,22 +132,32 @@ body {
 }
 .animate-avatar-rubber { animation: avatar-rubber 0.7s ease-out; }
 
-/* Gentle floating cards on the login screen — slight up/down drift + tiny tilt. */
-@keyframes float-y-slow {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50%      { transform: translateY(-10px) rotate(-1deg); }
+/* Floating cards on the login screen — noticeable up/down drift, sideways
+   sway, and a gentle tilt so each card feels like it's hovering. */
+@keyframes float-card-1 {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  25%  { transform: translate(6px, -12px) rotate(-1.5deg); }
+  50%  { transform: translate(0, -22px) rotate(0.5deg); }
+  75%  { transform: translate(-5px, -10px) rotate(2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
 }
-@keyframes float-y-medium {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50%      { transform: translateY(-14px) rotate(1.2deg); }
+@keyframes float-card-2 {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  25%  { transform: translate(-8px, -10px) rotate(2deg); }
+  50%  { transform: translate(-4px, -26px) rotate(-1.5deg); }
+  75%  { transform: translate(5px, -14px) rotate(1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
 }
-@keyframes float-y-fast {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50%      { transform: translateY(-8px) rotate(-0.8deg); }
+@keyframes float-card-3 {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  25%  { transform: translate(4px, -8px) rotate(-1deg); }
+  50%  { transform: translate(8px, -18px) rotate(1.8deg); }
+  75%  { transform: translate(-3px, -12px) rotate(-1.2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
 }
-.animate-float-slow   { animation: float-y-slow   6s ease-in-out infinite; }
-.animate-float-medium { animation: float-y-medium 5s ease-in-out infinite; }
-.animate-float-fast   { animation: float-y-fast   4.2s ease-in-out infinite; }
+.animate-float-card-1 { animation: float-card-1 7s ease-in-out infinite; }
+.animate-float-card-2 { animation: float-card-2 8.5s ease-in-out infinite; }
+.animate-float-card-3 { animation: float-card-3 6.2s ease-in-out infinite; }
 
 /* ── Grogoliath Loader ───────────────────────────────────────────────────── */
 .gg-spinner {
@@ -267,4 +277,146 @@ body {
 .dark *::-webkit-scrollbar-thumb:hover {
   background: #3f3f3f;
   background-clip: content-box;
+}
+
+/* Neobrutalist "Delete" button (Uiverse-style, two-tone gray).
+   - At rest: "Delete" text left, slightly-darker icon zone on the right.
+   - Hover: icon zone slides across to fill, text fades.
+   - Active: button depresses 3px (shadow disappears).
+   Destructive intent is conveyed by the trash icon + "Delete" word — not
+   by colour — to match the original Uiverse aesthetic. */
+.gg-del-btn {
+  position: relative;
+  width: 130px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border: 2px solid #323232;
+  box-shadow: 4px 4px 0 #323232;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+.dark .gg-del-btn {
+  border-color: #e5e5e5;
+  box-shadow: 4px 4px 0 #e5e5e5;
+  background-color: #1a1a1a;
+}
+.gg-del-text,
+.gg-del-icon { transition: all 0.3s; }
+.gg-del-text {
+  transform: translateX(22px);
+  color: #323232;
+  font-weight: 600;
+  font-size: 13px;
+}
+.dark .gg-del-text { color: #e5e5e5; }
+.gg-del-icon {
+  position: absolute;
+  transform: translateX(94px);
+  height: 100%;
+  width: 32px;
+  background-color: #f4f4f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dc2626;
+}
+.gg-del-icon svg { stroke: #dc2626; }
+.dark .gg-del-icon {
+  background-color: #2a2a2a;
+  color: #f87171;
+}
+.dark .gg-del-icon svg { stroke: #f87171; }
+.gg-del-btn:hover .gg-del-text { color: transparent; }
+.gg-del-btn:hover .gg-del-icon {
+  width: 126px;
+  transform: translateX(0);
+}
+.gg-del-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 transparent;
+}
+
+/* ── Chip editor (page-content fields) ────────────────────────────────────
+   A contenteditable div that renders {{var}} and [A | B] patterns as
+   pill-style chips inline. The chips are non-editable units — a single
+   backspace deletes the whole chip — and behave like text characters when
+   typing around them. */
+.gg-chip-editor {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+  cursor: text;
+  line-height: 1.8;
+  color: #1e293b;
+  word-break: break-word;
+}
+.dark .gg-chip-editor {
+  background: #1f1f1f;
+  border-color: #404040;
+  color: #ededed;
+}
+.gg-chip-editor:hover { border-color: #94a3b8; }
+.dark .gg-chip-editor:hover { border-color: #525252; }
+.gg-chip-editor:focus { border-color: #075056; box-shadow: 0 0 0 3px rgba(7, 80, 86, 0.08); }
+.dark .gg-chip-editor:focus { border-color: #5eead4; box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.10); }
+.gg-chip-editor.gg-empty::before {
+  content: attr(data-placeholder);
+  color: #94a3b8;
+  pointer-events: none;
+  position: absolute;
+  left: 14px;
+  top: 10px;
+  font-style: normal;
+  white-space: pre-wrap;
+  max-width: calc(100% - 28px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dark .gg-chip-editor.gg-empty::before { color: #666666; }
+.gg-chip-editor--multi { min-height: 64px; }
+
+.gg-chip {
+  display: inline-block;
+  padding: 1px 6px;
+  margin: 0 1px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+  user-select: all;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.gg-chip-var {
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+.gg-chip-group {
+  background: #fce7f3;
+  color: #be185d;
+  border: 1px solid #fbcfe8;
+}
+.dark .gg-chip-var {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+  border-color: rgba(139, 92, 246, 0.4);
+}
+.dark .gg-chip-group {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f9a8d4;
+  border-color: rgba(236, 72, 153, 0.4);
 }

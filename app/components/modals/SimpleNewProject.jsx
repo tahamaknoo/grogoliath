@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Upload, X } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import { apiFetch } from "../../../lib/apiFetch";
+import { useConfirm } from "../ConfirmDialog";
 
 // Handles quoted CSV values with commas inside them
 function parseCSVLine(line) {
@@ -41,6 +42,7 @@ const TIPS = [
 ];
 
 export default function SimpleNewProject({ isOpen, onClose, session, onSuccess }) {
+  const confirm = useConfirm();
   const [step, setStep]               = useState(1);
   const [projectName, setProjectName] = useState("");
   const [csvFile, setCsvFile]         = useState(null);
@@ -614,8 +616,15 @@ Generate ALL combinations now. Return ONLY the JSON, no other text.`;
                     Minimize
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm("Are you sure you want to cancel project creation?")) {
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: 'Cancel project creation?',
+                        message: 'The pages being generated will be discarded.',
+                        confirmLabel: 'Cancel creation',
+                        cancelLabel: 'Keep going',
+                        variant: 'danger',
+                      });
+                      if (ok) {
                         setIsCreating(false);
                         setCreationProgress(0);
                       }

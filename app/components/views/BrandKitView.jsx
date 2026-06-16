@@ -1,16 +1,21 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { fetchBrandKits, createBrandKit, updateBrandKit, deleteBrandKit, limitForPlan } from '../../../lib/brandKits';
+import { PLANS } from '../../../lib/plans';
+import { useConfirm } from '../ConfirmDialog';
 
 const PRESET_COLORS = ['#075056', '#2563eb', '#7c3aed', '#dc2626', '#ea580c', '#0d9488', '#262626'];
 
 export default function BrandKitView({ session, profile }) {
+  const confirm = useConfirm();
   const [kits, setKits] = useState(null);
   const [editor, setEditor] = useState(null); // null | { mode: 'create' } | { mode: 'edit', kit }
 
-  const plan = String(profile?.plan || 'basic').toLowerCase();
+  const plan = String(profile?.plan || 'free').toLowerCase();
+  const planName = PLANS[plan]?.name || 'Free';
   const limit = limitForPlan(plan);
   const atLimit = (kits || []).length >= limit;
+  const notOnPlan = limit === 0; // Free tier — brand kits not included at all
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -20,7 +25,12 @@ export default function BrandKitView({ session, profile }) {
   const refresh = async () => setKits(await fetchBrandKits(session?.access_token));
 
   const onDelete = async (kit) => {
-    const ok = window.confirm(`Delete "${kit.name}"? This can't be undone.`);
+    const ok = await confirm({
+      title: 'Delete brand kit?',
+      message: `"${kit.name}" will be permanently removed. This can't be undone.`,
+      confirmLabel: 'Delete kit',
+      variant: 'danger',
+    });
     if (!ok) return;
     try {
       const removed = await deleteBrandKit(kit.id, session?.access_token);
@@ -45,7 +55,7 @@ export default function BrandKitView({ session, profile }) {
             {(kits || []).length} / {limit} used
           </span>
           <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#555555] dark:text-[#999999] bg-[#f5f5f5] dark:bg-[#262626] border border-[#e5e5e5] dark:border-[#333333] rounded-full">
-            {plan === 'pro' ? 'Pro plan · 3 kits' : 'Basic plan · 1 kit'}
+            {planName} plan · {limit === Infinity ? '∞' : limit} kit{limit === 1 ? '' : 's'}
           </span>
         </div>
       </div>
@@ -63,14 +73,14 @@ export default function BrandKitView({ session, profile }) {
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-base sm:text-lg font-bold text-[#262626] dark:text-white tracking-tight mb-1">
-            {atLimit ? 'Brand kit limit reached' : 'Create a brand kit'}
+            {notOnPlan ? 'Brand kits are a paid feature' : atLimit ? 'Brand kit limit reached' : 'Create a brand kit'}
           </h3>
           <p className="text-xs sm:text-sm text-[#777777] dark:text-[#888888]">
-            {atLimit
-              ? plan === 'pro'
-                ? 'Pro plan supports up to 3 kits. Delete one to create another.'
-                : 'Upgrade to Pro to create up to 3 brand kits.'
-              : 'Save your colors, logo, and voice. Apply them to AI-generated pages with one click.'}
+            {notOnPlan
+              ? 'Upgrade to a paid plan to save your colors, logo, and voice and apply them to AI-generated pages.'
+              : atLimit
+                ? `Your ${planName} plan includes ${limit} brand kit${limit === 1 ? '' : 's'}. Delete one or upgrade to add more.`
+                : 'Save your colors, logo, and voice. Apply them to AI-generated pages with one click.'}
           </p>
         </div>
         {!atLimit && (

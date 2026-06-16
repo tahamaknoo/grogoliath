@@ -5,8 +5,10 @@ import { Download, Eye, LayoutGrid, Plus, Save, Table2, Trash2, X } from "lucide
 import { supabase } from "../../../lib/supabaseClient";
 import InspectorModal from "./InspectorModal";
 import PageCardView from "../PageCardView";
+import { useConfirm } from "../ConfirmDialog";
 
 const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
+  const confirm = useConfirm();
   const [localProject, setLocalProject] = useState(project);
   const [newRow, setNewRow] = useState({});
   const [showAddRow, setShowAddRow] = useState(false);
@@ -327,8 +329,14 @@ const ViewModal = ({ isOpen, onClose, project, onProjectUpdate }) => {
                     })}
                     <td className="px-4 py-2">
                       <button
-                        onClick={() => {
-                          if (confirm("Delete?")) handleUpdate(rows.filter((_, idx) => idx !== i), headers);
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: 'Delete this row?',
+                            message: 'The row will be removed from the dataset.',
+                            confirmLabel: 'Delete row',
+                            variant: 'danger',
+                          });
+                          if (ok) handleUpdate(rows.filter((_, idx) => idx !== i), headers);
                         }}
                         className="text-slate-300 hover:text-red-500"
                       >

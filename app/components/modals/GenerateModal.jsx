@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import PRESET_TEMPLATES from "../../constants/presetTemplates";
 import { supabase } from "../../../lib/supabaseClient";
 import { apiFetch } from "../../../lib/apiFetch";
+import { creditsRemaining, applySpend } from "../../../lib/plans";
+import { useConfirm } from "../ConfirmDialog";
 
 const GenerateModal = ({
   isOpen,
@@ -20,6 +22,7 @@ const GenerateModal = ({
   onStatusChange,
   expandSignal
 }) => {
+  const confirm = useConfirm();
   const [prompt, setPrompt] = useState("");
   const [targetColumn, setTargetColumn] = useState("AI_Output");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -474,11 +477,11 @@ ${prompt}
       return;
     }
 
-    const pagesRemaining = profile.page_limit - profile.pages_used;
+    const pagesRemaining = creditsRemaining(profile);
     const total = indexesToGenerate.length;
 
     if (total > pagesRemaining) {
-      alert(`You can only generate ${pagesRemaining} more pages on your current plan.\n\nUpgrade to Pro to generate more.`);
+      alert(`You can only generate ${pagesRemaining} more page${pagesRemaining === 1 ? '' : 's'} on your current plan.\n\nUpgrade or add a top-up pack to generate more.`);
       setIsGenerating(false);
       abortControllerRef.current = null;
       return;
@@ -654,14 +657,10 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
       onUpdateSuccess();
 
       if (successCount > 0) {
-        const nextUsed = profile.pages_used + successCount;
-
-        await supabase
-          .from("profiles")
-          .update({ pages_used: nextUsed })
-          .eq("id", session.user.id);
-
-        setProfile({ ...profile, pages_used: nextUsed });
+        // Deduct via the tamper-proof RPC (spends monthly credits first, then top-ups).
+        const { error: spendError } = await supabase.rpc("spend_credits", { p_amount: successCount });
+        if (spendError) console.error("spend_credits failed:", spendError);
+        setProfile({ ...applySpend(profile, successCount) });
       }
     } catch (error) {
       console.error(error);
@@ -763,12 +762,18 @@ ${JSON.stringify(finalParsed || {}, null, 2)}
 
   const etaSeconds = estimateRemainingSeconds();
 
-  const handleCloseRequest = () => {
+  const handleCloseRequest = async () => {
     if (!isGenerating) {
       onClose();
       return;
     }
-    const shouldStop = confirm("Generation is still running. Stop it and close?");
+    const shouldStop = await confirm({
+      title: 'Generation is still running',
+      message: 'Stop the generation and close this window?\n\nMinimize instead to keep it running in the background.',
+      confirmLabel: 'Stop & close',
+      cancelLabel: 'Minimize',
+      variant: 'danger',
+    });
     if (!shouldStop) {
       setIsMinimized(true);
       return;

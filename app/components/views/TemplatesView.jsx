@@ -4,6 +4,10 @@ import TemplateBuilder from '../TemplateBuilder';
 import STARTER_TEMPLATES from '../../data/starterTemplates';
 import { supabase } from '../../../lib/supabaseClient';
 import { IDEAL_FOR, styleForTemplate } from '../../../lib/templateMeta';
+import { useConfirm } from '../ConfirmDialog';
+import CustomizeTemplateModal from '../modals/CustomizeTemplateModal';
+import { previewHtml as renderPreviewHtml } from '../../../lib/templatePreview';
+import { planAllows, planIdOf } from '../../../lib/plans';
 
 // Add a starter ID to this set after dropping its PNG into /public/template-screenshots/<id>.png
 // IDs not in this set fall back to the icon-based card design (no 404s, no flicker).
@@ -11,125 +15,8 @@ const AVAILABLE_SCREENSHOTS = new Set([
   // 'starter-1', 'starter-2', ... — uncomment as you add files
 ]);
 
-// Hide iframe scrollbars inside tiny thumbnail previews (grid cards only)
-const HIDE_SCROLL_CSS = '<style>html,body{overflow:hidden!important;scrollbar-width:none!important}html::-webkit-scrollbar,body::-webkit-scrollbar,*::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}</style>';
-
-// Disable all link/button/form interactions inside the preview iframe so clicks
-// don't navigate the iframe to broken anchors (#contact etc.) or submit forms.
-// Pointer events are kept ON so the user can scroll and hover normally.
-const DISABLE_INTERACTIONS = `<style>
-  a, button, [role="button"] { cursor: default !important; }
-  a:hover, button:hover { text-decoration: none !important; }
-</style>
-<script>
-  (function() {
-    var stop = function(e) {
-      var t = e.target.closest && e.target.closest('a, button, [role="button"], form, input, textarea, select');
-      if (t) { e.preventDefault(); e.stopPropagation(); }
-    };
-    document.addEventListener('click', stop, true);
-    document.addEventListener('submit', stop, true);
-    // Also block keyboard activation so Enter on a focused link doesn't navigate
-    document.addEventListener('keydown', function(e) {
-      if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('a, button')) {
-        e.preventDefault();
-      }
-    }, true);
-  })();
-</script>`;
-
-// Replace placeholders with demo copy — `hideScroll` true for thumbnails, false for the full preview modal
-const previewHtml = (html, { hideScroll = true } = {}) => ((hideScroll ? HIDE_SCROLL_CSS : '') + DISABLE_INTERACTIONS + html)
-  // Business page placeholders
-  .replace(/\{\{KEYWORD\}\}/g, 'Your Business')
-  .replace(/\{\{LOCATION\}\}/g, 'Your City')
-  .replace(/\{\{SERVICE\}\}/g, 'Your Service')
-  .replace(/\{\{TAGLINE\}\}/g, 'Professional • Reliable • Trusted')
-  .replace(/\{\{PHONE\}\}/g, '(555) 000-0000')
-  .replace(/\{\{EMAIL\}\}/g, 'hello@yourbusiness.com')
-  .replace(/\{\{HERO_HEADLINE\}\}/g, 'Your Business Name')
-  .replace(/\{\{HERO_SUB\}\}/g, 'Professional services you can trust.')
-  .replace(/\{\{CTA_PRIMARY\}\}/g, 'Get Started')
-  .replace(/\{\{CTA_SECONDARY\}\}/g, 'Learn More')
-  // Blog placeholders
-  .replace(/\{\{POST_TITLE\}\}/g, 'Tool A vs Tool B: Which Is Right for You in 2025?')
-  .replace(/\{\{POST_CATEGORY\}\}/g, 'Comparison')
-  .replace(/\{\{SITE_NAME\}\}/g, 'YourBlog')
-  .replace(/\{\{AUTHOR_NAME\}\}/g, 'Alex Johnson')
-  .replace(/\{\{AUTHOR_INITIAL\}\}/g, 'A')
-  .replace(/\{\{AUTHOR_BIO\}\}/g, 'Writer and researcher covering productivity tools and software.')
-  .replace(/\{\{PUBLISH_DATE\}\}/g, 'April 2025')
-  .replace(/\{\{READ_TIME\}\}/g, '8')
-  .replace(/\{\{POST_INTRO\}\}/g, 'Choosing the right tool can make or break your workflow. In this guide, we compare the top options side by side so you can make the best decision.')
-  .replace(/\{\{POST_INTRO_2\}\}/g, 'We\'ve tested both tools extensively and broken down the key differences across pricing, features, and ease of use.')
-  .replace(/\{\{QUICK_ANSWER\}\}/g, 'If you\'re a solo creator, Tool A is the better pick. Teams and power users will get more out of Tool B.')
-  .replace(/\{\{OPTION_A\}\}/g, 'Tool A')
-  .replace(/\{\{OPTION_B\}\}/g, 'Tool B')
-  .replace(/\{\{VERDICT_TITLE\}\}/g, 'Which Should You Choose?')
-  .replace(/\{\{VERDICT_BODY\}\}/g, 'Both tools are excellent in their own right. Your choice ultimately depends on your team size, budget, and workflow needs.')
-  .replace(/\{\{SECTION_1_TITLE\}\}/g, 'What Is Tool A?')
-  .replace(/\{\{SECTION_1_BODY\}\}/g, 'Tool A is a modern productivity platform designed for individuals and small teams. It offers a clean interface with powerful integrations.')
-  .replace(/\{\{SECTION_2_TITLE\}\}/g, 'What Is Tool B?')
-  .replace(/\{\{SECTION_2_BODY\}\}/g, 'Tool B takes a different approach, focusing on collaboration and scalability. It\'s built for growing teams that need structure.')
-  .replace(/\{\{TOC_[0-9]+\}\}/g, 'Section heading')
-  .replace(/\{\{COMPARE_[0-9]+\}\}/g, 'Feature')
-  .replace(/\{\{PRO_[AB][0-9]+\}\}/g, 'Key advantage of this tool')
-  .replace(/\{\{CON_[AB][0-9]+\}\}/g, 'Limitation to consider')
-  .replace(/\{\{RELATED_[0-9]+_TITLE\}\}/g, 'Related Article Title')
-  .replace(/\{\{RELATED_[0-9]+_DESC\}\}/g, 'A short description of this related post.')
-  .replace(/\{\{STEP_([0-9]+)_TITLE\}\}/g, 'Step $1: Complete This Action')
-  .replace(/\{\{STEP_[0-9]+_BODY\}\}/g, 'Detailed instructions for completing this step successfully.')
-  .replace(/\{\{STEP_[0-9]+_TIP\}\}/g, 'Pro tip: Here\'s a helpful shortcut to save you time.')
-  .replace(/\{\{STEP_[0-9]+_WARNING\}\}/g, 'Be careful not to skip this — it\'s easy to miss and can cause issues later.')
-  .replace(/\{\{STEP_[0-9]+_CODE\}\}/g, '# Example command\nnpm install your-package --save')
-  .replace(/\{\{STEP_[0-9]+_BULLET_[0-9]+\}\}/g, 'Important sub-step to follow')
-  .replace(/\{\{PREREQ_[0-9]+\}\}/g, 'Basic requirement or tool needed')
-  .replace(/\{\{SUMMARY_HEADLINE\}\}/g, 'What You\'ve Learned')
-  .replace(/\{\{SUMMARY_[0-9]+\}\}/g, 'Key takeaway from this guide')
-  .replace(/\{\{LIST_([0-9]+)_TITLE\}\}/g, 'Option $1: Great Tool Name')
-  .replace(/\{\{LIST_[0-9]+_BODY\}\}/g, 'A reliable and well-regarded option in this category, known for its ease of use and solid feature set.')
-  .replace(/\{\{LIST_[0-9]+_PRO_[0-9]+\}\}/g, 'Notable strength of this option')
-  .replace(/\{\{LIST_[0-9]+_RATING\}\}/g, '4.5')
-  .replace(/\{\{LIST_[0-9]+_REVIEWS\}\}/g, '2,400+')
-  .replace(/\{\{LIST_[0-9]+_FEAT_[0-9]+\}\}/g, 'Key feature of this option')
-  .replace(/\{\{LIST_[0-9]+_BOTTOM_LINE\}\}/g, 'A solid choice for most users looking for reliability and ease of use.')
-  .replace(/\{\{LIST_COUNT\}\}/g, '6')
-  .replace(/\{\{CTA_HEADLINE\}\}/g, 'Ready to Get Started?')
-  .replace(/\{\{CTA_SUBTEXT\}\}/g, 'Join thousands of people already using the best tools for their workflow.')
-  // Comparison article extras
-  .replace(/\{\{TLDR_[0-9]+\}\}/g, 'Key insight about these tools to help you decide faster.')
-  .replace(/\{\{VERDICT_A\}\}/g, 'you want simplicity and a faster learning curve')
-  .replace(/\{\{VERDICT_B\}\}/g, 'you need advanced collaboration and scalability')
-  .replace(/\{\{VERDICT_A_[0-9]+\}\}/g, 'Prefer a cleaner, simpler interface')
-  .replace(/\{\{VERDICT_B_[0-9]+\}\}/g, 'Need powerful team collaboration features')
-  .replace(/\{\{UPDATED_DATE\}\}/g, 'March 2025')
-  .replace(/\{\{EVAL_INTRO\}\}/g, 'We spent weeks hands-on testing both tools across six key dimensions.')
-  .replace(/\{\{EVAL_[0-9]+_TITLE\}\}/g, 'Evaluation Criterion')
-  .replace(/\{\{EVAL_[0-9]+_DESC\}\}/g, 'How each tool performs on this dimension based on our testing.')
-  .replace(/\{\{FEATURE_[0-9]+\}\}/g, 'Notable capability of this tool')
-  .replace(/\{\{PRICE_[AB]_FREE\}\}/g, 'Free forever')
-  .replace(/\{\{PRICE_[AB]_PAID\}\}/g, '$12/month')
-  .replace(/\{\{PRICE_[AB]_FEAT_[0-9]+\}\}/g, 'Included in this plan')
-  .replace(/\{\{AUTHOR_TITLE\}\}/g, 'Senior Editor')
-  .replace(/\{\{SOURCE_[0-9]+\}\}/g, 'Official documentation and product research, 2025.')
-  // How-to guide extras
-  .replace(/\{\{EST_TIME\}\}/g, '30 min')
-  .replace(/\{\{DIFFICULTY\}\}/g, 'Beginner')
-  .replace(/\{\{STEP_COUNT\}\}/g, '5')
-  .replace(/\{\{STEP_[0-9]+_NOTE\}\}/g, 'Note: Keep this in mind as you proceed through the next steps.')
-  .replace(/\{\{STEP_[0-9]+_CODE\}\}/g, '# Example command\nnpm install your-package')
-  .replace(/\{\{STEP_[0-9]+_BULLET_[0-9]+\}\}/g, 'Important detail to keep in mind')
-  .replace(/\{\{STEP_[0-9]+_TIP\}\}/g, 'Pro tip: This shortcut will save you significant time.')
-  .replace(/\{\{TROUBLE_[0-9]+_Q\}\}/g, 'What if something goes wrong at this step?')
-  .replace(/\{\{TROUBLE_[0-9]+_A\}\}/g, 'Try restarting the process from step 1. Check that all prerequisites are installed correctly.')
-  // Listicle extras
-  .replace(/\{\{METHODOLOGY_NOTE\}\}/g, 'We independently tested each option and reviewed thousands of user ratings to compile this list.')
-  .replace(/\{\{HOW_TO_CHOOSE_TITLE\}\}/g, 'How to Choose the Right Option')
-  .replace(/\{\{HOW_TO_CHOOSE_BODY\}\}/g, 'The best choice depends on your specific needs. Here are the four most important factors to consider:')
-  .replace(/\{\{CHOOSE_[0-9]+_TITLE\}\}/g, 'Key Factor')
-  .replace(/\{\{CHOOSE_[0-9]+_DESC\}\}/g, 'Consider how this factor affects your specific situation and workflow requirements.')
-  // Catch-all
-  .replace(/\{\{[A-Z0-9_]+\}\}/g, 'Sample content');
+// Alias to the shared helper so existing call sites keep working.
+const previewHtml = renderPreviewHtml;
 
 // ── SVG thumbnail mockups ─────────────────────────────────────────────────────
 // Each is a 400×280 mini visual representing the template's design style
@@ -992,28 +879,38 @@ function TemplateCard({ template, onPreview, onRename, onDelete, isRenaming, ren
 
 // ── Render helpers ─────────────────────────────────────────────────────────────
 // Full-width "Create your own template" banner (sits above everything else)
-function renderCreateBanner(openBuilder) {
+function renderCreateBanner(openBuilder, canBuild = true, onUpgrade) {
   return (
     <button
-      onClick={() => openBuilder(true)}
+      onClick={() => (canBuild ? openBuilder(true) : onUpgrade?.())}
       className="group w-full text-left flex items-center gap-5 p-5 sm:p-6 mb-10 bg-gradient-to-br from-white to-[#fafafa] dark:from-[#1a1a1a] dark:to-[#111111] border border-dashed border-[#b8b8b8] dark:border-[#525252] rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.5)] hover:shadow-[0_12px_40px_rgba(7,80,86,0.18)] dark:hover:shadow-[0_12px_40px_rgba(7,80,86,0.35)] hover:border-solid hover:border-[#075056] dark:hover:border-[#075056] hover:-translate-y-0.5 transition-all duration-300"
     >
       <div className="w-14 h-14 rounded-2xl bg-[#075056]/10 dark:bg-[#075056]/20 flex items-center justify-center text-[#075056] dark:text-[#5eead4] group-hover:bg-[#075056] group-hover:text-white dark:group-hover:bg-[#075056] dark:group-hover:text-white group-hover:rotate-90 transition-all duration-500 shrink-0">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 5v14M5 12h14"/>
-        </svg>
+        {canBuild ? (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        ) : (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-base sm:text-lg font-bold text-[#262626] dark:text-white tracking-tight">Create your own template</h3>
-          <span className="hidden sm:inline-flex items-center text-[10px] font-bold uppercase tracking-[0.1em] text-[#075056] dark:text-[#5eead4] bg-[#075056]/10 dark:bg-[#075056]/20 px-2 py-0.5 rounded-full">New</span>
+          <h3 className="text-base sm:text-lg font-bold text-[#262626] dark:text-white tracking-tight">
+            {canBuild ? 'Create your own template' : 'Custom templates are a paid feature'}
+          </h3>
+          <span className="hidden sm:inline-flex items-center text-[10px] font-bold uppercase tracking-[0.1em] text-[#075056] dark:text-[#5eead4] bg-[#075056]/10 dark:bg-[#075056]/20 px-2 py-0.5 rounded-full">{canBuild ? 'New' : 'Upgrade'}</span>
         </div>
         <p className="text-xs sm:text-sm text-[#777777] dark:text-[#888888] line-clamp-1 sm:line-clamp-2">
-          Start from a blank canvas. Drag in elements, choose your brand color, and save.
+          {canBuild
+            ? 'Start from a blank canvas. Drag in elements, choose your brand color, and save.'
+            : 'Upgrade to a paid plan to build your own templates from scratch. Free includes the starter templates below.'}
         </p>
       </div>
       <span className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-[#075056] text-white text-sm font-bold rounded-xl group-hover:bg-[#064548] group-hover:shadow-lg group-hover:shadow-[#075056]/30 transition-all shrink-0">
-        Get started
+        {canBuild ? 'Get started' : 'View plans'}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M5 12h14M13 5l7 7-7 7"/>
         </svg>
@@ -1100,11 +997,15 @@ function CuratedLayout({ featured, customs, grouped, renderCard }) {
 }
 
 // ── Main view ─────────────────────────────────────────────────────────────────
-export default function TemplatesView({ user, session, templates: userTemplatesProp, onTemplateAdded, onTemplateDeleted, onRefresh, onUseTemplate, darkMode, setDarkMode }) {
+export default function TemplatesView({ user, session, profile, onUpgrade, templates: userTemplatesProp, onTemplateAdded, onTemplateDeleted, onRefresh, onUseTemplate, darkMode, setDarkMode }) {
+  const confirm = useConfirm();
+  // Custom template builder is a paid feature (Free = starter templates only).
+  const canBuild = planAllows(planIdOf(profile), 'customTemplates');
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   // 'closed' | 'open' | 'minimized'
   const [builderState, setBuilderState] = useState('closed');
+  const [customizingTemplate, setCustomizingTemplate] = useState(null); // template being duplicated/edited
   const [minimizedDraft, setMinimizedDraft] = useState(null);
 
   // Auto-open the builder if a draft survived a page refresh
@@ -1215,7 +1116,12 @@ export default function TemplatesView({ user, session, templates: userTemplatesP
 
   const handleDelete = async (template) => {
     if (!template?.id) return;
-    const ok = window.confirm(`Delete "${template.name}"? This can't be undone.`);
+    const ok = await confirm({
+      title: 'Delete this template?',
+      message: `"${template.name}" will be permanently removed from your library.`,
+      confirmLabel: 'Delete template',
+      variant: 'danger',
+    });
     if (!ok) return;
 
     // .select() returns the rows that were actually deleted. If RLS blocks the row,
@@ -1293,7 +1199,7 @@ export default function TemplatesView({ user, session, templates: userTemplatesP
       </div>
 
       {/* Standalone create-template banner — full width, always at the top */}
-      {renderCreateBanner(setShowBuilder)}
+      {renderCreateBanner(setShowBuilder, canBuild, onUpgrade)}
 
       {/* Grid */}
       {filteredTemplates.length === 0 ? (
@@ -1324,6 +1230,18 @@ export default function TemplatesView({ user, session, templates: userTemplatesP
           )}
         </div>
       )}
+
+      {/* Customize-template modal — copies a template into the user's library */}
+      <CustomizeTemplateModal
+        isOpen={!!customizingTemplate}
+        source={customizingTemplate}
+        session={session}
+        onClose={() => setCustomizingTemplate(null)}
+        onCreated={(newTemplate) => {
+          onTemplateAdded?.(newTemplate);
+          setCustomizingTemplate(null);
+        }}
+      />
 
       {/* Template Builder modal */}
       {showBuilder && (
@@ -1401,6 +1319,21 @@ export default function TemplatesView({ user, session, templates: userTemplatesP
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => {
+                    const tpl = selectedTemplate;
+                    setSelectedTemplate(null);
+                    // open the customize modal in the next tick so the preview modal closes first
+                    setTimeout(() => setCustomizingTemplate(tpl), 0);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#262626] border border-[#e5e5e5] dark:border-[#3a3a3a] text-[#262626] dark:text-white text-sm font-bold rounded-xl hover:border-[#075056] dark:hover:border-[#5eead4] hover:-translate-y-0.5 transition-all duration-200"
+                  title="Copy this template and edit your own version"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                  </svg>
+                  Customize
+                </button>
                 <button
                   onClick={() => {
                     setSelectedTemplate(null);

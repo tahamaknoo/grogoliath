@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Loader2, X } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import { apiFetch } from "../../lib/apiFetch";
+import { creditsRemaining, applySpend } from "../../lib/plans";
 import PRESET_TEMPLATES from "../constants/presetTemplates";
 
 const WORD_COUNTS = { short: 100, medium: 200, long: 400 };
@@ -238,9 +239,9 @@ ${filled}`.trim();
     if (!profile)                  { alert("Profile not loaded. Please wait."); return; }
     if (needsGenRows.length === 0) { alert("All rows already have content."); return; }
 
-    const pagesRemaining = (profile.page_limit || 0) - (profile.pages_used || 0);
+    const pagesRemaining = creditsRemaining(profile);
     if (needsGenRows.length > pagesRemaining) {
-      alert(`Only ${pagesRemaining} pages remaining on your plan. Upgrade to generate more.`);
+      alert(`Only ${pagesRemaining} credit${pagesRemaining === 1 ? '' : 's'} remaining on your plan. Upgrade or add a top-up pack to generate more.`);
       return;
     }
 
@@ -417,11 +418,10 @@ ${filled}`.trim();
       onUpdateSuccess?.();
 
       if (successCount > 0) {
-        const nextUsed = (profile.pages_used || 0) + successCount;
-        console.log(`[GG] Updating profile pages_used: ${profile.pages_used} → ${nextUsed}`);
-        const { error: profileError } = await supabase.from("profiles").update({ pages_used: nextUsed }).eq("id", session.user.id);
-        if (profileError) console.error(`[GG] Profile update failed:`, profileError);
-        else setProfile?.({ ...profile, pages_used: nextUsed });
+        // Deduct via the tamper-proof RPC (spends monthly credits first, then top-ups).
+        const { error: spendError } = await supabase.rpc("spend_credits", { p_amount: successCount });
+        if (spendError) console.error(`[GG] spend_credits failed:`, spendError);
+        else setProfile?.(applySpend(profile, successCount));
       }
 
       console.log(`[GG] ===== GENERATION COMPLETE: ${successCount} pages saved =====`);

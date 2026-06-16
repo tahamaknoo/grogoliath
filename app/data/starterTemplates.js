@@ -61,15 +61,29 @@ nav { border-bottom: 1px solid #e5e7eb; padding: 18px 0; }
 .faq-answer { padding: 0 24px 18px; font-size: .875rem; color: #6b7280; line-height: 1.75; }
 footer { padding: 32px 0; border-top: 1px solid #e5e7eb; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8125rem; color: #9ca3af; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <a href="#contact" class="nav-btn">Get in touch</a>
 </div></div></nav>
 
-<section class="hero"><div class="c">
+<section class="hero"><div class="c hero-grid">
+<div class="hero-text">
   <div class="hero-tag">{{SERVICE}} in {{LOCATION}}</div>
   <h1>{{HERO_HEADLINE}}</h1>
   <p>{{HERO_SUBHEADLINE}}</p>
@@ -77,6 +91,8 @@ footer { padding: 32px 0; border-top: 1px solid #e5e7eb; }
     <a href="#contact" class="btn-dark">Get a free quote</a>
     <a href="#services" class="btn-outline">Learn more</a>
   </div>
+</div>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
 </div></section>
 
 <section class="sec" id="services"><div class="c">
@@ -150,8 +166,8 @@ footer { padding: 32px 0; border-top: 1px solid #e5e7eb; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}. All rights reserved.</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}. All rights reserved.</span>
 </div></div></footer>
 </body></html>`
   },
@@ -222,15 +238,29 @@ nav { padding: 20px 0; border-bottom: 1px solid #1f1f1f; }
 .faq-answer { padding: 0 24px 18px; font-size: .875rem; color: #6b7280; line-height: 1.75; background: #111; }
 footer { padding: 32px 0; border-top: 1px solid #1f1f1f; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8125rem; color: #4b5563; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <a href="#contact" class="nav-btn">Get a quote</a>
 </div></div></nav>
 
-<section class="hero"><div class="c">
+<section class="hero"><div class="c hero-grid">
+<div class="hero-text">
   <div class="hero-eyebrow">{{SERVICE}} | {{LOCATION}}</div>
   <h1>{{HERO_HEADLINE}}</h1>
   <p>{{HERO_SUBHEADLINE}}</p>
@@ -243,6 +273,8 @@ footer { padding: 32px 0; border-top: 1px solid #1f1f1f; }
     <div><div class="stat-num">{{STAT_2_NUMBER}}</div><div class="stat-lbl">{{STAT_2_LABEL}}</div></div>
     <div><div class="stat-num">{{STAT_3_NUMBER}}</div><div class="stat-lbl">{{STAT_3_LABEL}}</div></div>
   </div>
+</div>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
 </div></section>
 
 <section class="sec" id="services"><div class="c">
@@ -305,8 +337,8 @@ footer { padding: 32px 0; border-top: 1px solid #1f1f1f; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}</span>
 </div></div></footer>
 </body></html>`
   },
@@ -374,15 +406,29 @@ nav { background: #faf6f0; padding: 20px 0; border-bottom: 1px solid #e8ddd0; po
 .faq-answer { padding: 0 4px 18px; font-size: .875rem; color: #78716c; line-height: 1.8; }
 footer { padding: 32px 0; border-top: 1px solid #e8ddd0; background: #faf6f0; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8125rem; color: #a8a29e; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <a href="#contact" class="nav-btn">Get in touch</a>
 </div></div></nav>
 
-<section class="hero"><div class="c">
+<section class="hero"><div class="c hero-grid">
+<div class="hero-text">
   <div class="hero-location">Serving {{LOCATION}}</div>
   <h1>{{HERO_HEADLINE}}</h1>
   <p>{{HERO_SUBHEADLINE}}</p>
@@ -390,6 +436,8 @@ footer { padding: 32px 0; border-top: 1px solid #e8ddd0; background: #faf6f0; }
     <a href="#contact" class="btn-amber">Free consultation</a>
     <a href="#services" class="btn-text">Our services</a>
   </div>
+</div>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
 </div></section>
 
 <hr class="divider">
@@ -477,8 +525,8 @@ footer { padding: 32px 0; border-top: 1px solid #e8ddd0; background: #faf6f0; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}. All rights reserved.</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}. All rights reserved.</span>
 </div></div></footer>
 </body></html>`
   },
@@ -551,11 +599,24 @@ nav { background: #0f172a; padding: 18px 0; }
 .faq-answer { padding: 0 24px 18px; font-size: .875rem; color: #64748b; line-height: 1.75; background: #fff; }
 footer { padding: 32px 0; border-top: 1px solid #e2e8f0; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8125rem; color: #94a3b8; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <div class="nav-links">
     <a href="#services" class="nav-link">Services</a>
     <a href="#about" class="nav-link">About</a>
@@ -563,7 +624,8 @@ footer { padding: 32px 0; border-top: 1px solid #e2e8f0; }
   </div>
 </div></div></nav>
 
-<section class="hero"><div class="c">
+<section class="hero"><div class="c hero-grid">
+<div class="hero-text">
   <div class="hero-badge">{{SERVICE}} | {{LOCATION}}</div>
   <h1>{{HERO_HEADLINE}}</h1>
   <p>{{HERO_SUBHEADLINE}}</p>
@@ -571,6 +633,8 @@ footer { padding: 32px 0; border-top: 1px solid #e2e8f0; }
     <a href="#contact" class="btn-blue">Schedule a consultation</a>
     <a href="#services" class="btn-ghost">Our services</a>
   </div>
+</div>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
 </div></section>
 
 <div class="trust-bar"><div class="c"><div class="trust-row">
@@ -655,8 +719,8 @@ footer { padding: 32px 0; border-top: 1px solid #e2e8f0; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}. All rights reserved.</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}. All rights reserved.</span>
 </div></div></footer>
 </body></html>`
   },
@@ -734,18 +798,32 @@ nav { padding: 20px 0; }
 .faq-answer { padding: 0 0 18px; font-size: .875rem; color: #6b7280; line-height: 1.8; }
 footer { padding: 32px 0; border-top: 2px solid #111; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8125rem; color: #9ca3af; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <div class="nav-right">
     <a href="#services" class="nav-link">Services</a>
     <a href="#contact" class="nav-btn">Get started</a>
   </div>
 </div></div></nav>
 
-<section class="hero"><div class="c">
+<section class="hero"><div class="c hero-grid">
+<div class="hero-text">
   <div class="hero-kicker">{{SERVICE}} | {{LOCATION}}</div>
   <h1>{{HERO_HEADLINE}}</h1>
   <div class="hero-deck">{{HERO_SUBHEADLINE}}</div>
@@ -753,6 +831,8 @@ footer { padding: 32px 0; border-top: 2px solid #111; }
     <a href="#contact" class="btn-dark">Get a free quote</a>
     <a href="#services" class="btn-outline">View services</a>
   </div>
+</div>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
 </div></section>
 
 <section class="sec" id="services"><div class="c">
@@ -827,8 +907,8 @@ footer { padding: 32px 0; border-top: 2px solid #111; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}. All rights reserved.</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}. All rights reserved.</span>
 </div></div></footer>
 </body></html>`
   },
@@ -896,15 +976,29 @@ nav { background: #fff; padding: 18px 0; border-bottom: 1px solid #e4e4e7; }
 .faq-answer { padding: 0 20px 18px; font-size: .875rem; color: #71717a; line-height: 1.75; }
 footer { background: #fff; padding: 32px 0; border-top: 1px solid #e4e4e7; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8125rem; color: #a1a1aa; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <a href="#contact" class="nav-btn">Contact us</a>
 </div></div></nav>
 
-<section class="hero"><div class="c">
+<section class="hero"><div class="c hero-grid">
+<div class="hero-text">
   <div class="hero-chip">{{SERVICE}} in {{LOCATION}}</div>
   <h1>{{HERO_HEADLINE}}</h1>
   <p>{{HERO_SUBHEADLINE}}</p>
@@ -912,6 +1006,8 @@ footer { background: #fff; padding: 32px 0; border-top: 1px solid #e4e4e7; }
     <a href="#contact" class="btn-main">Get started</a>
     <a href="#services" class="btn-soft">Learn more</a>
   </div>
+</div>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
 </div></section>
 
 <section class="sec" id="services"><div class="c">
@@ -998,8 +1094,8 @@ footer { background: #fff; padding: 32px 0; border-top: 1px solid #e4e4e7; }
 </div></div>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}</span>
 </div></div></footer>
 </body></html>`
   },
@@ -1073,11 +1169,24 @@ nav { padding: 18px 28px; display: flex; justify-content: space-between; align-i
 .faq-answer { padding: 0 24px 18px; font-size: .875rem; color: #6b7280; line-height: 1.75; }
 footer { padding: 32px 0; border-top: 1px solid #e5e7eb; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8125rem; color: #9ca3af; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav>
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <a href="#contact" class="nav-btn">Free quote</a>
 </nav>
 
@@ -1166,8 +1275,8 @@ footer { padding: 32px 0; border-top: 1px solid #e5e7eb; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}</span>
 </div></div></footer>
 </body></html>`
   },
@@ -1234,11 +1343,24 @@ nav { padding: 20px 0; border-bottom: 1px solid #f3f4f6; }
 .faq-answer { padding: 0 24px 18px; font-size: .875rem; color: #6b7280; line-height: 1.75; background: #fafafa; text-align: left; }
 footer { padding: 32px 0; border-top: 1px solid #f3f4f6; text-align: center; }
 .foot-text { font-size: .8125rem; color: #9ca3af; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <a href="#contact" class="nav-btn">Get in touch</a>
 </div></nav>
 
@@ -1415,11 +1537,24 @@ nav { background: #111; padding: 16px 0; }
 .faq-answer { padding: 0 20px 18px; font-size: .875rem; color: #6b7280; line-height: 1.75; }
 footer { padding: 24px 0; border-top: 1px solid #e5e7eb; }
 .foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: .8125rem; color: #9ca3af; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <div class="nav-phone">Call now: <span>+1 (555) 000-0000</span></div>
 </div></div></nav>
 
@@ -1513,8 +1648,8 @@ footer { padding: 24px 0; border-top: 1px solid #e5e7eb; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}. All rights reserved.</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}. All rights reserved.</span>
 </div></div></footer>
 </body></html>`
   },
@@ -1585,15 +1720,29 @@ nav { padding: 24px 0; border-bottom: 1px solid #1c1917; }
 footer { padding: 36px 0; border-top: 1px solid #1c1917; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 .foot-text { font-size: .8125rem; color: #44403c; letter-spacing: .04em; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <a href="#contact" class="nav-btn">Inquire now</a>
 </div></div></nav>
 
-<section class="hero"><div class="c">
+<section class="hero"><div class="c hero-grid">
+<div class="hero-text">
   <div class="hero-ornament">{{SERVICE}} | {{LOCATION}}</div>
   <h1>{{HERO_HEADLINE}}</h1>
   <p>{{HERO_SUBHEADLINE}}</p>
@@ -1601,6 +1750,8 @@ footer { padding: 36px 0; border-top: 1px solid #1c1917; }
     <a href="#contact" class="btn-gold">Schedule a consultation</a>
     <a href="#services" class="btn-ghost">Our services</a>
   </div>
+</div>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
 </div></section>
 
 <section class="sec" id="services"><div class="c">
@@ -1760,11 +1911,24 @@ nav { padding: 18px 0; border-bottom: 1px solid #f0fdf4; background: #fff; }
 .btn-white { background: #fff; color: #0d9488; padding: 14px 36px; border-radius: 8px; font-weight: 800; font-size: .9375rem; display: inline-block; }
 footer { padding: 32px 0; border-top: 1px solid #f0fdf4; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8125rem; color: #9ca3af; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <div class="nav-links">
     <a href="#services" class="nav-link">Services</a>
     <a href="#contact" class="nav-btn">Get a quote</a>
@@ -1869,8 +2033,8 @@ footer { padding: 32px 0; border-top: 1px solid #f0fdf4; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}. All rights reserved.</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}. All rights reserved.</span>
 </div></div></footer>
 </body></html>`
   },
@@ -1942,15 +2106,29 @@ nav { background: #111; padding: 16px 0; }
 .btn-orange-lg { background: #f97316; color: #fff; padding: 15px 36px; border-radius: 6px; font-weight: 900; font-size: 1rem; display: inline-block; white-space: nowrap; }
 footer { padding: 24px 0; border-top: 1px solid #f3f4f6; }
 .foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: .8125rem; color: #9ca3af; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <div class="nav-phone">{{PHONE}}</div>
 </div></div></nav>
 
-<section class="hero"><div class="c">
+<section class="hero"><div class="c hero-grid">
+<div class="hero-text">
   <div class="hero-badge">Serving {{LOCATION}}</div>
   <h1>{{HERO_HEADLINE}}</h1>
   <p class="hero-lead">{{HERO_SUBHEADLINE}}</p>
@@ -1958,6 +2136,8 @@ footer { padding: 24px 0; border-top: 1px solid #f3f4f6; }
     <a href="#contact" class="btn-orange">Get a free quote</a>
     <a href="#services" class="btn-ghost">Our services</a>
   </div>
+</div>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
 </div></section>
 
 <div class="stats-band"><div class="c">
@@ -2040,8 +2220,8 @@ footer { padding: 24px 0; border-top: 1px solid #f3f4f6; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}. All rights reserved.</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}. All rights reserved.</span>
 </div></div></footer>
 </body></html>`
   },
@@ -2115,15 +2295,29 @@ nav { background: #1d4ed8; padding: 18px 0; }
 .btn-white { background: #fff; color: #1d4ed8; padding: 14px 36px; border-radius: 8px; font-weight: 800; font-size: .9375rem; display: inline-block; }
 footer { background: #fff; padding: 32px 0; border-top: 1px solid #e2e8f0; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8125rem; color: #94a3b8; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <a href="#contact" class="nav-btn">Get a free quote</a>
 </div></div></nav>
 
-<section class="hero sec-bg-white"><div class="c">
+<section class="hero sec-bg-white"><div class="c hero-grid">
+<div class="hero-text">
   <div class="hero-tag">{{SERVICE}} in {{LOCATION}}</div>
   <h1>{{HERO_HEADLINE}}</h1>
   <p>{{HERO_SUBHEADLINE}}</p>
@@ -2137,6 +2331,8 @@ footer { background: #fff; padding: 32px 0; border-top: 1px solid #e2e8f0; }
     <div class="badge"><div class="badge-dot"></div><div class="badge-text">{{TRUST_3}}</div></div>
     <div class="badge"><div class="badge-dot"></div><div class="badge-text">{{TRUST_4}}</div></div>
   </div>
+</div>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
 </div></section>
 
 <section class="sec" id="services"><div class="c">
@@ -2210,8 +2406,8 @@ footer { background: #fff; padding: 32px 0; border-top: 1px solid #e2e8f0; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}. All rights reserved.</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}. All rights reserved.</span>
 </div></div></footer>
 </body></html>`
   },
@@ -2291,11 +2487,24 @@ nav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 18px 0; }
 .btn-sky-lg { background: #0ea5e9; color: #fff; padding: 15px 36px; border-radius: 7px; font-weight: 700; font-size: 1rem; display: inline-block; white-space: nowrap; }
 footer { padding: 32px 0; border-top: 1px solid #e5e7eb; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8125rem; color: #94a3b8; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <div class="nav-links">
     <a href="#services" class="nav-link">Services</a>
     <a href="#about" class="nav-link">About</a>
@@ -2303,7 +2512,8 @@ footer { padding: 32px 0; border-top: 1px solid #e5e7eb; }
   </div>
 </div></div></nav>
 
-<section class="hero"><div class="c">
+<section class="hero"><div class="c hero-grid">
+<div class="hero-text">
   <div class="hero-eyebrow">{{SERVICE}} | {{LOCATION}}</div>
   <h1>{{HERO_HEADLINE}}</h1>
   <p>{{HERO_SUBHEADLINE}}</p>
@@ -2316,6 +2526,8 @@ footer { padding: 32px 0; border-top: 1px solid #e5e7eb; }
     <div class="trust-item"><div class="trust-dot"></div>{{TRUST_2}}</div>
     <div class="trust-item"><div class="trust-dot"></div>{{TRUST_3}}</div>
   </div>
+</div>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
 </div></section>
 
 <section class="sec" id="services"><div class="c">
@@ -2391,8 +2603,8 @@ footer { padding: 32px 0; border-top: 1px solid #e5e7eb; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
-  <span>&copy; 2024 {{KEYWORD}}. All rights reserved.</span>
+  <span>{{SERVICE}}</span>
+  <span>&copy; 2024 {{SERVICE}}. All rights reserved.</span>
 </div></div></footer>
 </body></html>`
   },
@@ -2466,18 +2678,32 @@ nav { padding: 20px 0; border-bottom: 1px solid #1a1a1a; }
 .btn-dark { background: #0a0a0a; color: #fff; padding: 15px 36px; border-radius: 7px; font-weight: 800; font-size: 1rem; display: inline-block; }
 footer { padding: 32px 0; border-top: 1px solid #1a1a1a; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: .8125rem; color: #525252; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <div class="nav-links">
     <a href="#services" class="nav-link">Services</a>
     <a href="#contact" class="nav-btn">Work with us</a>
   </div>
 </div></div></nav>
 
-<section class="hero"><div class="c">
+<section class="hero"><div class="c hero-grid">
+<div class="hero-text">
   <div class="hero-tag">{{SERVICE}} | {{LOCATION}}</div>
   <h1>{{HERO_HEADLINE}}</h1>
   <p>{{HERO_SUBHEADLINE}}</p>
@@ -2490,6 +2716,8 @@ footer { padding: 32px 0; border-top: 1px solid #1a1a1a; }
     <div><div class="stat-num">{{STAT_2_NUMBER}}</div><div class="stat-lbl">{{STAT_2_LABEL}}</div></div>
     <div><div class="stat-num">{{STAT_3_NUMBER}}</div><div class="stat-lbl">{{STAT_3_LABEL}}</div></div>
   </div>
+</div>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
 </div></section>
 
 <section class="sec" id="services"><div class="c">
@@ -2563,7 +2791,7 @@ footer { padding: 32px 0; border-top: 1px solid #1a1a1a; }
 </div></section>
 
 <footer><div class="c"><div class="foot">
-  <span>{{KEYWORD}} | {{LOCATION}}</span>
+  <span>{{SERVICE}}</span>
   <span>&copy; 2024 {{KEYWORD}}.</span>
 </div></div></footer>
 </body></html>`
@@ -2637,11 +2865,24 @@ nav { background: #f5f0e8; padding: 28px 0; border-bottom: 1px solid #d6c9b0; }
 footer { background: #f5f0e8; padding: 36px 0; border-top: 1px solid #d6c9b0; }
 .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 .foot-text { font-size: .8125rem; color: #a89880; letter-spacing: .04em; }
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
 <nav><div class="c"><div class="nav-row">
-  <div class="logo">{{KEYWORD}}</div>
+  <div class="logo">{{SERVICE}}</div>
   <a href="#contact" class="nav-btn">Enquire</a>
 </div></div></nav>
 
@@ -2749,7 +2990,7 @@ a{color:#2563eb;text-decoration:none}
 a:hover{text-decoration:underline}
 img{display:block;max-width:100%}
 .wrap{max-width:740px;margin:0 auto;padding:0 28px}
-nav{border-bottom:1px solid #e5e7eb;height:54px;display:flex;align-items:center;position:sticky;top:0;background:#fff;z-index:100}
+nav{border-bottom:1px solid #e5e7eb;padding:12px 0;position:sticky;top:0;background:#fff;z-index:100}
 .nav-in{display:flex;justify-content:space-between;align-items:center;width:100%}
 .nav-logo{font-weight:800;font-size:16px;color:#111;text-decoration:none}
 .nav-btn{background:#111;color:#fff;padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none}
@@ -2803,6 +3044,19 @@ footer{border-top:1px solid #e5e7eb;padding:24px 0;margin-top:16px}
 .verdict-box{background:#111;color:#fff;border-radius:8px;padding:24px 28px;margin:28px 0}
 .verdict-box h3{font-size:18px;font-weight:700;color:#fff;margin-bottom:10px}
 .verdict-box p{color:#d1d5db;font-size:15px;margin:0}
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
@@ -2814,6 +3068,7 @@ footer{border-top:1px solid #e5e7eb;padding:24px 0;margin-top:16px}
 
 <div class="wrap">
   <div class="post-header">
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
     <div class="cat-tag">{{POST_CATEGORY}}</div>
     <h1>{{POST_TITLE}}</h1>
     <div class="meta">
@@ -2953,7 +3208,7 @@ footer{border-top:1px solid #e5e7eb;padding:24px 0;margin-top:16px}
 
 <footer><div class="wrap"><div class="foot-in">
   <span>{{SITE_NAME}}</span>
-  <span>&copy; 2025 {{SITE_NAME}}</span>
+  <span>&copy; 2026 {{SITE_NAME}}</span>
 </div></div></footer>
 
 </body></html>`
@@ -2976,7 +3231,7 @@ a{color:#2563eb;text-decoration:none}
 a:hover{text-decoration:underline}
 img{display:block;max-width:100%}
 .wrap{max-width:740px;margin:0 auto;padding:0 28px}
-nav{border-bottom:1px solid #e5e7eb;height:54px;display:flex;align-items:center;position:sticky;top:0;background:#fff;z-index:100}
+nav{border-bottom:1px solid #e5e7eb;padding:12px 0;position:sticky;top:0;background:#fff;z-index:100}
 .nav-in{display:flex;justify-content:space-between;align-items:center;width:100%}
 .nav-logo{font-weight:800;font-size:16px;color:#111;text-decoration:none}
 .nav-btn{background:#111;color:#fff;padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none}
@@ -3047,6 +3302,19 @@ footer{border-top:1px solid #e5e7eb;padding:24px 0;margin-top:16px}
 .trouble-item:last-child{border:none;padding:0;margin:0}
 .trouble-q{font-weight:600;font-size:15px;color:#111;margin-bottom:6px}
 .trouble-a{font-size:14px;color:#6b7280}
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
@@ -3058,6 +3326,7 @@ footer{border-top:1px solid #e5e7eb;padding:24px 0;margin-top:16px}
 
 <div class="wrap">
   <div class="post-header">
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
     <div class="cat-tag">{{POST_CATEGORY}}</div>
     <h1>{{POST_TITLE}}</h1>
     <div class="meta">
@@ -3184,7 +3453,7 @@ footer{border-top:1px solid #e5e7eb;padding:24px 0;margin-top:16px}
 
 <footer><div class="wrap"><div class="foot-in">
   <span>{{SITE_NAME}}</span>
-  <span>&copy; 2025 {{SITE_NAME}}</span>
+  <span>&copy; 2026 {{SITE_NAME}}</span>
 </div></div></footer>
 
 </body></html>`
@@ -3207,7 +3476,7 @@ a{color:#2563eb;text-decoration:none}
 a:hover{text-decoration:underline}
 img{display:block;max-width:100%}
 .wrap{max-width:740px;margin:0 auto;padding:0 28px}
-nav{border-bottom:1px solid #e5e7eb;height:54px;display:flex;align-items:center;position:sticky;top:0;background:#fff;z-index:100}
+nav{border-bottom:1px solid #e5e7eb;padding:12px 0;position:sticky;top:0;background:#fff;z-index:100}
 .nav-in{display:flex;justify-content:space-between;align-items:center;width:100%}
 .nav-logo{font-weight:800;font-size:16px;color:#111;text-decoration:none}
 .nav-btn{background:#111;color:#fff;padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none}
@@ -3272,6 +3541,19 @@ footer{border-top:1px solid #e5e7eb;padding:24px 0;margin-top:16px}
 .choose-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .choose-card h4{font-size:14px;font-weight:600;color:#111;margin-bottom:4px}
 .choose-card p{font-size:13px;color:#6b7280;margin:0}
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
 </style>
 </head>
 <body>
@@ -3283,6 +3565,7 @@ footer{border-top:1px solid #e5e7eb;padding:24px 0;margin-top:16px}
 
 <div class="wrap">
   <div class="post-header">
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
     <div class="cat-tag">{{POST_CATEGORY}}</div>
     <h1>{{POST_TITLE}}</h1>
     <div class="meta">
@@ -3443,9 +3726,571 @@ footer{border-top:1px solid #e5e7eb;padding:24px 0;margin-top:16px}
 
 <footer><div class="wrap"><div class="foot-in">
   <span>{{SITE_NAME}}</span>
-  <span>&copy; 2025 {{SITE_NAME}}</span>
+  <span>&copy; 2026 {{SITE_NAME}}</span>
 </div></div></footer>
 
+</body></html>`
+  },
+  // ── Additional production-grade blog templates ───────────────────────────────
+  // System fonts only. No Google Fonts. Real-world layouts.
+  {
+    id: 'starter-20',
+    name: 'Substack-Style Letter',
+    category: 'Blog',
+    structure: `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{POST_TITLE}}</title>
+<meta name="description" content="{{META_DESCRIPTION}}">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--text:#1a1a1a;--muted:#525252;--soft:#737373;--line:#e5e5e5;--bg:#fff;--accent:#1a1a1a}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:var(--bg);line-height:1.65;font-size:17px;-webkit-font-smoothing:antialiased}
+a{color:var(--text);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{text-decoration-thickness:2px}
+.wrap{max-width:680px;margin:0 auto;padding:0 24px}
+nav{padding:20px 0;border-bottom:1px solid var(--line)}
+.nav-row{display:flex;justify-content:space-between;align-items:center}
+.brand{font-size:18px;font-weight:700;text-decoration:none}
+.brand-sub{font-size:13px;color:var(--muted);margin-left:10px;font-weight:400}
+.nav-cta{padding:7px 14px;background:var(--text);color:#fff;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none}
+header.post{padding:48px 0 32px}
+.cat{display:inline-block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:16px;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px}
+h1.title{font-size:34px;font-weight:800;line-height:1.2;letter-spacing:-.015em;margin-bottom:14px;color:var(--text)}
+.deck{font-size:18px;color:var(--muted);line-height:1.55;margin-bottom:28px}
+.byline{display:flex;align-items:center;gap:12px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:14px}
+.avatar{width:40px;height:40px;border-radius:50%;background:#e5e5e5;display:flex;align-items:center;justify-content:center;color:var(--text);font-weight:700;font-size:14px;flex-shrink:0}
+.author{font-weight:600;color:var(--text)}
+.meta-line{color:var(--soft);font-size:13px;margin-top:1px}
+article{padding:36px 0 64px;font-size:17px;color:var(--text)}
+article p{margin-bottom:22px;line-height:1.65}
+article h2{font-size:24px;font-weight:700;line-height:1.3;margin:44px 0 14px;letter-spacing:-.01em}
+article h3{font-size:19px;font-weight:700;margin:32px 0 10px}
+article ul,article ol{margin:0 0 22px 24px}
+article li{margin-bottom:6px;line-height:1.6}
+article blockquote{padding:4px 0 4px 20px;margin:24px 0;border-left:3px solid var(--text);color:var(--muted);font-style:italic;font-size:17px}
+article strong{font-weight:700;color:var(--text)}
+hr.divider{border:none;border-top:1px solid var(--line);margin:32px 0}
+.callout{background:#fafafa;border:1px solid var(--line);border-radius:6px;padding:18px 20px;margin:24px 0;font-size:15px;color:var(--text)}
+.callout-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.subscribe{margin:48px 0 0;padding:28px;background:#fafafa;border-radius:8px;text-align:center}
+.subscribe h3{font-size:20px;font-weight:700;margin-bottom:8px}
+.subscribe p{font-size:14px;color:var(--muted);margin-bottom:18px}
+.subscribe-form{display:flex;gap:8px;max-width:380px;margin:0 auto}
+.subscribe input{flex:1;padding:11px 14px;border:1px solid var(--line);border-radius:5px;font-size:14px;font-family:inherit;background:#fff;outline:none}
+.subscribe input:focus{border-color:var(--text)}
+.subscribe button{padding:11px 18px;background:var(--text);color:#fff;border:none;border-radius:5px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.share-row{display:flex;gap:8px;margin:32px 0 0;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);align-items:center;flex-wrap:wrap}
+.share-btn{padding:6px 12px;border:1px solid var(--line);border-radius:4px;color:var(--text);text-decoration:none;font-size:12px;font-weight:500}
+.share-btn:hover{background:#fafafa;text-decoration:none}
+footer{padding:32px 0;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.foot-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+@media(max-width:560px){h1.title{font-size:28px}.deck{font-size:16px}.subscribe-form{flex-direction:column}.subscribe input,.subscribe button{width:100%}}
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
+</style>
+</head>
+<body>
+<nav><div class="wrap nav-row">
+<a href="#" class="brand">{{SITE_NAME}}<span class="brand-sub">{{TAGLINE}}</span></a>
+<a href="#" class="nav-cta">Subscribe</a>
+</div></nav>
+
+<header class="post"><div class="wrap">
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
+<a href="#" class="cat">{{CATEGORY_NAME}}</a>
+<h1 class="title">{{POST_TITLE}}</h1>
+<p class="deck">{{DECK}}</p>
+<div class="byline">
+<div class="avatar">{{AUTHOR_INITIALS}}</div>
+<div><div class="author">{{AUTHOR_NAME}}</div><div class="meta-line">{{PUBLISH_DATE}} · {{READING_TIME}}</div></div>
+</div>
+</div></header>
+
+<article><div class="wrap">
+
+<p>{{OPENING_PARAGRAPH}}</p>
+
+<p>{{SECOND_PARAGRAPH}}</p>
+
+<h2>{{SECTION_1_HEADLINE}}</h2>
+<p>{{SECTION_1_BODY_1}}</p>
+<p>{{SECTION_1_BODY_2}}</p>
+
+<blockquote>{{PULLQUOTE_1}}</blockquote>
+
+<h2>{{SECTION_2_HEADLINE}}</h2>
+<p>{{SECTION_2_BODY_1}}</p>
+
+<div class="callout">
+<div class="callout-label">Worth knowing</div>
+{{CALLOUT_TEXT}}
+</div>
+
+<p>{{SECTION_2_BODY_2}}</p>
+
+<h3>{{SUB_2A_HEADLINE}}</h3>
+<p>{{SUB_2A_BODY}}</p>
+
+<h3>{{SUB_2B_HEADLINE}}</h3>
+<p>{{SUB_2B_BODY}}</p>
+
+<hr class="divider">
+
+<h2>{{SECTION_3_HEADLINE}}</h2>
+<p>{{SECTION_3_BODY_1}}</p>
+<p>{{SECTION_3_BODY_2}}</p>
+
+<h2>{{CLOSING_HEADLINE}}</h2>
+<p>{{CLOSING_BODY}}</p>
+
+<div class="subscribe">
+<h3>{{CTA_HEADLINE}}</h3>
+<p>{{CTA_SUBTEXT}}</p>
+<form class="subscribe-form" onsubmit="return false">
+<input type="email" placeholder="your@email.com">
+<button type="submit">{{CTA_BUTTON}}</button>
+</form>
+</div>
+
+<div class="share-row">
+<span>Share this post:</span>
+<a href="#" class="share-btn">Copy link</a>
+<a href="#" class="share-btn">X / Twitter</a>
+<a href="#" class="share-btn">LinkedIn</a>
+</div>
+
+</div></article>
+
+<footer><div class="wrap foot-row">
+<span>&copy; 2026 {{SITE_NAME}}</span>
+<span>{{TAGLINE}}</span>
+</div></footer>
+</body></html>`
+  },
+  {
+    id: 'starter-21',
+    name: 'SaaS Engineering Blog',
+    category: 'Blog',
+    structure: `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{POST_TITLE}}</title>
+<meta name="description" content="{{META_DESCRIPTION}}">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--text:#0f172a;--body:#334155;--muted:#64748b;--soft:#94a3b8;--line:#e2e8f0;--bg:#fff;--soft-bg:#f8fafc;--brand:#3b82f6}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--body);background:var(--bg);line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+code,pre,.mono{font-family:ui-monospace,"SF Mono",Menlo,Monaco,Consolas,"Courier New",monospace}
+a{color:var(--brand);text-decoration:none}
+a:hover{text-decoration:underline}
+nav{background:#fff;border-bottom:1px solid var(--line);padding:14px 0;position:sticky;top:0;z-index:10}
+.nav-wrap{max-width:1200px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center}
+.brand{font-weight:700;font-size:15px;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:8px}
+.brand-mark{width:22px;height:22px;background:var(--text);border-radius:5px}
+.nav-links{display:flex;gap:24px;font-size:14px;color:var(--muted);font-weight:500;align-items:center}
+.nav-links a{color:var(--muted)}
+.nav-links a:hover{color:var(--text);text-decoration:none}
+.nav-cta{padding:7px 14px;background:var(--text);color:#fff!important;border-radius:6px;font-size:13px;font-weight:600}
+.nav-cta:hover{text-decoration:none;background:#1e293b}
+.layout{max-width:1200px;margin:0 auto;padding:36px 28px 80px;display:grid;grid-template-columns:1fr;gap:48px}
+@media(min-width:960px){.layout{grid-template-columns:1fr 220px;gap:64px}}
+article{max-width:720px}
+.crumbs{font-size:13px;color:var(--muted);margin-bottom:24px}
+.crumbs a{color:var(--muted)}
+.crumbs a:hover{color:var(--text)}
+.crumbs .sep{margin:0 6px;color:var(--soft)}
+.tag{display:inline-block;font-size:12px;font-weight:600;color:var(--brand);background:#eff6ff;padding:3px 8px;border-radius:4px;margin-bottom:16px}
+h1.title{font-size:36px;font-weight:800;line-height:1.2;letter-spacing:-.02em;color:var(--text);margin-bottom:16px}
+.deck{font-size:18px;color:var(--muted);line-height:1.55;margin-bottom:28px}
+.meta{display:flex;align-items:center;gap:14px;padding-bottom:24px;border-bottom:1px solid var(--line);margin-bottom:36px;font-size:14px;flex-wrap:wrap}
+.author-pill{display:flex;align-items:center;gap:10px}
+.author-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.author-name{font-weight:600;color:var(--text);font-size:14px;line-height:1.2}
+.author-role{font-size:12px;color:var(--muted);line-height:1.2}
+.meta-dot{color:var(--soft)}
+.meta-item{color:var(--muted)}
+.article-body{font-size:16px;color:var(--body);line-height:1.7}
+.article-body p{margin-bottom:18px}
+.article-body h2{font-size:26px;font-weight:700;color:var(--text);letter-spacing:-.01em;margin:44px 0 14px;padding-top:8px}
+.article-body h3{font-size:18px;font-weight:700;color:var(--text);margin:32px 0 10px}
+.article-body ul,.article-body ol{margin:0 0 18px 24px}
+.article-body li{margin-bottom:6px}
+.article-body code{background:#f1f5f9;color:#0f172a;padding:1.5px 6px;border-radius:4px;font-size:.92em;font-weight:500}
+.article-body pre{background:#0f172a;color:#e2e8f0;padding:16px 18px;border-radius:8px;margin:20px 0;overflow-x:auto;font-size:13.5px;line-height:1.55}
+.article-body pre code{background:none;color:inherit;padding:0;font-size:inherit}
+.article-body blockquote{padding:14px 18px;background:#f8fafc;border-left:3px solid var(--brand);margin:20px 0;color:var(--text);font-size:15px;border-radius:0 6px 6px 0}
+.tldr{background:var(--soft-bg);border:1px solid var(--line);border-radius:8px;padding:20px 22px;margin-bottom:32px}
+.tldr-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);margin-bottom:10px}
+.tldr ul{list-style:none;margin:0}
+.tldr li{padding-left:18px;position:relative;margin-bottom:6px;font-size:14px;color:var(--text)}
+.tldr li::before{content:"→";position:absolute;left:0;color:var(--brand);font-weight:700}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:24px 0}
+.metric{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px}
+.metric-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.metric-value{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.01em;line-height:1.1}
+.metric-trend{font-size:12px;font-weight:600;color:#059669;margin-top:4px}
+.toc{font-size:14px}
+@media(max-width:959px){.toc{display:none}}
+@media(min-width:960px){.toc{position:sticky;top:80px;align-self:start}}
+.toc-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.toc ul{list-style:none}
+.toc li{margin-bottom:8px;padding-left:10px;border-left:2px solid var(--line);line-height:1.4}
+.toc li:first-child{border-left-color:var(--brand)}
+.toc a{color:var(--muted);font-weight:500;display:block;padding:2px 0}
+.toc a:hover{color:var(--text);text-decoration:none}
+.cta-card{margin:48px 0 0;padding:28px;background:var(--text);border-radius:10px;color:#fff;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.cta-card-text{flex:1;min-width:240px}
+.cta-card h3{font-size:18px;font-weight:700;color:#fff;margin-bottom:6px}
+.cta-card p{color:#cbd5e1;margin-bottom:0;font-size:14px}
+.cta-card-btn{padding:10px 22px;background:#fff;color:var(--text);border-radius:6px;font-weight:600;font-size:14px;white-space:nowrap}
+.cta-card-btn:hover{background:#f1f5f9;text-decoration:none}
+.related{margin-top:48px;padding-top:32px;border-top:1px solid var(--line)}
+.related-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.related-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.related-card{padding:16px;border:1px solid var(--line);border-radius:8px;text-decoration:none;display:block}
+.related-card:hover{border-color:var(--text);text-decoration:none}
+.related-tag{font-size:11px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.related-title{font-size:14px;font-weight:600;color:var(--text);line-height:1.4}
+footer{background:var(--soft-bg);border-top:1px solid var(--line);padding:32px 0;font-size:13px;color:var(--muted)}
+.foot-wrap{max-width:1200px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
+</style>
+</head>
+<body>
+<nav><div class="nav-wrap">
+<a href="#" class="brand"><span class="brand-mark"></span><span>{{SITE_NAME}}</span></a>
+<div class="nav-links">
+<a href="#">Engineering</a>
+<a href="#">Product</a>
+<a href="#">Changelog</a>
+<a href="#" class="nav-cta">Sign up</a>
+</div>
+</div></nav>
+
+<div class="layout">
+
+<article>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
+<div class="crumbs"><a href="#">Blog</a><span class="sep">/</span><a href="#">{{CATEGORY_NAME}}</a></div>
+<span class="tag">{{TOPIC_TAG}}</span>
+<h1 class="title">{{POST_TITLE}}</h1>
+<p class="deck">{{DECK}}</p>
+
+<div class="meta">
+<div class="author-pill">
+<div class="author-avatar">{{AUTHOR_INITIALS}}</div>
+<div><div class="author-name">{{AUTHOR_NAME}}</div><div class="author-role">{{AUTHOR_ROLE}}</div></div>
+</div>
+<span class="meta-dot">·</span>
+<span class="meta-item">{{PUBLISH_DATE}}</span>
+<span class="meta-dot">·</span>
+<span class="meta-item">{{READING_TIME}}</span>
+</div>
+
+<div class="tldr">
+<div class="tldr-label">In this post</div>
+<ul>
+<li>{{TLDR_1}}</li>
+<li>{{TLDR_2}}</li>
+<li>{{TLDR_3}}</li>
+<li>{{TLDR_4}}</li>
+</ul>
+</div>
+
+<div class="article-body">
+<p>{{INTRO_PARAGRAPH}}</p>
+
+<h2>{{SECTION_1_HEADLINE}}</h2>
+<p>{{SECTION_1_BODY_1}}</p>
+<p>{{SECTION_1_BODY_2}}</p>
+
+<div class="metrics">
+<div class="metric"><div class="metric-label">{{METRIC_1_LABEL}}</div><div class="metric-value">{{METRIC_1_VALUE}}</div><div class="metric-trend">{{METRIC_1_TREND}}</div></div>
+<div class="metric"><div class="metric-label">{{METRIC_2_LABEL}}</div><div class="metric-value">{{METRIC_2_VALUE}}</div><div class="metric-trend">{{METRIC_2_TREND}}</div></div>
+<div class="metric"><div class="metric-label">{{METRIC_3_LABEL}}</div><div class="metric-value">{{METRIC_3_VALUE}}</div><div class="metric-trend">{{METRIC_3_TREND}}</div></div>
+</div>
+
+<h2>{{SECTION_2_HEADLINE}}</h2>
+<p>{{SECTION_2_BODY_1}}</p>
+
+<blockquote>{{INSIGHT_QUOTE}}</blockquote>
+
+<h3>{{SUB_2A_HEADLINE}}</h3>
+<p>{{SUB_2A_BODY}}</p>
+
+<h3>{{SUB_2B_HEADLINE}}</h3>
+<p>{{SUB_2B_BODY}}</p>
+
+<h2>{{SECTION_3_HEADLINE}}</h2>
+<p>{{SECTION_3_BODY_1}}</p>
+<p>{{SECTION_3_BODY_2}}</p>
+
+<h2>{{CONCLUSION_HEADLINE}}</h2>
+<p>{{CONCLUSION_BODY}}</p>
+</div>
+
+<div class="cta-card">
+<div class="cta-card-text">
+<h3>{{CTA_HEADLINE}}</h3>
+<p>{{CTA_SUBTEXT}}</p>
+</div>
+<a href="#" class="cta-card-btn">{{CTA_BUTTON}}</a>
+</div>
+
+<div class="related">
+<div class="related-label">Related reading</div>
+<div class="related-grid">
+<a href="#" class="related-card"><div class="related-tag">{{RELATED_1_TAG}}</div><div class="related-title">{{RELATED_1_TITLE}}</div></a>
+<a href="#" class="related-card"><div class="related-tag">{{RELATED_2_TAG}}</div><div class="related-title">{{RELATED_2_TITLE}}</div></a>
+<a href="#" class="related-card"><div class="related-tag">{{RELATED_3_TAG}}</div><div class="related-title">{{RELATED_3_TITLE}}</div></a>
+</div>
+</div>
+</article>
+
+<aside class="toc">
+<div class="toc-label">Table of contents</div>
+<ul>
+<li><a href="#">{{SECTION_1_HEADLINE}}</a></li>
+<li><a href="#">{{SECTION_2_HEADLINE}}</a></li>
+<li><a href="#">{{SECTION_3_HEADLINE}}</a></li>
+<li><a href="#">{{CONCLUSION_HEADLINE}}</a></li>
+</ul>
+</aside>
+
+</div>
+
+<footer><div class="foot-wrap">
+<span>&copy; 2026 {{SITE_NAME}}</span>
+<span>Built for the long form.</span>
+</div></footer>
+</body></html>`
+  },
+  {
+    id: 'starter-22',
+    name: 'Modern News Article',
+    category: 'Blog',
+    structure: `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{POST_TITLE}}</title>
+<meta name="description" content="{{META_DESCRIPTION}}">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--text:#171717;--body:#404040;--muted:#737373;--soft:#a3a3a3;--line:#e5e5e5;--bg:#fafafa;--card:#fff;--accent:#dc2626}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--body);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--text);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+.top{background:var(--card);border-bottom:1px solid var(--line)}
+.top-row{max-width:1140px;margin:0 auto;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);flex-wrap:wrap;gap:10px}
+.top-date{font-weight:500}
+.top-actions{display:flex;gap:16px}
+.top-actions a{color:var(--muted)}
+nav{background:var(--card);border-bottom:1px solid var(--line);padding:18px 0}
+.nav-wrap{max-width:1140px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.brand{font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--text);text-decoration:none}
+.nav-sections{display:flex;gap:24px;font-size:14px;font-weight:500;align-items:center;flex-wrap:wrap}
+.nav-sections a{color:var(--muted)}
+.nav-sections a:hover{color:var(--text);text-decoration:none}
+.nav-cta{padding:6px 14px;background:var(--accent);color:#fff!important;border-radius:4px;font-weight:600;font-size:13px}
+.nav-cta:hover{text-decoration:none;background:#b91c1c}
+main{max-width:760px;margin:0 auto;padding:36px 28px 60px;background:var(--card);border-left:1px solid var(--line);border-right:1px solid var(--line)}
+@media(max-width:780px){main{border:none}}
+.section-tag{display:inline-block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:18px;text-decoration:none}
+.section-tag:hover{text-decoration:underline}
+h1.title{font-size:38px;font-weight:800;line-height:1.15;letter-spacing:-.02em;color:var(--text);margin-bottom:14px}
+.deck{font-size:19px;color:var(--muted);line-height:1.5;margin-bottom:28px}
+.byline-row{display:flex;align-items:center;gap:14px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:32px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.by-author{display:flex;align-items:center;gap:10px}
+.by-avatar{width:34px;height:34px;border-radius:50%;background:#404040;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.by-name{color:var(--text);font-weight:600;font-size:14px}
+.by-affiliation{font-size:12px;color:var(--muted)}
+.by-sep{color:var(--soft)}
+.share-icons{margin-left:auto;display:flex;gap:8px}
+.share-icons a{width:32px;height:32px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;font-weight:600}
+.share-icons a:hover{background:#f5f5f5;text-decoration:none;color:var(--text)}
+.dateline{font-size:13px;color:var(--muted);margin-bottom:22px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.dateline strong{color:var(--text);font-weight:700}
+article{font-size:17px;color:var(--body);line-height:1.7}
+article p{margin-bottom:20px}
+article p:first-of-type{font-size:18px}
+article h2{font-size:24px;font-weight:700;color:var(--text);line-height:1.3;margin:36px 0 12px;letter-spacing:-.01em}
+article h3{font-size:18px;font-weight:700;color:var(--text);margin:28px 0 10px}
+article ul,article ol{margin:0 0 20px 24px}
+article li{margin-bottom:6px}
+article blockquote{margin:24px 0;padding:20px 24px;background:#fef2f2;border-left:4px solid var(--accent);border-radius:0 6px 6px 0;font-size:18px;color:var(--text);font-weight:500;line-height:1.5;font-style:italic}
+.fact-box{margin:28px 0;padding:20px 22px;background:#f5f5f5;border-radius:6px}
+.fact-box-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.fact-box h4{font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px}
+.fact-box p{font-size:14px;color:var(--body);margin-bottom:0;line-height:1.6}
+.key-facts{margin:32px 0;padding:24px;border:1px solid var(--line);border-radius:6px;background:#fafafa}
+.key-facts-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+.key-facts ul{list-style:none;margin:0}
+.key-facts li{padding-left:24px;position:relative;margin-bottom:8px;font-size:15px;color:var(--text);line-height:1.5}
+.key-facts li::before{content:"•";position:absolute;left:8px;color:var(--accent);font-weight:700;font-size:18px;line-height:1.4}
+.continue{margin:40px 0 0;padding:24px 0 0;border-top:2px solid var(--text);font-size:13px}
+.continue-label{font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text);margin-bottom:12px}
+.continue h4{font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.3}
+.continue p{font-size:14px;color:var(--muted);margin-bottom:8px}
+.continue-link{color:var(--accent);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+.newsletter{margin:40px 0 0;padding:28px;background:var(--text);color:#fff;border-radius:8px}
+.newsletter h3{font-size:20px;font-weight:700;color:#fff;margin-bottom:8px}
+.newsletter p{font-size:14px;color:#a3a3a3;margin-bottom:18px}
+.newsletter-form{display:flex;gap:8px}
+.newsletter input{flex:1;padding:11px 14px;background:#262626;border:1px solid #404040;color:#fff;border-radius:5px;font-size:14px;font-family:inherit;outline:none}
+.newsletter input::placeholder{color:#737373}
+.newsletter input:focus{border-color:var(--accent)}
+.newsletter button{padding:11px 18px;background:var(--accent);color:#fff;border:none;border-radius:5px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+footer{background:var(--text);color:#a3a3a3;padding:36px 0;margin-top:48px}
+.foot-wrap{max-width:1140px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;font-size:13px}
+.foot-brand{font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em}
+@media(max-width:560px){h1.title{font-size:28px}.deck{font-size:16px}.newsletter-form{flex-direction:column}.newsletter input,.newsletter button{width:100%}}
+.hero-img-wrap{position:relative;margin:0 0 32px 0}
+.hero-img{width:100%;max-height:480px;object-fit:cover;border-radius:14px;display:block;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+.hero-img-credit{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;line-height:1.4}
+.hero-img-credit:empty{display:none}
+.hero-img-credit a{color:inherit;text-decoration:underline}
+.hero-img-credit a:hover{color:#6b7280}
+.hero-grid{display:flex;flex-direction:row;gap:48px;align-items:center}
+.hero-grid > .hero-text{flex:1 1 55%;min-width:0}
+.hero-grid > .hero-img-wrap{flex:0 0 42%;min-width:0;margin:0}
+.hero-grid .hero-img{aspect-ratio:4/3;height:auto;max-height:460px;min-height:auto;width:100%}
+.hero-grid h1{font-size:clamp(1.875rem,3.4vw,2.75rem) !important;line-height:1.15 !important;max-width:none !important;margin-bottom:18px !important}
+.hero-grid p,.hero-grid .hero-deck,.hero-grid .hero-sub,.hero-grid .hero-subhead{font-size:1rem !important;max-width:none !important;margin-bottom:24px !important}
+@media(max-width:760px){.hero-grid{flex-direction:column;gap:20px}.hero-grid > .hero-img-wrap{order:-1;flex:0 0 auto;width:100%}.hero-grid > .hero-text{flex:0 0 auto;width:100%}.hero-grid .hero-img{aspect-ratio:16/9;max-height:240px}}
+</style>
+</head>
+<body>
+<div class="top"><div class="top-row">
+<span class="top-date">{{PUBLISH_DATE_LONG}}</span>
+<div class="top-actions"><a href="#">Today's edition</a><a href="#">Sign in</a></div>
+</div></div>
+
+<nav><div class="nav-wrap">
+<a href="#" class="brand">{{SITE_NAME}}</a>
+<div class="nav-sections">
+<a href="#">Latest</a>
+<a href="#">Analysis</a>
+<a href="#">Features</a>
+<a href="#">About</a>
+<a href="#" class="nav-cta">Subscribe</a>
+</div>
+</div></nav>
+
+<main>
+<a href="#" class="section-tag">{{SECTION_NAME}}</a>
+<!-- {{HERO_IMG_BLOCK_START}} --><div class="hero-img-wrap"><img class="hero-img" src="{{HERO_IMAGE}}" alt="{{KEYWORD}}"><p class="hero-img-credit">{{HERO_IMG_CREDIT}}</p></div><!-- {{HERO_IMG_BLOCK_END}} -->
+<h1 class="title">{{POST_TITLE}}</h1>
+<p class="deck">{{DECK}}</p>
+
+<div class="byline-row">
+<div class="by-author">
+<div class="by-avatar">{{AUTHOR_INITIALS}}</div>
+<div><div class="by-name">By {{AUTHOR_NAME}}</div><div class="by-affiliation">{{AUTHOR_ROLE}}</div></div>
+</div>
+<span class="by-sep">·</span>
+<span>{{PUBLISH_DATE}}</span>
+<span class="by-sep">·</span>
+<span>{{READING_TIME}}</span>
+<div class="share-icons">
+<a href="#" title="Share">X</a>
+<a href="#" title="LinkedIn">in</a>
+<a href="#" title="Copy link">⎘</a>
+</div>
+</div>
+
+<div class="dateline"><strong>{{DATELINE_LOCATION}}</strong> — {{DATELINE_DATE}}</div>
+
+<article>
+<p>{{LEAD_PARAGRAPH}}</p>
+
+<p>{{NUT_GRAF}}</p>
+
+<div class="key-facts">
+<div class="key-facts-label">What you need to know</div>
+<ul>
+<li>{{KEY_FACT_1}}</li>
+<li>{{KEY_FACT_2}}</li>
+<li>{{KEY_FACT_3}}</li>
+<li>{{KEY_FACT_4}}</li>
+</ul>
+</div>
+
+<h2>{{SECTION_1_HEADLINE}}</h2>
+<p>{{SECTION_1_BODY_1}}</p>
+<p>{{SECTION_1_BODY_2}}</p>
+
+<blockquote>{{PULLQUOTE}}</blockquote>
+
+<h2>{{SECTION_2_HEADLINE}}</h2>
+<p>{{SECTION_2_BODY_1}}</p>
+
+<div class="fact-box">
+<div class="fact-box-label">Background</div>
+<h4>{{FACT_BOX_HEADLINE}}</h4>
+<p>{{FACT_BOX_BODY}}</p>
+</div>
+
+<p>{{SECTION_2_BODY_2}}</p>
+
+<h2>{{SECTION_3_HEADLINE}}</h2>
+<p>{{SECTION_3_BODY_1}}</p>
+<p>{{SECTION_3_BODY_2}}</p>
+
+<h2>{{CLOSING_HEADLINE}}</h2>
+<p>{{CLOSING_BODY}}</p>
+
+<div class="continue">
+<div class="continue-label">Read next</div>
+<h4>{{NEXT_TITLE}}</h4>
+<p>{{NEXT_DECK}}</p>
+<a href="#" class="continue-link">Continue reading →</a>
+</div>
+
+<div class="newsletter">
+<h3>{{CTA_HEADLINE}}</h3>
+<p>{{CTA_SUBTEXT}}</p>
+<form class="newsletter-form" onsubmit="return false">
+<input type="email" placeholder="Email address">
+<button type="submit">{{CTA_BUTTON}}</button>
+</form>
+</div>
+</article>
+</main>
+
+<footer><div class="foot-wrap">
+<span class="foot-brand">{{SITE_NAME}}</span>
+<span>&copy; 2026 · All rights reserved.</span>
+</div></footer>
 </body></html>`
   },
 ];

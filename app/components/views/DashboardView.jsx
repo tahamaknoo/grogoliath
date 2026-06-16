@@ -44,6 +44,77 @@ function useGreeting(name) {
   return { greeting: `Working late, ${firstName}?`, sub: "Don't forget to rest. The rankings will still be there tomorrow." };
 }
 
+// Full-bleed day/night header that reflects the active theme. Pure CSS — every
+// layer transitions on the `.dark` class flip, so toggling gives a smooth
+// sunrise/sunset. A bottom mask fades the whole scene into the page background
+// so it blends seamlessly instead of sitting in a hard-edged box. The greeting
+// renders on top of it. Non-interactive (the real toggle lives in the header).
+function DayNightBand({ greeting, sub }) {
+  // [leftPercent, topPx] — spread across the full width.
+  const stars = [
+    [10, 34], [22, 58], [34, 26], [46, 48], [55, 70], [63, 30],
+    [71, 54], [78, 22], [85, 64], [90, 40], [95, 74], [16, 80],
+  ];
+  return (
+    <div className="relative -mx-6 -mt-12 h-[160px] overflow-hidden flex items-center" aria-hidden={false}>
+      {/* Scene — masked to fade into the page bg at the bottom */}
+      <div
+        className="absolute inset-0"
+        style={{
+          WebkitMaskImage: 'linear-gradient(to bottom, #000 52%, transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, #000 52%, transparent 100%)',
+        }}
+      >
+        <style>{`@keyframes gg-twinkle { 0%,100%{opacity:.3} 50%{opacity:1} }`}</style>
+
+        {/* Sky */}
+        <div className="absolute inset-0 bg-gradient-to-b from-sky-200 via-sky-100 to-[#eef6f2]
+                        dark:from-[#0a1026] dark:via-[#121a36] dark:to-[#18213f]
+                        transition-[background-image] duration-700 ease-in-out" />
+
+        {/* Stars — fade in for night */}
+        <div className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity duration-700">
+          {stars.map(([x, y], i) => (
+            <span
+              key={i}
+              className="absolute rounded-full bg-white"
+              style={{ left: `${x}%`, top: y, width: 2, height: 2, animation: `gg-twinkle ${2 + (i % 4) * 0.5}s ease-in-out ${i * 0.25}s infinite` }}
+            />
+          ))}
+        </div>
+
+        {/* Sun ↔ Moon — sits in the upper-right (clear of the header toggle) */}
+        <div className="absolute right-[13%] top-[26px]">
+          <div className="relative w-12 h-12">
+            <div className="absolute inset-0 rounded-full bg-amber-300 dark:bg-slate-100
+                            shadow-[0_0_44px_rgba(251,191,36,0.7)] dark:shadow-[0_0_30px_rgba(255,255,255,0.5)]
+                            transition-[background-color,box-shadow] duration-700" />
+            {/* Crescent shadow — only visible at night */}
+            <div className="absolute -top-1.5 right-[-9px] w-10 h-10 rounded-full bg-[#0d1430]
+                            opacity-0 dark:opacity-100 transition-opacity duration-700" />
+          </div>
+        </div>
+
+        {/* Rolling hills — full width */}
+        <svg viewBox="0 0 1200 200" preserveAspectRatio="none" className="absolute inset-0 w-full h-full">
+          <ellipse cx="300" cy="330" rx="780" ry="180"
+                   className="fill-emerald-300/90 dark:fill-[#11243b] transition-[fill] duration-700" />
+          <ellipse cx="980" cy="350" rx="780" ry="170"
+                   className="fill-emerald-400/90 dark:fill-[#0b1a2e] transition-[fill] duration-700" />
+        </svg>
+      </div>
+
+      {/* Greeting — vertically centered on top of the scene */}
+      <div className="relative z-10 px-6 w-full">
+        <h1 className="text-4xl font-black text-[#262626] dark:text-white tracking-tight mb-1">
+          {greeting}
+        </h1>
+        <p className="text-sm text-[#5a5a5a] dark:text-[#aab2cc]">{sub}</p>
+      </div>
+    </div>
+  );
+}
+
 function ActionStat({ label, value, hint, hintTone, onClick, accent }) {
   const Tag = onClick ? 'button' : 'div';
   return (
@@ -146,13 +217,8 @@ export default function DashboardView({ projects, onNewProject, onTemplates, onP
 
   return (
     <div className="px-6 pb-6 flex flex-col gap-5" style={{ paddingTop: '48px' }}>
-      {/* Greeting */}
-      <div className="mb-1">
-        <h1 className="text-4xl font-black text-[#262626] dark:text-white tracking-tight mb-1">
-          {greeting}
-        </h1>
-        <p className="text-sm text-[#777777] dark:text-[#888888]">{sub}</p>
-      </div>
+      {/* Day/night header band (greeting renders inside) */}
+      <DayNightBand greeting={greeting} sub={sub} />
 
       {/* Continue where you left off */}
       <ContinueCard project={continueProject} onResume={onProjectClick} onNewProject={onNewProject} />

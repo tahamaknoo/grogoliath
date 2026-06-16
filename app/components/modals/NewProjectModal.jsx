@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Edit3, Globe, LayoutTemplate, Loader2, Wand2, X } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import { apiFetch } from "../../../lib/apiFetch";
+import { creditsRemaining } from "../../../lib/plans";
 import LivePreview from "../builder/LivePreview";
 
 const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, onOpenTemplateBuilder, initialData, initialTemplateId, profile }) => {
@@ -49,10 +50,7 @@ const NewProjectModal = ({ isOpen, onClose, onUploadSuccess, onCreateProject, on
   const [rewriteLoadingId, setRewriteLoadingId] = useState(null);
   const [progressPercent, setProgressPercent] = useState(0);
   const contentRef = useRef(null);
-  const remainingPages =
-    profile && typeof profile.page_limit !== "undefined"
-      ? Math.max(0, Number(profile.page_limit || 0) - Number(profile.pages_used || 0))
-      : null;
+  const remainingPages = profile ? creditsRemaining(profile) : null;
   const stepLabels = ["Template", "Business", "AI Inputs", "Preview", "Data"];
   const lastStep = stepLabels.length - 1;
   const plannedKeywords = keywordsList

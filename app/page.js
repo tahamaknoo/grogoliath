@@ -1,23 +1,31 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import TemplateModal from "./components/builder/TemplateModal";
+import dynamic from "next/dynamic";
 import MarbleAvatar from "./components/MarbleAvatar";
-import GenerateModal from "./components/modals/GenerateModal";
-import SimpleNewProject from "./components/modals/SimpleNewProject";
-import ViewModal from "./components/modals/ViewModal";
 import DashboardView from "./components/views/DashboardView";
-import ProjectsView from "./components/views/ProjectsView";
-import TemplatesView from "./components/views/TemplatesView";
-import BrandKitView from "./components/views/BrandKitView";
-import SettingsView from "./components/views/SettingsView";
-import OnboardingWizard from "./components/OnboardingWizard";
-import SuccessScreen from "./components/SuccessScreen";
-import DeployOptions from "./components/DeployOptions";
 import { ensureProfile } from "../lib/profile";
 import { supabase } from "../lib/supabaseClient";
+import { supabaseFetch } from "../lib/apiFetch";
+import { planIdOf, PLANS } from "../lib/plans";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Loader from "./components/Loader";
+import { ConfirmProvider, useConfirm } from "./components/ConfirmDialog";
+
+// Heavy components are code-split. They only load when the user navigates to
+// the matching tab or opens the matching modal — keeping the initial JS bundle
+// small. ssr:false is safe here because the parent page is already "use client".
+const ProjectsView      = dynamic(() => import("./components/views/ProjectsView"),       { ssr: false, loading: () => <Loader /> });
+const TemplatesView     = dynamic(() => import("./components/views/TemplatesView"),      { ssr: false, loading: () => <Loader /> });
+const BrandKitView      = dynamic(() => import("./components/views/BrandKitView"),       { ssr: false, loading: () => <Loader /> });
+const SettingsView      = dynamic(() => import("./components/views/SettingsView"),       { ssr: false, loading: () => <Loader /> });
+const OnboardingWizard  = dynamic(() => import("./components/OnboardingWizard"),         { ssr: false });
+const TemplateModal     = dynamic(() => import("./components/builder/TemplateModal"),    { ssr: false });
+const GenerateModal     = dynamic(() => import("./components/modals/GenerateModal"),     { ssr: false });
+const SimpleNewProject  = dynamic(() => import("./components/modals/SimpleNewProject"),  { ssr: false });
+const ViewModal         = dynamic(() => import("./components/modals/ViewModal"),         { ssr: false });
+const SuccessScreen     = dynamic(() => import("./components/SuccessScreen"),            { ssr: false });
+const DeployOptions     = dynamic(() => import("./components/DeployOptions"),            { ssr: false });
 
 function LoginScreen() {
   const [mode, setMode] = useState("signin"); // 'signin' | 'signup'
@@ -80,12 +88,12 @@ function LoginScreen() {
       {/* Left: form */}
       <div className="flex-1 flex flex-col px-6 sm:px-10 lg:px-16 py-8 lg:py-12 overflow-y-auto">
         <div className="w-full max-w-md mx-auto flex-1 flex flex-col justify-center">
-          {/* Logo — sits right above the heading */}
-          <div className="mb-8 flex justify-center">
+          {/* Logo — left-aligned above the heading */}
+          <div className="mb-8 -ml-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/grogoliath_horizontal_transparent_2400x900.png" alt="GroGoliath" className="h-12 w-auto dark:hidden" />
+            <img src="/grogoliath_horizontal_transparent_2400x900.png" alt="GroGoliath" className="h-20 w-auto dark:hidden" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/GroGoliath_Dark_C_BrandTeal.png" alt="GroGoliath" className="h-12 w-auto hidden dark:block" />
+            <img src="/GroGoliath_Dark_C_BrandTeal.png" alt="GroGoliath" className="h-20 w-auto hidden dark:block" />
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-black text-[#262626] dark:text-white tracking-[-0.02em] leading-tight mb-2">
@@ -221,7 +229,7 @@ function LoginScreen() {
         <div className="relative z-10 w-full h-full flex items-center justify-center p-12">
           <div className="relative w-full max-w-md aspect-[4/5]">
             {/* Top stats chip */}
-            <div className="absolute top-0 left-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 animate-fade-in animate-float-slow">
+            <div className="absolute top-0 left-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 animate-float-card-1">
               <div className="w-9 h-9 rounded-xl bg-[#075056] text-white flex items-center justify-center">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
               </div>
@@ -232,7 +240,7 @@ function LoginScreen() {
             </div>
 
             {/* Quote card */}
-            <div className="absolute top-[28%] right-0 w-[78%] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-5 animate-fade-in animate-float-medium" style={{ animationDelay: '0.1s, 0.8s' }}>
+            <div className="absolute top-[28%] right-0 w-[78%] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-5 animate-float-card-2" style={{ animationDelay: '0.4s' }}>
               <p className="text-base font-bold text-[#075056] leading-snug mb-3">
                 &ldquo;GroGoliath ranked us on page 1 for 240 location keywords in three months.&rdquo;
               </p>
@@ -248,7 +256,7 @@ function LoginScreen() {
             </div>
 
             {/* Growth card */}
-            <div className="absolute bottom-0 left-[10%] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-5 w-[68%] animate-fade-in animate-float-fast" style={{ animationDelay: '0.2s, 1.5s' }}>
+            <div className="absolute bottom-0 left-[10%] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-5 w-[68%] animate-float-card-3" style={{ animationDelay: '0.9s' }}>
               <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#888888] mb-1">Organic traffic</div>
               <div className="flex items-baseline gap-2">
                 <div className="text-3xl font-black text-[#262626]">+312%</div>
@@ -286,7 +294,7 @@ const AVATAR_ANIMATIONS = [
   'animate-avatar-rubber',
 ];
 
-function SidebarProfile({ session, profile, onOpenSettings }) {
+function SidebarProfile({ session, profile, onOpenSettings, collapsed = false }) {
   const [anim, setAnim] = useState('');
   const lastAnimRef = useRef('');
 
@@ -316,13 +324,13 @@ function SidebarProfile({ session, profile, onOpenSettings }) {
   };
 
   return (
-    <div className="border-t border-[#ebebeb] dark:border-[#262626] px-4 py-4">
+    <div className={`border-t border-[#ebebeb] dark:border-[#262626] py-4 ${collapsed ? 'px-2' : 'px-4'}`}>
       <button
         type="button"
         onClick={playRandomAnim}
         onDoubleClick={onOpenSettings}
-        title="Double-click for settings"
-        className="flex items-center gap-3 w-full text-left rounded-xl p-1 -m-1 hover:bg-[#fafafa] dark:hover:bg-[#222222] transition-colors"
+        title={collapsed ? `${fullName} · double-click for settings` : 'Double-click for settings'}
+        className={`flex items-center gap-3 w-full text-left rounded-xl p-1 -m-1 hover:bg-[#fafafa] dark:hover:bg-[#222222] transition-colors ${collapsed ? 'justify-center' : ''}`}
       >
         <div className={`w-9 h-9 rounded-full overflow-hidden shrink-0 ring-2 ring-white dark:ring-[#075056]/30 ${anim}`}>
           {avatarUrl ? (
@@ -339,22 +347,35 @@ function SidebarProfile({ session, profile, onOpenSettings }) {
             <MarbleAvatar seed={seed} size={36} className="w-full h-full block" />
           </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[#262626] dark:text-white truncate leading-tight">
-            {fullName}
-          </p>
-          {email && (
-            <p className="text-[11px] text-[#888888] dark:text-[#888888] truncate leading-tight mt-0.5">
-              {email}
+        {!collapsed && (
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-[#262626] dark:text-white truncate leading-tight">
+              {fullName}
             </p>
-          )}
-        </div>
+            {email && (
+              <p className="text-[11px] text-[#888888] dark:text-[#888888] truncate leading-tight mt-0.5">
+                {email}
+              </p>
+            )}
+          </div>
+        )}
       </button>
     </div>
   );
 }
 
 export default function App() {
+  // ConfirmProvider must wrap any component that calls useConfirm.
+  // Splitting it out into AppInner means the provider can sit at the top.
+  return (
+    <ConfirmProvider>
+      <AppInner />
+    </ConfirmProvider>
+  );
+}
+
+function AppInner() {
+  const confirm = useConfirm();
   const [profile, setProfile] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -371,6 +392,14 @@ export default function App() {
     document.documentElement.classList.toggle('dark', darkMode);
     localStorage.setItem('darkMode', darkMode);
   }, [darkMode]);
+
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try { return localStorage.getItem('sidebarCollapsed') === 'true'; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed)); } catch { /* ignore */ }
+  }, [sidebarCollapsed]);
 
   // Queue status lifted here so it survives tab switches
   const [queueStatus, setQueueStatus] = useState({ running: false, done: 0, total: 0, projectName: '', projectId: null, currentItem: null });
@@ -410,6 +439,15 @@ export default function App() {
     setActiveTab(tab);
     window.history.replaceState({ tab }, '', `?tab=${tab}`);
     window.dispatchEvent(new Event('gg-navigate'));
+  };
+
+  // Jump straight to Settings → Plans (used by upgrade prompts). The `section`
+  // param is read by SettingsView to open the right sub-tab.
+  const goToPlans = () => {
+    setActiveTab('settings');
+    window.history.pushState({ tab: 'settings' }, '', '?tab=settings&section=plans');
+    window.dispatchEvent(new Event('gg-navigate'));
+    if (typeof window !== 'undefined') document.querySelector('main')?.scrollTo?.({ top: 0 });
   };
 
   const [pendingProjectId, setPendingProjectId] = useState(null);
@@ -539,15 +577,17 @@ export default function App() {
 
   const fetchProjects = async (firstLoad = false) => {
     try {
-      const result = await Promise.race([
-        supabase.from("projects").select("*").order("created_at", { ascending: false }),
+      // Use the raw REST endpoint (with auth + refresh) instead of supabase-js
+      // — the JS client silently keeps stale rows when its in-memory token
+      // expires, which is what made deleted projects appear to "come back".
+      const res = await Promise.race([
+        supabaseFetch('/rest/v1/projects?select=*&order=created_at.desc'),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
       ]);
-      if (result.data) {
-        setProjects(result.data);
-        const hasCompletedOnboarding = localStorage.getItem('hasCompletedOnboarding') === 'true';
-        const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding') === 'true';
-        if (firstLoad && result.data.length === 0 && !hasCompletedOnboarding && !hasSeenOnboarding) setShowOnboarding(true);
+      if (!res.ok) return;
+      const data = await res.json().catch(() => null);
+      if (Array.isArray(data)) {
+        setProjects(data);
       }
     } catch {
       // timed out — keep existing projects state
@@ -574,8 +614,8 @@ export default function App() {
     setPendingTemplate(null);
     localStorage.setItem('hasSeenOnboarding', 'true');
     if (result !== null) {
+      // Finalized — persist, optimistically show the new project, land on Projects.
       localStorage.setItem('hasCompletedOnboarding', 'true');
-      // Optimistically add the new project immediately so it shows up without waiting for a fetch
       if (result.project) {
         setProjects(prev => [result.project, ...prev.filter(p => p.id !== result.project.id)]);
       }
@@ -584,11 +624,47 @@ export default function App() {
       fetchProjects(false);
       setTimeout(() => fetchProjects(false), 1500);
       setTimeout(() => fetchProjects(false), 4000);
+      replaceTab('projects');
+    } else {
+      // Cancelled / discarded — stay on the tab the user came from. Just drop
+      // the ?wizard=true URL so a refresh doesn't reopen the wizard. Users
+      // should only land on Projects when they actually finalize.
+      replaceTab(activeTab);
     }
-    replaceTab('projects');
   };
 
-  const handleNewProject = () => {
+  const handleNewProject = async () => {
+    // No project-count gate — credits are the real cap. Free users can create
+    // any number of projects, but page generation is gated by their credits
+    // (server-side via the spend_credits RPC). See lib/plans.js.
+
+    // If there's a draft in progress, ask before throwing it away.
+    let draft = null;
+    try { draft = localStorage.getItem('gg-wizard-draft'); } catch { /* ignore */ }
+
+    let hasMeaningfulDraft = false;
+    if (draft) {
+      try {
+        const d = JSON.parse(draft);
+        hasMeaningfulDraft = !!(d.businessType || d.keyword || d.location || d.blogAngle);
+      } catch { /* ignore */ }
+    }
+
+    if (hasMeaningfulDraft) {
+      const ok = await confirm({
+        title: 'You have a project in progress',
+        message: 'Starting a new one will discard your current draft. The minimized project will be gone.',
+        confirmLabel: 'Start new project',
+        cancelLabel: 'Keep my draft',
+        variant: 'danger',
+      });
+      if (!ok) return;
+    }
+
+    // Clear any draft so the new wizard starts fresh at step 1.
+    try { localStorage.removeItem('gg-wizard-draft'); } catch { /* ignore */ }
+    setWizardMinimized(false);
+
     setShowOnboarding(true);
     setShowSuccess(false);
     setShowDeploy(false);
@@ -604,9 +680,13 @@ export default function App() {
 
   if (loading) return <Loader />;
   if (!session) return <LoginScreen />;
-  if (showOnboarding) return (
+  // Onboarding wizard renders as an overlay on top of the current tab (see the
+  // main return below) — NOT a full-page takeover — so closing it leaves the
+  // user exactly where they were instead of on a blank screen.
+  const onboardingOverlay = showOnboarding ? (
     <OnboardingWizard
       session={session}
+      profile={profile}
       onComplete={(result) => {
         setWizardMinimized(false);
         setMinimizedDraftSummary(null);
@@ -629,7 +709,7 @@ export default function App() {
       }}
       initialTemplate={pendingTemplate}
     />
-  );
+  ) : null;
   if (showSuccess) return (
     <SuccessScreen
       project={wizardResult?.project}
@@ -706,26 +786,52 @@ export default function App() {
           profile={profile}
         />
 
-        <aside className="w-64 bg-white dark:bg-[#262626] border-r border-[#ebebeb] dark:border-[#262626] flex flex-col shrink-0" style={{ paddingTop: '24px' }}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-[#262626] border-r border-[#ebebeb] dark:border-[#262626] flex flex-col shrink-0 relative transition-[width] duration-300 ease-in-out`} style={{ paddingTop: '24px' }}>
+
+          {/* Collapse / expand toggle — straddles the right border */}
+          <button
+            onClick={() => setSidebarCollapsed(c => !c)}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="absolute top-7 -right-3 z-50 w-6 h-6 rounded-full bg-white dark:bg-[#333333] border border-[#e5e5e5] dark:border-[#444444] shadow-sm flex items-center justify-center text-[#777777] hover:text-[#075056] dark:text-[#999999] dark:hover:text-[#14b8a6] hover:border-[#075056] dark:hover:border-[#14b8a6] transition-colors"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-300 ${sidebarCollapsed ? 'rotate-180' : ''}`}>
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </button>
 
           {/* Logo */}
-          <div className="px-3 pt-1 pb-6">
-            <img src="/grogoliath_horizontal_transparent_2400x900.png" alt="GroGoliath" className="w-full h-auto dark:hidden" />
-            <img src="/GroGoliath_Dark_C_BrandTeal.png" alt="GroGoliath" className="w-full h-auto hidden dark:block" />
+          <div className={`pt-1 pb-6 ${sidebarCollapsed ? 'px-0 flex justify-center' : 'px-3'}`}>
+            {sidebarCollapsed ? (
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#075056" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-label="GroGoliath" className="dark:hidden">
+                <path d="M3 20l5-9 4 6 3-5 6 8z"/><circle cx="17" cy="6" r="2"/>
+              </svg>
+            ) : (
+              <>
+                <img src="/grogoliath_horizontal_transparent_2400x900.png" alt="GroGoliath" className="w-full h-auto dark:hidden" />
+                <img src="/GroGoliath_Dark_C_BrandTeal.png" alt="GroGoliath" className="w-full h-auto hidden dark:block" />
+              </>
+            )}
+            {sidebarCollapsed && (
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-label="GroGoliath" className="hidden dark:block">
+                <path d="M3 20l5-9 4 6 3-5 6 8z"/><circle cx="17" cy="6" r="2"/>
+              </svg>
+            )}
           </div>
 
-          <nav className="flex-1 px-3 pb-3 flex flex-col gap-1 overflow-y-auto">
+          <nav className="flex-1 px-3 pb-3 flex flex-col gap-1 overflow-y-auto overflow-x-hidden">
 
             {/* New Project button */}
             <button onClick={handleNewProject}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 mb-5 bg-[#075056] hover:bg-[#064548] text-white text-[15px] font-semibold rounded-xl transition-all hover:shadow-lg hover:shadow-[#075056]/30"
+              title={sidebarCollapsed ? 'New Project' : undefined}
+              className={`w-full flex items-center justify-center gap-2 ${sidebarCollapsed ? 'px-0' : 'px-4'} py-3.5 mb-5 bg-[#075056] hover:bg-[#064548] text-white text-[15px] font-semibold rounded-xl transition-all hover:shadow-lg hover:shadow-[#075056]/30`}
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-              New Project
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M12 5v14M5 12h14"/></svg>
+              {!sidebarCollapsed && 'New Project'}
             </button>
 
             {/* MENU */}
-            <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-[#aaaaaa] dark:text-[#555555]">Menu</p>
+            {!sidebarCollapsed && <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-[#aaaaaa] dark:text-[#555555]">Menu</p>}
             {[
               { id: 'dashboard', label: 'Dashboard', icon: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></> },
               { id: 'projects', label: 'Projects', icon: <><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></> },
@@ -733,24 +839,26 @@ export default function App() {
               { id: 'brandkit', label: 'Brand Kit', icon: <><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 22a10 10 0 0 1-4-19.5A10 10 0 0 1 22 12c0 1-.7 2-2 2h-2a2 2 0 0 0-2 2 4 4 0 0 1-4 6z"/></> },
             ].map(({ id, label, icon }) => (
               <button key={id} onClick={() => { setPendingProjectId(null); handleSetActiveTab(id); }}
-                className={`relative w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[15px] font-medium transition-all ${activeTab === id ? 'text-[#262626] dark:text-white bg-[#f5f5f5] dark:bg-[#262626]' : 'text-[#777777] dark:text-[#888888] hover:text-[#262626] dark:hover:text-white hover:bg-[#f5f5f5] dark:hover:bg-[#262626]'}`}
+                title={sidebarCollapsed ? label : undefined}
+                className={`relative w-full flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'} py-3 rounded-xl text-[15px] font-medium transition-all ${activeTab === id ? 'text-[#262626] dark:text-white bg-[#f5f5f5] dark:bg-[#262626]' : 'text-[#777777] dark:text-[#888888] hover:text-[#262626] dark:hover:text-white hover:bg-[#f5f5f5] dark:hover:bg-[#262626]'}`}
               >
                 {activeTab === id && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#075056] dark:bg-[#14b8a6] rounded-r-full" />}
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
-                {label}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">{icon}</svg>
+                {!sidebarCollapsed && label}
               </button>
             ))}
 
             {/* CONFIG */}
-            <p className="px-3 pt-6 pb-2 text-[11px] font-semibold uppercase tracking-widest text-[#aaaaaa] dark:text-[#555555]">Config</p>
+            {!sidebarCollapsed && <p className="px-3 pt-6 pb-2 text-[11px] font-semibold uppercase tracking-widest text-[#aaaaaa] dark:text-[#555555]">Config</p>}
             <button onClick={() => handleSetActiveTab('settings')}
-              className={`relative w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[15px] font-medium transition-all ${activeTab === 'settings' ? 'text-[#262626] dark:text-white bg-[#f5f5f5] dark:bg-[#262626]' : 'text-[#777777] dark:text-[#888888] hover:text-[#262626] dark:hover:text-white hover:bg-[#f5f5f5] dark:hover:bg-[#262626]'}`}
+              title={sidebarCollapsed ? 'Settings' : undefined}
+              className={`relative w-full flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-0 mt-6' : 'px-3'} py-3 rounded-xl text-[15px] font-medium transition-all ${activeTab === 'settings' ? 'text-[#262626] dark:text-white bg-[#f5f5f5] dark:bg-[#262626]' : 'text-[#777777] dark:text-[#888888] hover:text-[#262626] dark:hover:text-white hover:bg-[#f5f5f5] dark:hover:bg-[#262626]'}`}
             >
               {activeTab === 'settings' && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#075056] dark:bg-[#14b8a6] rounded-r-full" />}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                 <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
               </svg>
-              Settings
+              {!sidebarCollapsed && 'Settings'}
             </button>
           </nav>
 
@@ -758,6 +866,7 @@ export default function App() {
           <SidebarProfile
             session={session}
             profile={profile}
+            collapsed={sidebarCollapsed}
             onOpenSettings={() => handleSetActiveTab('settings')}
           />
         </aside>
@@ -789,6 +898,7 @@ export default function App() {
               session={session}
               onNewProject={handleNewProject}
               onRefresh={() => fetchProjects(false)}
+              onProjectDeleted={(id) => setProjects(prev => prev.filter(p => p.id !== id))}
               onQueueUpdate={setQueueStatus}
               initialProjectId={pendingProjectId}
             />
@@ -797,6 +907,8 @@ export default function App() {
             <TemplatesView
               user={session.user}
               session={session}
+              profile={profile}
+              onUpgrade={goToPlans}
               templates={templates}
               onTemplateAdded={(t) => setTemplates(prev => [{ ...t, _isUserTemplate: true }, ...(prev || [])])}
               onTemplateDeleted={(id) => setTemplates(prev => (prev || []).filter(t => t.id !== id))}
@@ -814,6 +926,10 @@ export default function App() {
           </div>
         </main>
       </div>
+
+      {/* Onboarding wizard — overlays the current tab so the page stays visible
+          (and dimmed) behind it instead of a blank white takeover. */}
+      {onboardingOverlay}
 
       {/* Minimized wizard — floating Resume pill */}
       {wizardMinimized && !showOnboarding && (

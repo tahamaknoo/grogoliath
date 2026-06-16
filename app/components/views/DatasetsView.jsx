@@ -4,8 +4,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { FileSpreadsheet, HardDrive, Trash2, UploadCloud } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import Loader from "../Loader";
+import { useConfirm } from "../ConfirmDialog";
 
 const DatasetsView = ({ user }) => {
+  const confirm = useConfirm();
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef(null);
@@ -41,7 +43,13 @@ const DatasetsView = ({ user }) => {
   };
 
   const handleDelete = async (id) => {
-    if (confirm("Delete dataset?")) {
+    const ok = await confirm({
+      title: 'Delete this dataset?',
+      message: 'The dataset and its rows will be permanently removed.',
+      confirmLabel: 'Delete dataset',
+      variant: 'danger',
+    });
+    if (ok) {
       await supabase.from("datasets").delete().eq("id", id);
       setDatasets(datasets.filter((d) => d.id !== id));
     }

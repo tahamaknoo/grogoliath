@@ -26,18 +26,25 @@ export async function POST(request) {
       return `<!-- STYLE_BLOCK_${extractedStyles.length - 1} -->`;
     });
 
-    const prompt = `You are editing a finished HTML landing page. Make ONLY the change described below — do not rewrite or modify anything else.
+    const _now = new Date();
+    const currentYear = _now.getFullYear();
+
+    const prompt = `You are editing a finished HTML page. Make ONLY the change described below. Do not rewrite or modify anything else.
 
 INSTRUCTION:
 ${instruction}
 
 RULES:
-- Make only the minimal change needed to fulfil the instruction
-- Do NOT rewrite sections that weren't mentioned
-- Do NOT remove any HTML tags, class names, or inline styles
-- Do NOT remove or alter <!-- STYLE_BLOCK_N --> comment markers
-- Return the COMPLETE HTML with ONLY the requested change applied
-- No markdown, no explanations — just the HTML
+- Make only the minimal change needed to fulfil the instruction.
+- Do NOT rewrite sections that weren't mentioned.
+- Do NOT remove any HTML tags, class names, or inline styles.
+- Do NOT remove or alter <!-- STYLE_BLOCK_N --> comment markers.
+- Return the COMPLETE HTML with ONLY the requested change applied.
+- No markdown, no explanations. Just the HTML.
+
+STYLE RULES (apply to any new copy you write, not just the requested change):
+- FORBIDDEN PUNCTUATION: do NOT use em dashes (—) or en dashes (–) anywhere. Use commas, periods, colons, or parentheses instead.
+- Current year is ${currentYear}. Any year reference MUST use ${currentYear}, never an older year as if it were now.
 
 CURRENT PAGE HTML:
 ${htmlForClaude}`;
@@ -77,6 +84,16 @@ ${htmlForClaude}`;
       }
       refinedHtml = refinedHtml.replace(/<!-- STYLE_BLOCK_\d+ -->/g, '');
     }
+
+    // Safety net for em/en dashes — strip from text nodes only (never tag attrs).
+    refinedHtml = refinedHtml.split(/(<[^>]*>)/g).map((segment, i) => {
+      if (i % 2 === 1) return segment;
+      return segment
+        .replace(/\s+—\s+/g, ', ')
+        .replace(/—/g, ', ')
+        .replace(/\s+–\s+/g, ', ')
+        .replace(/(\D)–(\D)/g, '$1, $2');
+    }).join('');
 
     return NextResponse.json({ html: refinedHtml });
 

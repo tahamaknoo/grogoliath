@@ -1,10 +1,18 @@
 import JSZip from 'jszip';
 import { NextResponse } from 'next/server';
 import { requireUser, safeError } from '../../../lib/apiAuth';
+import { getProfilePlan, bearerToken } from '../../../lib/credits';
+import { planAllows } from '../../../lib/plans';
 
 export async function POST(req) {
   const auth = await requireUser(req);
   if (auth.error) return auth.error;
+
+  const plan = await getProfilePlan(bearerToken(req), auth.user.id);
+  if (!planAllows(plan, 'htmlExport')) {
+    return NextResponse.json({ error: 'UPGRADE_REQUIRED', message: 'Exporting your pages is available on paid plans. Upgrade to download.' }, { status: 403 });
+  }
+
   try {
     const { pages, projectName } = await req.json();
 

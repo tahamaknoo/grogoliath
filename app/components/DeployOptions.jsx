@@ -1,8 +1,10 @@
 'use client';
 import { useState } from 'react';
 import { apiFetch } from '../../lib/apiFetch';
+import { useConfirm } from './ConfirmDialog';
 
 export default function DeployOptions({ project, pages, onBack }) {
+  const confirm = useConfirm();
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployStatus, setDeployStatus] = useState('');
 
@@ -56,10 +58,14 @@ export default function DeployOptions({ project, pages, onBack }) {
 
       setDeployStatus(`✓ Live at: ${result.url}`);
 
-      setTimeout(() => {
-        if (confirm(`✅ Deployment successful!\n\nYour site is live at:\n${result.url}\n\nOpen in new tab?`)) {
-          window.open(result.url, '_blank');
-        }
+      setTimeout(async () => {
+        const open = await confirm({
+          title: '🎉 Deployment successful',
+          message: `Your site is live at:\n${result.url}\n\nOpen it in a new tab?`,
+          confirmLabel: 'Open site',
+          cancelLabel: 'Stay here',
+        });
+        if (open) window.open(result.url, '_blank');
         setIsDeploying(false);
       }, 1000);
 
@@ -69,7 +75,13 @@ export default function DeployOptions({ project, pages, onBack }) {
       setIsDeploying(false);
 
       if (error.message.includes('auth') || error.message.includes('token')) {
-        if (confirm('Authentication failed. Clear saved token and try again?')) {
+        const retry = await confirm({
+          title: 'Authentication failed',
+          message: 'Your saved Vercel token didn\'t work. Clear it and try again with a new one?',
+          confirmLabel: 'Clear & retry',
+          variant: 'danger',
+        });
+        if (retry) {
           localStorage.removeItem('vercel_token');
           handleVercelDeploy();
         }
@@ -127,10 +139,14 @@ export default function DeployOptions({ project, pages, onBack }) {
 
       setDeployStatus(`✓ Live at: ${result.url}`);
 
-      setTimeout(() => {
-        if (confirm(`✅ Deployment successful!\n\nYour site is live at:\n${result.url}\n\nOpen in new tab?`)) {
-          window.open(result.url, '_blank');
-        }
+      setTimeout(async () => {
+        const open = await confirm({
+          title: '🎉 Deployment successful',
+          message: `Your site is live at:\n${result.url}\n\nOpen it in a new tab?`,
+          confirmLabel: 'Open site',
+          cancelLabel: 'Stay here',
+        });
+        if (open) window.open(result.url, '_blank');
         setIsDeploying(false);
       }, 1000);
 
@@ -140,7 +156,13 @@ export default function DeployOptions({ project, pages, onBack }) {
       setIsDeploying(false);
 
       if (error.message.includes('auth') || error.message.includes('token')) {
-        if (confirm('Authentication failed. Clear saved token and try again?')) {
+        const retry = await confirm({
+          title: 'Authentication failed',
+          message: 'Your saved Netlify token didn\'t work. Clear it and try again with a new one?',
+          confirmLabel: 'Clear & retry',
+          variant: 'danger',
+        });
+        if (retry) {
           localStorage.removeItem('netlify_token');
           handleNetlifyDeploy();
         }
