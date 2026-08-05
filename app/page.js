@@ -513,24 +513,52 @@ function AppInner() {
     } catch { /* ignore */ }
   }, []);
 
+  // BFCache safety net — if the user navigates away (e.g. to a Lemon Squeezy
+  // checkout) and then hits the browser Back button, some browsers restore
+  // this page from the back-forward cache WITHOUT re-running effects. If the
+  // page was mid-loading state when it left, `loading` could be stale-true.
+  // The pageshow event with `persisted=true` is the canonical BFCache-restore
+  // signal — clear the loader then so the user isn't stuck on the spinner.
+  useEffect(() => {
+    const onPageShow = (e) => {
+      if (e.persisted) setLoading(false);
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
+
   useEffect(() => {
     let unsubscribe;
 
     const initAuth = async () => {
-      const {
-        data: { session }
-      } = await supabase.auth.getSession();
+      try {
+        // Time-bound getSession — supabase-js has been observed to hang here
+        // after a back-navigation (network in odd state, BFCache half-restore
+        // shenanigans). 5s is plenty for a fresh fetch; longer and the user
+        // is sitting on a spinner.
+        const result = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('session-timeout')), 5000)),
+        ]);
+        const session = result?.data?.session || null;
+        setSession(session);
 
-      setSession(session);
-
-      if (session) {
-        const profileData = await ensureProfile(session.user);
-        setProfile(profileData);
-
-        fetchProjects(true);
-        fetchTemplates();
+        if (session) {
+          try {
+            const profileData = await Promise.race([
+              ensureProfile(session.user),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('profile-timeout')), 5000)),
+            ]);
+            setProfile(profileData);
+            fetchProjects(true);
+            fetchTemplates();
+          } catch (e) {
+            console.warn('[initAuth] profile load failed:', e?.message);
+          }
+        }
+      } catch (e) {
+        console.warn('[initAuth] session check failed:', e?.message);
       }
-
       setLoading(false);
 
       const {

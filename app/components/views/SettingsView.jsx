@@ -443,7 +443,7 @@ const SettingsView = ({ email, onLogout, profile, session, onProfileUpdate }) =>
                 : !plan.paid
                   ? 'Free forever'
                   : thisLoading
-                    ? 'Opening checkout…'
+                    ? 'Taking you to checkout…'
                     : 'Upgrade now'}
             </button>
           );
@@ -733,7 +733,7 @@ const SettingsView = ({ email, onLogout, profile, session, onProfileUpdate }) =>
                   {billingBusy === 'topup' && (
                     <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" aria-hidden />
                   )}
-                  {billingBusy === 'topup' ? 'Opening checkout…' : 'Add to plan'}
+                  {billingBusy === 'topup' ? 'Taking you to checkout…' : 'Add to plan'}
                 </button>
               </div>
             </div>
@@ -762,7 +762,7 @@ const SettingsView = ({ email, onLogout, profile, session, onProfileUpdate }) =>
                 {billingBusy === 'portal' ? (
                   <>
                     <span className="inline-block w-3.5 h-3.5 border-2 border-slate-400/40 border-t-slate-700 dark:border-t-white rounded-full animate-spin" aria-hidden />
-                    Opening portal…
+                    Taking you to billing…
                   </>
                 ) : (
                   <>

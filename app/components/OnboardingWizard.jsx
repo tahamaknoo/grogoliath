@@ -492,11 +492,12 @@ export default function OnboardingWizard({ session, profile, onComplete, onMinim
       }
       const controller = new AbortController();
       abortControllerRef.current = controller;
-      // Generous timeouts: landing pages typically finish in 30-60s but can
-      // take 90s on a slow day, and apiFetch may add up to ~6s for refresh +
-      // retry. 180s gives comfortable headroom without making impatient users
-      // wait forever for a hung backend.
-      const timeoutMs = contentType === 'blog' ? 220000 : 180000;
+      // Server uses streaming with 45s stall detection — so if Claude is
+      // actively generating, the server keeps the connection alive
+      // indefinitely. The only reason the client should abort is if the
+      // server itself dies (Vercel's 300s maxDuration) or the user's network
+      // dies. Setting client > server: 320s blog / 220s landing.
+      const timeoutMs = contentType === 'blog' ? 320000 : 220000;
       console.log(`[gen] calling /api/generate-page (timeout ${timeoutMs / 1000}s)…`);
       const apiFetchStart = Date.now();
       const fetchTimeout = setTimeout(() => {
@@ -606,8 +607,11 @@ export default function OnboardingWizard({ session, profile, onComplete, onMinim
     setIsRefining(true);
     setRefineError("");
     try {
+      // Server streams the response with 45s stall detection (max ~300s
+      // total via Vercel maxDuration). Client timeout sits comfortably
+      // above so the server's stall/error surfaces first if anything breaks.
       const controller = new AbortController();
-      const t = setTimeout(() => controller.abort(), 100000);
+      const t = setTimeout(() => controller.abort(), 320000);
       let response;
       try {
         response = await apiFetch("/api/refine-page", {

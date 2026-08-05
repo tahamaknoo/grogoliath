@@ -5,7 +5,11 @@ import { getAvailableCredits, spendCredits, bearerToken } from '../../../lib/cre
 import { CREDIT_COST } from '../../../lib/plans';
 import { MODIFIERS, modifierOrDefault } from '../../../lib/modifiers';
 
-export const maxDuration = 180; // Vercel: blog posts need more time than landing pages.
+// Vercel kills the function after `maxDuration` seconds regardless of what's
+// running. 300s covers the worst-case blog generation (Claude's slowest
+// real-world response for max_tokens=16000 is ~250s). Requires Vercel Pro+
+// (Hobby tier caps at 60s, Pro at 800s).
+export const maxDuration = 300;
 
 export async function POST(request) {
   const auth = await requireUser(request);
@@ -333,25 +337,69 @@ ${templateForClaude}`;
 
     console.log(`Prompt length: ${prompt.length} chars. Calling Claude...`);
 
-    const messagePromise = anthropic.messages.create({
+    // STREAMING with stall detection.
+    //
+    // Why: the old code used `messages.create()` (blocking, waits for full
+    // response) with a single overall timeout. For long blogs, Claude can
+    // legitimately take 200s+ to finish even when it's actively generating
+    // tokens — and our timeout would fire mid-generation, returning a 500
+    // and discarding everything Claude produced. The user saw this as
+    // "Claude API timeout after 160s" hundreds of times.
+    //
+    // Streaming solves this properly: we receive tokens as they're produced,
+    // and only abort if Claude STALLS (no tokens for STALL_MS). Slow ≠ broken
+    // is now correctly distinguished.
+    //
+    // Stall threshold: 45s. Real Claude generation streams ~50 tok/s
+    // steadily; a 45s gap means the connection is dead, not slow.
+    const STALL_MS = 45000;
+    console.log(`[generate-page] streaming Claude (${isBlog ? 'blog' : 'page'}, stall threshold ${STALL_MS / 1000}s)…`);
+    const startTime = Date.now();
+
+    const messageStream = anthropic.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 16000,
       messages: [{ role: 'user', content: prompt }],
     });
 
-    // Blogs are longer and need more time. Page generation is faster.
-    // Keep these BELOW the client's abort timeout so we surface a real
-    // error message instead of the client giving up first.
-    const claudeTimeoutMs = isBlog ? 160000 : 100000;
-    console.log(`[generate-page] calling Claude (${isBlog ? 'blog' : 'page'}, ${claudeTimeoutMs / 1000}s timeout)…`);
-    const startTime = Date.now();
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(`Claude API timeout after ${claudeTimeoutMs / 1000}s`)), claudeTimeoutMs)
-    );
+    let lastEventAt = Date.now();
+    let tokenCount = 0;
+    let stallAborted = false;
+    const stallTimer = setInterval(() => {
+      const sinceLast = Date.now() - lastEventAt;
+      if (sinceLast > STALL_MS && !stallAborted) {
+        stallAborted = true;
+        console.warn(`[generate-page] Claude stream stalled (${sinceLast}ms since last token, ${tokenCount} tokens so far). Aborting.`);
+        try { messageStream.controller.abort(); } catch { /* ignore */ }
+      }
+    }, 5000);
 
-    const message = await Promise.race([messagePromise, timeoutPromise]);
+    let message;
+    try {
+      for await (const event of messageStream) {
+        lastEventAt = Date.now();
+        if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+          tokenCount += 1;
+          // Heartbeat every ~500 tokens so the server log shows progress
+          // (useful when the user is staring at "Building your preview…").
+          if (tokenCount % 500 === 0) {
+            const sec = ((Date.now() - startTime) / 1000).toFixed(1);
+            console.log(`[generate-page] streaming… ${tokenCount} tokens, ${sec}s elapsed`);
+          }
+        }
+      }
+      message = await messageStream.finalMessage();
+    } catch (e) {
+      if (stallAborted) {
+        throw new Error(`Claude stream stalled for >${STALL_MS / 1000}s. Try again — usually transient on Anthropic's side.`);
+      }
+      throw new Error(`Claude streaming failed: ${e?.message || e}`);
+    } finally {
+      clearInterval(stallTimer);
+    }
+
     const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`[generate-page] Claude responded in ${elapsedSec}s, stop_reason: ${message.stop_reason}`);
+    console.log(`[generate-page] Claude finished streaming in ${elapsedSec}s (${tokenCount} tokens). stop_reason: ${message.stop_reason}`);
 
     if (message.stop_reason === 'max_tokens') {
       console.warn('WARNING: Claude output was truncated — template may be too large');

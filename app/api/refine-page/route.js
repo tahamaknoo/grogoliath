@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { requireUser, safeError } from '../../../lib/apiAuth';
 
-export const maxDuration = 120;
+// Refining a long blog (40k+ chars) means Claude echoes most of the HTML
+// back with small edits — that takes about as long as a fresh blog gen,
+// not the 90s the old code assumed. 300s = Vercel Pro ceiling; comfortably
+// above realistic Claude streaming time.
+export const maxDuration = 300;
 
 export async function POST(request) {
   const auth = await requireUser(request);
@@ -49,17 +53,56 @@ STYLE RULES (apply to any new copy you write, not just the requested change):
 CURRENT PAGE HTML:
 ${htmlForClaude}`;
 
-    const messagePromise = anthropic.messages.create({
+    // Streaming with stall detection — same approach as /api/generate-page.
+    // Refines often output 40k+ chars (most of the input HTML echoed back
+    // with small edits), so total time can be 60-200s. An overall timeout
+    // is the wrong tool here; what we want is "is Claude still streaming?"
+    // and that's exactly what stall detection gives us.
+    const STALL_MS = 45000;
+    const startTime = Date.now();
+    console.log(`[refine-page] streaming Claude (stall threshold ${STALL_MS / 1000}s)…`);
+
+    const messageStream = anthropic.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 16000,
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Claude API timeout after 90s')), 90000)
-    );
+    let lastEventAt = Date.now();
+    let tokenCount = 0;
+    let stallAborted = false;
+    const stallTimer = setInterval(() => {
+      const sinceLast = Date.now() - lastEventAt;
+      if (sinceLast > STALL_MS && !stallAborted) {
+        stallAborted = true;
+        console.warn(`[refine-page] Claude stream stalled (${sinceLast}ms since last token, ${tokenCount} tokens so far). Aborting.`);
+        try { messageStream.controller.abort(); } catch { /* ignore */ }
+      }
+    }, 5000);
 
-    const message = await Promise.race([messagePromise, timeoutPromise]);
+    let message;
+    try {
+      for await (const event of messageStream) {
+        lastEventAt = Date.now();
+        if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+          tokenCount += 1;
+          if (tokenCount % 500 === 0) {
+            const sec = ((Date.now() - startTime) / 1000).toFixed(1);
+            console.log(`[refine-page] streaming… ${tokenCount} tokens, ${sec}s elapsed`);
+          }
+        }
+      }
+      message = await messageStream.finalMessage();
+    } catch (e) {
+      if (stallAborted) {
+        throw new Error(`Claude stream stalled for >${STALL_MS / 1000}s. Try again — usually transient on Anthropic's side.`);
+      }
+      throw new Error(`Claude streaming failed: ${e?.message || e}`);
+    } finally {
+      clearInterval(stallTimer);
+    }
+    const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`[refine-page] Claude finished streaming in ${elapsedSec}s (${tokenCount} tokens). stop_reason: ${message.stop_reason}`);
 
     let refinedHtml = message.content[0]?.text?.trim();
     if (!refinedHtml) throw new Error('Claude returned empty response');
