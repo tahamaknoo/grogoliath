@@ -88,12 +88,14 @@ function LoginScreen() {
       {/* Left: form */}
       <div className="flex-1 flex flex-col px-6 sm:px-10 lg:px-16 py-8 lg:py-12 overflow-y-auto">
         <div className="w-full max-w-md mx-auto flex-1 flex flex-col justify-center">
-          {/* Logo — left-aligned above the heading */}
-          <div className="mb-8 -ml-3">
+          {/* Logo — left-aligned above the heading. Uses the SVG lockup from
+              the June 2026 brand kit (icon + wordmark, tile gradient).
+              Light variant on light bg, dark variant on dark bg. */}
+          <div className="mb-8 -ml-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/grogoliath_horizontal_transparent_2400x900.png" alt="GroGoliath" className="h-20 w-auto dark:hidden" />
+            <img src="/grogoliath_lockup_light.svg" alt="GroGoliath" className="h-12 w-auto dark:hidden" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/GroGoliath_Dark_C_BrandTeal.png" alt="GroGoliath" className="h-20 w-auto hidden dark:block" />
+            <img src="/grogoliath_lockup_dark.svg" alt="GroGoliath" className="h-12 w-auto hidden dark:block" />
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-black text-[#262626] dark:text-white tracking-[-0.02em] leading-tight mb-2">
@@ -836,8 +838,8 @@ function AppInner() {
               </svg>
             ) : (
               <>
-                <img src="/grogoliath_horizontal_transparent_2400x900.png" alt="GroGoliath" className="w-full h-auto dark:hidden" />
-                <img src="/GroGoliath_Dark_C_BrandTeal.png" alt="GroGoliath" className="w-full h-auto hidden dark:block" />
+                <img src="/grogoliath_lockup_light.svg" alt="GroGoliath" className="h-9 w-auto dark:hidden" />
+                <img src="/grogoliath_lockup_dark.svg" alt="GroGoliath" className="h-9 w-auto hidden dark:block" />
               </>
             )}
             {sidebarCollapsed && (
